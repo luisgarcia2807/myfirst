@@ -7,33 +7,46 @@ import 'package:mifirst/screens/registrarse.dart';
 import 'package:mifirst/theme/theme.dart';
 import 'package:mifirst/widgets/custom_scaffold.dart';
 
+import '../util/Informacion_principal.dart';
+import 'informacion_Principal.dart';
+
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return CustomScaffold(
-      child: Stack(
+    return Scaffold(
+      body: Stack(
         children: [
-          // Fondo con imagen
+          // Fondo con degradado multicolor, ahora cubre todo el espacio
           Container(
+            width: double.infinity,
+            height: double.infinity,
             decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/background.jpg'),
-                fit: BoxFit.cover,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF0D47A1), // Azul oscuro
+                  Color(0xFF1976D2), // Azul medio
+                  Color(0xFF42A5F5), // Azul claro
+                  Color(0xFF7E57C2), // Morado
+                  Color(0xFF26C6DA), // Turquesa
+                ],
               ),
             ),
           ),
+
           Column(
             children: [
-              const SizedBox(height: 80),
+              const SizedBox(height: 100),
               Center(
                 child: RichText(
                   textAlign: TextAlign.center,
                   text: const TextSpan(
                     children: [
                       TextSpan(
-                        text: '¡Bienvenido!\n',
+                        text: '\n¡Bienvenido!\n',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 45.0,
@@ -106,7 +119,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => SignUpScreendoctor()
+                              builder: (context) => SignUpScreendoctor(),
                             ),
                           );
                         },
@@ -119,13 +132,13 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const DoctorMobileScreen(nombre: 'Luis'),
+                              builder: (context) => InformacionPrincipalPaciente(nombre: "Luis"),
                             ),
                           );
                         },
                         color: Colors.lightBlue.shade800,
                       ),
-                    const Spacer(),
+                      const Spacer(),
                       Text(
                         '¿Necesitas ayuda? Contáctanos aquí.',
                         style: TextStyle(
