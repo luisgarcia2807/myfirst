@@ -119,7 +119,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const PacienteScreen(nombre: 'Luis'),
+                              builder: (context) => const DoctorMobileScreen(nombre: 'Luis'),
                             ),
                           );
                         },

@@ -5,9 +5,9 @@ import 'package:mifirst/screens/pantallapaciente.dart';
 import 'package:mifirst/widgets/custom_scaffold.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import '../models/Centro_medico.dart';
 import '../models/especialidades_doctor.dart';
+import '../models/grupoSanguineo.dart';
 import '../theme/theme.dart';
 
 class SignUpScreendoctor extends StatefulWidget {
@@ -23,6 +23,7 @@ class _SignUpScreenStatedoctor extends State<SignUpScreendoctor>{
   bool agreePersonalData=true;
   int? selectedCentroMedico;
   int? selectedEspecialidad;
+  int? selectedGrupoSanguineo;
 
 
 
@@ -61,6 +62,7 @@ class _SignUpScreenStatedoctor extends State<SignUpScreendoctor>{
     fechaController.dispose();
     _numeroController.dispose();
     _numeroLicencia.dispose();
+
     super.dispose();
   }
   String convertirFecha(String fecha) {
@@ -72,6 +74,12 @@ class _SignUpScreenStatedoctor extends State<SignUpScreendoctor>{
     return '$year-${mes.padLeft(2, '0')}-${dia.padLeft(2, '0')}'; // Formato 'YYYY-MM-DD'
   }
   Future<void> registrarUsuario() async {
+    String nombre = _nameController.text;       // Extraemos el texto del controlador
+    String apellido = _lastNameController.text; // Extraemos el texto del controlador
+    String email = _emailController.text;       // Extraemos el texto del controlador
+    String contrasena = _passwordController.text; // Extraemos el texto del controlador
+    String cedula = _cedulaController.text;     // Extraemos el texto del controlador
+    String licencia = _numeroLicencia.text;     // Extraemos el texto del controlador
     if (!_formSignupKey.currentState!.validate()) {
       return;
     }
@@ -86,21 +94,25 @@ class _SignUpScreenStatedoctor extends State<SignUpScreendoctor>{
     String fechaFormateada = convertirFecha(fechaController.text);
 
     // La URL de tu API Django para registrar el usuario
-    final url = Uri.parse('http://192.168.0.105:8000/usuarios/api/usuarios/'); // Cambia la IP si es necesario
+    final url = Uri.parse('http://192.168.0.100:8000/usuarios/api/usuarios/'); // Cambia la IP si es necesario
 // Concatenar el prefijo seleccionado con el número de cédula ingresado
     String cedulaCompleta = "$prefijoce${_numeroCedulaController.text}";
-    String licencia = "$prefijoce${_numeroLicencia.text}";
     String telefonoCompleto = "$prefijoSeleccionado${_numeroController.text}";
 
 
     final Map<String, dynamic> data = {
-      'nombre': _nameController.text,
-      'apellido': _lastNameController.text,
-      'cedula': cedulaCompleta,
-      'email': _emailController.text,
-      'telefono': telefonoCompleto, // Envia 'contrasena' según la configuración en Django
+      'nombre': nombre,
+      'apellido':apellido,
+      'cedula':cedulaCompleta,
+      'email': email,
+      'telefono':telefonoCompleto, // Envia 'contrasena' según la configuración en Django
       'fecha_nacimiento': fechaFormateada,
-      'password': _passwordController.text,
+      'password': contrasena,
+      "numero_licencia":licencia,
+      "id_rol": 2,
+      "id_especialidad": selectedEspecialidad,
+      "id_sangre":selectedGrupoSanguineo,
+      "id_centromedico": selectedCentroMedico
 
     };
 
@@ -472,40 +484,14 @@ class _SignUpScreenStatedoctor extends State<SignUpScreendoctor>{
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // Selector de prefijo
-                            SizedBox(
-                              width: 80, // Ajusta este valor para hacer el prefijo más pequeño
-                              child: DropdownButtonFormField<String>(
-                                value: prefijoce,
-                                decoration: InputDecoration(
-                                  labelText: 'Prefijo',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-                                ),
-                                items: prefijosCedula.map((String prefijo) {
-                                  return DropdownMenuItem<String>(
-                                    value: prefijo,
-                                    child: Text(prefijo),
-                                  );
-                                }).toList(),
-                                onChanged: (String? nuevoPrefijo) {
-                                  setState(() {
-                                    prefijoce = nuevoPrefijo;
-                                  });
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 10), // Espacio entre el prefijo y el número de cédula
-                            // Campo para el número de cédula
+                            // Campo para el número de licencia (sin prefijo)
                             Expanded(
                               child: TextFormField(
                                 controller: _numeroLicencia,
                                 keyboardType: TextInputType.number,
                                 maxLength: 8, // Permitimos hasta 8 dígitos
                                 decoration: InputDecoration(
-                                  labelText: 'Num Licencia',
+                                  labelText: 'Número de Licencia',
                                   hintText: 'Inserte su número de Licencia',
                                   counterText: "",
                                   border: OutlineInputBorder(
@@ -524,6 +510,43 @@ class _SignUpScreenStatedoctor extends State<SignUpScreendoctor>{
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 20.0),
+                        FutureBuilder<List<GrupoSanguineo>>(
+                          future: fetchGruposSanguineos(),  // Llamar a la función para obtener los datos
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return CircularProgressIndicator();
+                            } else if (snapshot.hasError) {
+                              return Text('Error: ${snapshot.error}');
+                            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return Text('No hay grupos sanguíneos disponibles');
+                            } else {
+                              List<GrupoSanguineo> gruposSanguineos = snapshot.data!;
+
+                              return DropdownButtonFormField<int>(
+                                decoration: InputDecoration(
+                                  labelText: 'Grupo Sanguíneo',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12.0), // 👈 Borde redondeado
+                                  ),
+                                ),
+                                value: selectedGrupoSanguineo, // Variable para almacenar la selección
+                                onChanged: (int? newValue) {
+                                  setState(() {
+                                    selectedGrupoSanguineo = newValue;
+                                    print('ID de Grupo Sanguíneo seleccionado: $selectedGrupoSanguineo');
+                                  });
+                                },
+                                items: gruposSanguineos.map((GrupoSanguineo grupo) {
+                                  return DropdownMenuItem<int>(
+                                    value: grupo.idSangre, // Guarda el ID
+                                    child: Text(grupo.tipoSangre), // Muestra el tipo de sangre
+                                  );
+                                }).toList(),
+                              );
+                            }
+                          },
                         ),
                         const SizedBox(height: 20.0),
                         //campo de Centro medico
@@ -549,7 +572,8 @@ class _SignUpScreenStatedoctor extends State<SignUpScreendoctor>{
                                     value: selectedCentroMedico,
                                     onChanged: (int? newValue) {
                                       setState(() {
-                                        selectedCentroMedico = newValue; // Guarda el ID aquí
+                                        selectedCentroMedico = newValue;
+                                        print('ID de la Centro medico seleccionada: $selectedCentroMedico');// Guarda el ID aquí
                                       });
                                     },
                                     items: centros.map((CentroMedico centro) {
@@ -715,7 +739,7 @@ class _SignUpScreenStatedoctor extends State<SignUpScreendoctor>{
   }
 }
 Future<List<CentroMedico>> fetchCentrosMedicos() async {
-  final response = await http.get(Uri.parse('http://192.168.0.103:8000/usuarios/api/centros_medicos/'));
+  final response = await http.get(Uri.parse('http://192.168.0.100:8000/usuarios/api/centros_medicos/'));
 
   if (response.statusCode == 200) {
     // 👇 Esto es importante: decodificar bien en UTF-8
@@ -729,15 +753,27 @@ Future<List<CentroMedico>> fetchCentrosMedicos() async {
 }
 
 Future<List<Especialidad>> fetchEspecialidades() async {
-  final response = await http.get(Uri.parse('http://192.168.0.103:8000/usuarios/api/especialidades/'));
+  final response = await http.get(Uri.parse('http://192.168.0.100:8000/usuarios/api/especialidades/'));
 
   if (response.statusCode == 200) {
-
     final utf8DecodedBody = utf8.decode(response.bodyBytes);
     // Si la solicitud es exitosa, parsea los datos
     List<dynamic> data =json.decode(utf8DecodedBody);
     return data.map((json) => Especialidad.fromJson(json)).toList();
   } else {
     throw Exception('Error al cargar las especialidades');
+  }
+}
+
+Future<List<GrupoSanguineo>> fetchGruposSanguineos() async {
+  final response = await http.get(Uri.parse('http://192.168.0.100:8000/usuarios/api/grupos-sanguineos/'));
+
+  if (response.statusCode == 200) {
+    final utf8DecodedBody = utf8.decode(response.bodyBytes);
+    // Si la solicitud es exitosa, parsea los datos
+    List<dynamic> data = json.decode(utf8DecodedBody);
+    return data.map((json) => GrupoSanguineo.fromJson(json)).toList();
+  } else {
+    throw Exception('Error al cargar los grupos sanguíneos');
   }
 }

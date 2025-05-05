@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mifirst/screens/registrarCredencial.dart';
 import '../theme/theme.dart';
+import '../util/emoticon_face.dart';
 
 class DoctorMobileScreen extends StatefulWidget {
   final String nombre;
@@ -18,199 +20,282 @@ class _DoctorMobileScreenState extends State<DoctorMobileScreen> {
     String fechaHoy = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
     return Scaffold(
-      drawer: Drawer(
-        child: ListView(
-          padding: const EdgeInsets.all(0),
+      backgroundColor: Colors.blue.shade900,
+      bottomNavigationBar: Theme(
+        data: Theme.of(context).copyWith(
+          navigationBarTheme: NavigationBarThemeData(
+            backgroundColor:Colors.white,
+            indicatorColor: Colors.blue.shade900,
+            labelTextStyle: MaterialStateProperty.resolveWith<TextStyle>((states) {
+              if (states.contains(MaterialState.selected)) {
+                return TextStyle(color: Colors.indigo, fontWeight: FontWeight.w600);
+              }
+              return TextStyle(color: Colors.grey);
+            }),
+            iconTheme: MaterialStateProperty.resolveWith<IconThemeData>((states) {
+              if (states.contains(MaterialState.selected)) {
+                return IconThemeData(color: Colors.white);
+              }
+              return IconThemeData(color: Colors.grey);
+            }),
+          ),
+        ),
+        child: NavigationBar(
+          height: 70,
+          selectedIndex: 0, // cambia esto si necesitas manejar el estado
+          onDestinationSelected: (int index) {
+            if (index == 2) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RegistrarCredencialScreen()),
+              );
+            }
+          },
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'Inicio',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.qr_code_outlined),
+              selectedIcon: Icon(Icons.qr_code),
+              label: 'QR',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_pin),
+              selectedIcon: Icon(Icons.person_pin),
+              label: 'Paciente',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.settings_outlined),
+              selectedIcon: Icon(Icons.settings),
+              label: 'Ajustes',
+            ),
+          ],
+        ),
+      ),
+
+      body: SafeArea(
+        child: Column(
           children: [
-            Container(
-              color: const Color.fromARGB(255, 55, 112, 191),  // Fondo para el menú
-              padding: const EdgeInsets.all(25),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 25.0),
               child: Column(
                 children: [
-                  SizedBox(height: 20),
-                  // Nombre y ícono de usuario
+                  SizedBox(height: 25),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Ícono de usuario en lugar de foto
-                      CircleAvatar(
-                        radius: 40,  // Ícono más grande
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.person, // Ícono de usuario
-                          size: 35,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Dr. ${widget.nombre}",
+                            "Hola ${widget.nombre}",
                             style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
                               color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 5),
+                          SizedBox(height: 8.0),
                           Text(
                             fechaHoy,
-                            style: TextStyle(
-                              color: Colors.white54,
-                            ),
+                            style: TextStyle(color: Colors.white70),
                           ),
+                        ],
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blueAccent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.all(12),
+                        child: Icon(
+                          Icons.notifications_on,
+                          color: Colors.white,
+                        ),
+                      )
+                    ],
+                  ),
+                  SizedBox(height: 25),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Icon(Icons.search, color: Colors.white70),
+                        SizedBox(width: 5),
+                        Text(
+                          'Explorar',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 25),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '¿Cómo te sientes?',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Icon(Icons.more_horiz, color: Colors.white),
+                    ],
+                  ),
+                  SizedBox(height: 25),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Column(
+                        children: [
+                          EmoticonFace(emoticonface: '😃', color: Colors.green),
+                          SizedBox(height: 8),
+                          Text('Excelente', style: TextStyle(color: Colors.white)),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          EmoticonFace(emoticonface: '🙂', color: Colors.limeAccent),
+                          SizedBox(height: 8),
+                          Text('Bien', style: TextStyle(color: Colors.white)),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          EmoticonFace(emoticonface: '😐', color: Colors.orangeAccent),
+                          SizedBox(height: 8),
+                          Text('Regular', style: TextStyle(color: Colors.white)),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          EmoticonFace(emoticonface: '😢', color: Colors.red),
+                          SizedBox(height: 8),
+                          Text('Mal', style: TextStyle(color: Colors.white)),
                         ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
-            _menuItem("Home", Icons.home),
-            _menuItem("Ver Pacientes", Icons.person_search),
-            _menuItem("Ver Citas", Icons.calendar_today),
-            _menuItem("Mi Información", Icons.account_circle),
-            const Divider(),
-            _menuItem("Cerrar Sesión", Icons.exit_to_app),
-          ],
-        ),
-      ),
-      body: Stack(
-        children: [
-          // Imagen de fondo
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/ima2.jpg',  // Ruta de la imagen
-              fit: BoxFit.cover,
-            ),
-          ),
-          // Contenido principal
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 15),
-                // Botón de menú y título alineados a la izquierda
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
+            SizedBox(height: 25),
+            Expanded(
+              child: Container(
+                padding: EdgeInsets.all(25),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Botón de menú
-                    Builder(
-                      builder: (context) {
-                        return IconButton(
-                          icon: const Icon(Icons.menu, color: Colors.white),
-                          onPressed: () {
-                            Scaffold.of(context).openDrawer();  // Abre el menú al presionar el ícono
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 10),
-                    // Título de la acción seleccionada
                     Text(
-                      _getAppBarTitle(),
+                      'Información reciente',
                       style: TextStyle(
-                        fontSize: 30,
                         fontWeight: FontWeight.bold,
+                        fontSize: 20,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(width: 90),
-                    // Botón de reporte
-                    IconButton(
-                      icon: const Icon(Icons.support_agent, color: Colors.white,size: 30,),
-                      onPressed: () {
-                        // Lógica para el reporte
-                        print("Acción de Reporte");
-                      },
-                    ),
-                    const SizedBox(width: 10),
-                    // Botón de notificaciones
-                    IconButton(
-                      icon: const Icon(Icons.notifications_active, color: Colors.white, size: 30,),
-                      onPressed: () {
-                        // Lógica para las notificaciones
-                        print("Acción de Notificaciones");
-                      },
+                    SizedBox(height: 20),
+                    Expanded(
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          CardItem(
+                            emoji: '🩺',
+                            title: 'Información Médica',
+                            subtitle: 'Datos clave',
+                            color: Colors.white38,
+                          ),
+                          CardItem(
+                            emoji: '🔬',
+                            title: 'Exámenes',
+                            subtitle: 'Últimos resultados',
+                            color: Colors.white38,
+                          ),
+                          CardItem(
+                            emoji: '📑',
+                            title: 'Póliza de Seguro',
+                            subtitle: 'Detalles de cobertura',
+                            color: Colors.white38,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                SizedBox(height: 20), // Espacio entre el título y el cuadro de contenido
-                // Cuadro de contenido más grande que ocupa la parte inferior de la pantalla
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(15),
-                    width: double.infinity,  // Hace que el cuadro ocupe todo el ancho disponible
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: _buildContent(),
-                  ),
-                ),
-              ],
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class CardItem extends StatelessWidget {
+  final String emoji;
+  final String title;
+  final String subtitle;
+  final Color color;
+
+  const CardItem({
+    Key? key,
+    required this.emoji,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 160,
+      margin: EdgeInsets.symmetric(horizontal: 10),
+      padding: EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color.withOpacity(0.9), color.withOpacity(0.6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.white,
+            blurRadius: 8,
+            offset: Offset(0, 4),
           ),
         ],
       ),
-      // Botón flotante para abrir el Drawer
-      floatingActionButton: SizedBox(), // Eliminamos el botón flotante
-    );
-  }
-
-  Widget _menuItem(String title, IconData icon) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 10), // Espacio en el contenido
-      leading: Icon(
-        icon,
-        color: selectedOption == title ? Color.fromARGB(255, 130, 20, 20) : Colors.black,  // Aseguramos que el ícono sea visible
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            emoji,
+            style: TextStyle(fontSize: 42, color: Colors.indigo),
+          ),
+          SizedBox(height: 10),
+          Text(
+            title,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.indigo),
+          ),
+          Text(
+            subtitle,
+            style: TextStyle(color: Colors.indigo),
+          ),
+        ],
       ),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: selectedOption == title ? const Color.fromARGB(255, 130, 20, 20) : Colors.black,  // Texto blanco cuando se selecciona
-          fontSize: 18,
-        ),
-      ),
-      tileColor: selectedOption == title ? Colors.blue : null,  // Barra azul en la opción seleccionada
-      selected: selectedOption == title,
-      onTap: () {
-        setState(() {
-          selectedOption = title;
-          Navigator.of(context).pop();  // Cierra el menú al seleccionar una opción
-        });
-      },
     );
-  }
-
-  // Función para obtener el título dinámico según la opción seleccionada
-  String _getAppBarTitle() {
-    switch (selectedOption) {
-      case "Ver Pacientes":
-        return "Ver Pacientes";
-      case "Ver Citas":
-        return "Ver Citas";
-      case "Mi Información":
-        return "Mi Información";
-      default:
-        return "Inicio";
-    }
-  }
-
-  Widget _buildContent() {
-    switch (selectedOption) {
-      case "Ver Pacientes":
-        return const Center(child: Text("Lista de Pacientes"));
-      case "Ver Citas":
-        return const Center(child: Text("Lista de Citas"));
-      case "Mi Información":
-        return const Center(child: Text("Información del Doctor"));
-      case "Cerrar Sesión":
-        return const Center(child: Text("Sesión Cerrada"));
-      default:
-        return const Center(child: Text("Inicio"));
-    }
   }
 }

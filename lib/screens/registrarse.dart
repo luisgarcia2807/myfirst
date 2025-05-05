@@ -6,6 +6,7 @@ import 'package:mifirst/widgets/custom_scaffold.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../models/grupoSanguineo.dart';
 import '../theme/theme.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen>{
   final _formSignupKey = GlobalKey<FormState>();
   bool agreePersonalData=true;
+  int? selectedGrupoSanguineo;
 
   // para guardar nombre, apellido, email, cedula y contrasena
   final TextEditingController _nameController = TextEditingController();
@@ -64,6 +66,12 @@ class _SignUpScreenState extends State<SignUpScreen>{
     return '$year-${mes.padLeft(2, '0')}-${dia.padLeft(2, '0')}'; // Formato 'YYYY-MM-DD'
     }
   Future<void> registrarUsuario() async {
+    String nombre = _nameController.text;       // Extraemos el texto del controlador
+    String apellido = _lastNameController.text; // Extraemos el texto del controlador
+    String email = _emailController.text;       // Extraemos el texto del controlador
+    String contrasena = _passwordController.text; // Extraemos el texto del controlador
+    String cedula = _cedulaController.text;     // Extraemos el texto del controlador
+
     if (!_formSignupKey.currentState!.validate()) {
       return;
     }
@@ -84,15 +92,15 @@ class _SignUpScreenState extends State<SignUpScreen>{
     String telefonoCompleto = "$prefijoSeleccionado${_numeroController.text}";
 
     final Map<String, dynamic> data = {
-      'nombre': _nameController.text,
-      'apellido': _lastNameController.text,
+      'nombre': nombre,
+      'apellido': apellido,
       'cedula': cedulaCompleta,
-      'email': _emailController.text,
-      'telefono': telefonoCompleto, // Envia 'contrasena' según la configuración en Django
+      'email': email,
+      'telefono': telefonoCompleto,
       'fecha_nacimiento': fechaFormateada,
-      'password': _passwordController.text,
+      'password': contrasena,
       'id_rol': 1,
-
+      "id_sangre":selectedGrupoSanguineo,
     };
 
     try {
@@ -461,6 +469,42 @@ class _SignUpScreenState extends State<SignUpScreen>{
                           },
                         ),
                         const SizedBox(height: 20.0),
+                        FutureBuilder<List<GrupoSanguineo>>(
+                          future: fetchGruposSanguineos(),  // Llamar a la función para obtener los datos
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return CircularProgressIndicator();
+                            } else if (snapshot.hasError) {
+                              return Text('Error: ${snapshot.error}');
+                            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return Text('No hay grupos sanguíneos disponibles');
+                            } else {
+                              List<GrupoSanguineo> gruposSanguineos = snapshot.data!;
+
+                              return DropdownButtonFormField<int>(
+                                decoration: InputDecoration(
+                                  labelText: 'Grupo Sanguíneo',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12.0), // 👈 Borde redondeado
+                                  ),
+                                ),
+                                value: selectedGrupoSanguineo, // Variable para almacenar la selección
+                                onChanged: (int? newValue) {
+                                  setState(() {
+                                    selectedGrupoSanguineo = newValue;
+                                    print('ID de Grupo Sanguíneo seleccionado: $selectedGrupoSanguineo');
+                                  });
+                                },
+                                items: gruposSanguineos.map((GrupoSanguineo grupo) {
+                                  return DropdownMenuItem<int>(
+                                    value: grupo.idSangre, // Guarda el ID
+                                    child: Text(grupo.tipoSangre), // Muestra el tipo de sangre
+                                  );
+                                }).toList(),
+                              );
+                            }
+                          },
+                        ),
                         //recordar datos
                         const SizedBox(height: 20.0),
                         Row(
@@ -569,5 +613,18 @@ class _SignUpScreenState extends State<SignUpScreen>{
       ),
     );
 
+  }
+}
+
+Future<List<GrupoSanguineo>> fetchGruposSanguineos() async {
+  final response = await http.get(Uri.parse('http://192.168.0.100:8000/usuarios/api/grupos-sanguineos/'));
+
+  if (response.statusCode == 200) {
+    final utf8DecodedBody = utf8.decode(response.bodyBytes);
+    // Si la solicitud es exitosa, parsea los datos
+    List<dynamic> data = json.decode(utf8DecodedBody);
+    return data.map((json) => GrupoSanguineo.fromJson(json)).toList();
+  } else {
+    throw Exception('Error al cargar los grupos sanguíneos');
   }
 }

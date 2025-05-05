@@ -28,7 +28,7 @@ class _SingInScreenState extends State<SingInScreen>{
       return;
     }
 
-    final url = Uri.parse('http://192.168.0.105:8000/api/token/');  // Reemplaza la IP si es necesario
+    final url = Uri.parse('http://192.168.0.100:8000/api/token/');  // Reemplaza la IP si es necesario
 
     final response = await http.post(
       url,
