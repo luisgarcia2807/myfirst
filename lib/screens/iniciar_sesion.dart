@@ -42,25 +42,29 @@ class _SingInScreenState extends State<SingInScreen>{
     );
 
     if (response.statusCode == 200) {
-      // Si el login es exitoso, obtener el token
+      // Si el login es exitoso, obtener el token, id y nombre
       final Map<String, dynamic> data = jsonDecode(response.body);
       String token = data['access'];
       String nombre = data['nombre'] ?? 'Desconocido'; // Si no tiene nombre, asigna 'Desconocido'
+      int id = data['id_usuario'];  // Cambié 'id' por 'id_usuario' según tu respuesta de Postman
+
 
       // Guardar en SharedPreferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString('auth_token', token);
       prefs.setString('nombre_usuario', nombre);
+      prefs.setInt('user_id', id);
+      print('\n\n\nhola is $id');// Guardar el id del usuario
 
       // Mostrar mensaje de éxito
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Inicio de sesión exitoso')),
       );
 
-      // Redirigir a la pantalla de Paciente
+      // Redirigir a la pantalla de Paciente, pasando el nombre y el id
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => PacienteScreen(nombre: nombre)),
+        MaterialPageRoute(builder: (context) => PacienteScreen(idusuario: id,)),  // Pasando el id al siguiente screen
       );
     } else {
       // Si ocurre un error, muestra el mensaje de error
@@ -69,6 +73,7 @@ class _SingInScreenState extends State<SingInScreen>{
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

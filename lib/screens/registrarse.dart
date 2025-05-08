@@ -86,7 +86,7 @@ class _SignUpScreenState extends State<SignUpScreen>{
     String fechaFormateada = convertirFecha(fechaController.text);
 
     // La URL de tu API Django para registrar el usuario
-    final url = Uri.parse('http://192.168.0.103:8000/usuarios/api/usuarios/'); // Cambia la IP si es necesario
+    final url = Uri.parse('http://192.168.0.100:8000/usuarios/api/usuarios/'); // Cambia la IP si es necesario
 // Concatenar el prefijo seleccionado con el número de cédula ingresado
     String cedulaCompleta = "$prefijoce${_numeroCedulaController.text}";
     String telefonoCompleto = "$prefijoSeleccionado${_numeroController.text}";
@@ -132,7 +132,7 @@ class _SignUpScreenState extends State<SignUpScreen>{
         });
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (e) =>  PacienteScreen(nombre: _nameController.text),
+          MaterialPageRoute(builder: (e) =>  PacienteScreen( idusuario: 1,),
           ),
         );
       } else {

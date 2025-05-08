@@ -3,15 +3,15 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-class InformacionPrincipalPaciente extends StatefulWidget {
+class VistaAlergia extends StatefulWidget {
   final int idusuario;
-  const InformacionPrincipalPaciente({super.key, required this.idusuario, });
+  const VistaAlergia({super.key, required this.idusuario, });
 
   @override
-  State<InformacionPrincipalPaciente> createState() => _InformacionPrincipalPaciente();
+  State<VistaAlergia> createState() => _VistaAlergia();
 }
 
-class _InformacionPrincipalPaciente extends State<InformacionPrincipalPaciente> {
+class _VistaAlergia extends State<VistaAlergia> {
   final TextEditingController _credencialController = TextEditingController();
   String nombreUsuario = '';
   String apellidoUsuario = '';
@@ -111,10 +111,10 @@ class _InformacionPrincipalPaciente extends State<InformacionPrincipalPaciente> 
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF0D47A1),
-              Color(0xFF1976D2),
-              Color(0xFF42A5F5),
-              Color(0xFF7E57C2),
+              Color(0xFF3DD152),
+              Color(0xFF033B71),
+              Color(0xFF42EA14),
+              Color(0xFF5B487E),
               Color(0xFF26C6DA),
             ],
           ),
@@ -167,23 +167,23 @@ class _InformacionPrincipalPaciente extends State<InformacionPrincipalPaciente> 
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors.blueAccent,
+                                color: Colors.green,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               padding: EdgeInsets.all(12),
                               child: Icon(
-                                Icons.notifications_on,
+                                Icons.add_circle_outline_sharp,
                                 color: Colors.white,
                               ),
                             ),
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors.blueAccent,
+                                color: Colors.red,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               padding: EdgeInsets.all(12),
                               child: Icon(
-                                Icons.phone,
+                                Icons.remove_circle,
                                 color: Colors.white,
                               ),
                             ),

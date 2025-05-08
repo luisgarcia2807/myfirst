@@ -145,7 +145,7 @@ class _SignUpScreenStatedoctor extends State<SignUpScreendoctor>{
         });
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (e) =>  PacienteScreen(nombre: _nameController.text),
+          MaterialPageRoute(builder: (e) =>  PacienteScreen( idusuario: 1, ),
           ),
         );
       } else {

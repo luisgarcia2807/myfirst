@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:mifirst/screens/registrarCredencial.dart';
-import 'package:mifirst/util/Informacion_principal.dart';
-import 'package:mifirst/util/emoticon_face.dart';
-import '../theme/theme.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:mifirst/screens/registrarCredencial.dart';
+import '../util/emoticon_face.dart';
 
 class PacienteScreen extends StatefulWidget {
-  final String nombre;
-  const PacienteScreen({super.key, required this.nombre});
+  final int idusuario;
+  const PacienteScreen({super.key, required this.idusuario});
 
   @override
   State<PacienteScreen> createState() => _PacienteScreen();
@@ -15,6 +15,61 @@ class PacienteScreen extends StatefulWidget {
 
 class _PacienteScreen extends State<PacienteScreen> {
   final TextEditingController _credencialController = TextEditingController();
+
+  String nombreUsuario = '';
+  String apellidoUsuario = '';
+  String cedulaUsuario = '';
+  String emailUsuario = '';
+  String telefonoUsuario = '';
+  String fechaNacimientoUsuario = '';
+  bool estadoUsuario = false;
+  int idRolUsuario = 0;
+
+  // Método para obtener los datos de la API
+  Future<void> obtenerDatos() async {
+    // La URL de tu API (reemplázala por la URL correcta)
+    final url = Uri.parse('http://localhost:8000/usuarios/api/usuario/${widget.idusuario}/'); // Asegúrate de cambiar esto
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        // La respuesta fue exitosa, imprimimos los datos en la consola
+        var datos = jsonDecode(utf8.decode(response.bodyBytes));
+        setState(() {
+          nombreUsuario = datos['nombre'];
+          apellidoUsuario = datos['apellido'];
+          cedulaUsuario = datos['cedula'];
+          emailUsuario = datos['email'];
+          telefonoUsuario = datos['telefono'];
+          fechaNacimientoUsuario = datos['fecha_nacimiento'];
+          estadoUsuario = datos['estado'];
+          idRolUsuario = datos['id_rol'];
+        });
+        // Imprimir los datos obtenidos
+        print('Nombre: $nombreUsuario');
+        print('Apellido: $apellidoUsuario');
+        print('Cédula: $cedulaUsuario');
+        print('Email: $emailUsuario');
+        print('Teléfono: $telefonoUsuario');
+        print('Fecha de nacimiento: $fechaNacimientoUsuario');
+        print('Estado: $estadoUsuario');
+        print('ID Rol: $idRolUsuario');
+      } else {
+        // Si el servidor no responde con un código 200
+        print('Error al obtener los datos: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Si ocurre un error durante la petición
+      print('Error: $e');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    obtenerDatos(); // Llamamos al método para obtener los datos
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +131,6 @@ class _PacienteScreen extends State<PacienteScreen> {
           ],
         ),
       ),
-
       body: SafeArea(
         child: Column(
           children: [
@@ -92,7 +146,7 @@ class _PacienteScreen extends State<PacienteScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Hola ${widget.nombre}",
+                            "Hola $nombreUsuario $apellidoUsuario", // Aquí mostramos el nombre completo
                             style: TextStyle(
                               color: Colors.black87,
                               fontSize: 24,
@@ -106,17 +160,6 @@ class _PacienteScreen extends State<PacienteScreen> {
                           ),
                         ],
                       ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.blueAccent,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: EdgeInsets.all(12),
-                        child: Icon(
-                          Icons.notifications_on,
-                          color: Colors.white,
-                        ),
-                      )
                     ],
                   ),
                   SizedBox(height: 25),
@@ -266,31 +309,24 @@ class CardItem extends StatelessWidget {
       padding: EdgeInsets.all(15),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color.withOpacity(0.9), color.withOpacity(0.6)],
+          colors: [color.withOpacity(0.7), color.withOpacity(0.5)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             emoji,
-            style: TextStyle(fontSize: 42, color: Colors.white),
+            style: TextStyle(fontSize: 30),
           ),
           SizedBox(height: 10),
           Text(
             title,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
           ),
+          SizedBox(height: 5),
           Text(
             subtitle,
             style: TextStyle(color: Colors.white70),
