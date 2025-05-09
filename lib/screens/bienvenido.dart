@@ -5,6 +5,7 @@ import 'package:mifirst/screens/pantallapaciente.dart';
 import 'package:mifirst/screens/registrar_doctor.dart';
 import 'package:mifirst/screens/registrarse.dart';
 import 'package:mifirst/screens/vista_alergia.dart';
+import 'package:mifirst/screens/vista_vacuna.dart';
 import 'package:mifirst/theme/theme.dart';
 import 'package:mifirst/widgets/custom_scaffold.dart';
 
@@ -120,7 +121,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => VistaAlergia(idusuario: 16,),
+                              builder: (context) => VistaVacuna(idusuario: 16,),
                             ),
                           );
                         },
