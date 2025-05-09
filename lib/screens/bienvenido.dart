@@ -120,7 +120,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => VistaAlergia(idusuario: 1,),
+                              builder: (context) => VistaAlergia(idusuario: 16,),
                             ),
                           );
                         },
