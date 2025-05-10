@@ -5,7 +5,7 @@ import 'package:mifirst/screens/pantallapaciente.dart';
 import 'package:mifirst/widgets/custom_scaffold.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import '../constans.dart';
 import '../models/grupoSanguineo.dart';
 import '../theme/theme.dart';
 
@@ -86,7 +86,7 @@ class _SignUpScreenState extends State<SignUpScreen>{
     String fechaFormateada = convertirFecha(fechaController.text);
 
     // La URL de tu API Django para registrar el usuario
-    final url = Uri.parse('http://192.168.0.100:8000/usuarios/api/usuarios/'); // Cambia la IP si es necesario
+    final url = Uri.parse('$baseUrl/usuarios/api/usuarios/'); // Cambia la IP si es necesario
 // Concatenar el prefijo seleccionado con el número de cédula ingresado
     String cedulaCompleta = "$prefijoce${_numeroCedulaController.text}";
     String telefonoCompleto = "$prefijoSeleccionado${_numeroController.text}";
@@ -617,7 +617,7 @@ class _SignUpScreenState extends State<SignUpScreen>{
 }
 
 Future<List<GrupoSanguineo>> fetchGruposSanguineos() async {
-  final response = await http.get(Uri.parse('http://192.168.0.100:8000/usuarios/api/grupos-sanguineos/'));
+  final response = await http.get(Uri.parse('$baseUrl/usuarios/api/grupos-sanguineos/'));
 
   if (response.statusCode == 200) {
     final utf8DecodedBody = utf8.decode(response.bodyBytes);

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/registrarCredencial.dart';
 import '../util/emoticon_face.dart';
+import '../constans.dart';
 
 class PacienteScreen extends StatefulWidget {
   final int idusuario;
@@ -28,7 +29,7 @@ class _PacienteScreen extends State<PacienteScreen> {
   // Método para obtener los datos de la API
   Future<void> obtenerDatos() async {
     // La URL de tu API (reemplázala por la URL correcta)
-    final url = Uri.parse('http://localhost:8000/usuarios/api/usuario/${widget.idusuario}/'); // Asegúrate de cambiar esto
+    final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/'); // Asegúrate de cambiar esto
 
     try {
       final response = await http.get(url);

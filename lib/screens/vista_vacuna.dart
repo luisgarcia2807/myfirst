@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/alergias.dart';
 import '../models/vacuna.dart';
+import '../constans.dart';
 
 class VistaVacuna extends StatefulWidget {
   final int idusuario;
@@ -36,7 +36,7 @@ class _VistaVacuna extends State<VistaVacuna> {
   final TextEditingController _descripcionAlergiaController = TextEditingController();
 
   Future<void> obtenerDatos() async {
-    final url = Uri.parse('http://192.168.0.105:8000/usuarios/api/usuario/${widget.idusuario}/');
+    final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
 
     try {
       final response = await http.get(url);
@@ -68,7 +68,7 @@ class _VistaVacuna extends State<VistaVacuna> {
     }
   }
   Future<void> obtenerDatosPacienteSangre(int idUsuario) async {
-    final url = Uri.parse('http://192.168.0.105:8000/usuarios/api/pacientes/por-usuario/$idUsuario/');
+    final url = Uri.parse('$baseUrl/usuarios/api/pacientes/por-usuario/$idUsuario/');
 
     try {
       final response = await http.get(url);
@@ -214,7 +214,7 @@ class _VistaVacuna extends State<VistaVacuna> {
                     if (selectedVacunaId != null &&
                         _fechaController.text.isNotEmpty &&
                         selectedDosis != null) {
-                      final url = Uri.parse('http://192.168.0.105:8000/usuarios/api/vacunas-pacientes/');
+                      final url = Uri.parse('$baseUrl/usuarios/api/vacunas-pacientes/');
                       final Map<String, dynamic> data = {
                         'paciente': idPaciente,
                         'vacuna': selectedVacunaId,
@@ -265,12 +265,10 @@ class _VistaVacuna extends State<VistaVacuna> {
   }
 
 
-
-
-  //mostrar alergia
+  //mostrar Vacuna
   Future<void> _fetchVacunas() async {
     final response = await http.get(
-      Uri.parse('http://127.0.0.1:8000/usuarios/api/pacientes/2/vacunas/'),
+      Uri.parse('$baseUrl/usuarios/api/pacientes/$idPaciente/vacunas/'),
     );
 
     if (response.statusCode == 200) {
@@ -286,10 +284,15 @@ class _VistaVacuna extends State<VistaVacuna> {
   @override
   void initState() {
     super.initState();
-    obtenerDatos();
-    obtenerDatosPacienteSangre(widget.idusuario);
-    _fetchVacunas();
+    _inicializarDatos();
   }
+
+  Future<void> _inicializarDatos() async {
+    await obtenerDatos(); // no es necesario await si no depende de datos
+    await obtenerDatosPacienteSangre(widget.idusuario);
+    await _fetchVacunas(); // Llamar después de que idPaciente esté disponible
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -336,18 +339,19 @@ class _VistaVacuna extends State<VistaVacuna> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
+                            SizedBox(height: 12),
                             Text(
                               "GESTOR DE VACUNA",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize:60,
+                                fontSize:30,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 8),
+                            SizedBox(height: 6),
                             Text(
                               nombreUsuario,
-                              style: TextStyle(color: Colors.white.withOpacity(0.7),fontSize: 24),
+                              style: TextStyle(color: Colors.white.withOpacity(0.7),fontSize: 30),
                             ),
                           ],
                         ),
@@ -392,65 +396,77 @@ class _VistaVacuna extends State<VistaVacuna> {
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.grey,
-                    borderRadius: BorderRadius.only(
+                    color: Colors.grey[200], // Fondo gris claro
+                    borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(30),
                       topRight: Radius.circular(30),
                     ),
                   ),
                   padding: const EdgeInsets.all(20),
                   child: vacunas.isEmpty
-                      ? Center(child: CircularProgressIndicator())
+                      ? const Center(child: CircularProgressIndicator())
                       : ListView.builder(
                     itemCount: vacunas.length,
                     itemBuilder: (context, index) {
                       return Card(
-                        margin: EdgeInsets.only(bottom: 10),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
                         color: Colors.white,
+                        elevation: 3,
                         child: ListTile(
-                          contentPadding: EdgeInsets.all(0),
+                          contentPadding: const EdgeInsets.all(10),
                           title: Row(
                             children: [
-                              SizedBox(height: 2),
+                              // Icono de vacuna
                               Container(
-                                padding: EdgeInsets.only(left: 8),
                                 width: 60,
-                                height: 120,
+                                height: 60,
                                 decoration: BoxDecoration(
                                   color: Colors.blue, // Color fijo azul
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: Center(
+                                child: const Center(
                                   child: Text(
                                     '💉', // Emoji de vacuna
-                                    style: TextStyle(fontSize: 40),
+                                    style: TextStyle(fontSize: 30),
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 15),
+                              const SizedBox(width: 15),
+
+                              // Información de la vacuna
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       vacunas[index]['nombre_vacuna'],
-                                      style: TextStyle(color: Colors.black),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
                                     ),
                                     Text(
                                       'Dosis: ${vacunas[index]['dosis']} / ${vacunas[index]['max_dosis']}',
-                                      style: TextStyle(color: Colors.black54),
+                                      style: const TextStyle(color: Colors.black54),
                                     ),
                                     Text(
                                       'Fecha: ${vacunas[index]['fecha_aplicacion']}',
-                                      style: TextStyle(color: Colors.black54),
+                                      style: const TextStyle(color: Colors.black54),
                                     ),
                                     Text(
                                       'Observación: ${vacunas[index]['observacion']}',
-                                      style: TextStyle(color: Colors.black54),
+                                      style: const TextStyle(color: Colors.black54),
                                     ),
                                   ],
                                 ),
                               ),
+
+                              // Icono de opciones
+                              const Icon(Icons.more_vert, color: Colors.black54),
                             ],
                           ),
                         ),
@@ -477,7 +493,7 @@ class _VistaVacuna extends State<VistaVacuna> {
 }
 
 Future<List<Vacuna>> fetchVacunas() async {
-  final url = Uri.parse('http://localhost:8000/usuarios/api/vacunas/');
+  final url = Uri.parse('$baseUrl/usuarios/api/vacunas/');
   final response = await http.get(url);
 
   if (response.statusCode == 200) {

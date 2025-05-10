@@ -121,7 +121,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => VistaVacuna(idusuario: 16,),
+                              builder: (context) => VistaAlergia(idusuario: 16),
                             ),
                           );
                         },
@@ -134,7 +134,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => InformacionPrincipalPaciente(idusuario: 30),
+                              builder: (context) => InformacionPrincipalPaciente(idusuario: 16),
                             ),
                           );
                         },

@@ -9,6 +9,7 @@ import '../models/Centro_medico.dart';
 import '../models/especialidades_doctor.dart';
 import '../models/grupoSanguineo.dart';
 import '../theme/theme.dart';
+import '../constans.dart';
 
 class SignUpScreendoctor extends StatefulWidget {
   const SignUpScreendoctor ({super.key});
@@ -94,7 +95,7 @@ class _SignUpScreenStatedoctor extends State<SignUpScreendoctor>{
     String fechaFormateada = convertirFecha(fechaController.text);
 
     // La URL de tu API Django para registrar el usuario
-    final url = Uri.parse('http://192.168.0.100:8000/usuarios/api/usuarios/'); // Cambia la IP si es necesario
+    final url = Uri.parse('$baseUrl/usuarios/api/usuarios/'); // Cambia la IP si es necesario
 // Concatenar el prefijo seleccionado con el número de cédula ingresado
     String cedulaCompleta = "$prefijoce${_numeroCedulaController.text}";
     String telefonoCompleto = "$prefijoSeleccionado${_numeroController.text}";
@@ -739,7 +740,7 @@ class _SignUpScreenStatedoctor extends State<SignUpScreendoctor>{
   }
 }
 Future<List<CentroMedico>> fetchCentrosMedicos() async {
-  final response = await http.get(Uri.parse('http://192.168.0.100:8000/usuarios/api/centros_medicos/'));
+  final response = await http.get(Uri.parse('$baseUrl/usuarios/api/centros_medicos/'));
 
   if (response.statusCode == 200) {
     // 👇 Esto es importante: decodificar bien en UTF-8
@@ -753,7 +754,7 @@ Future<List<CentroMedico>> fetchCentrosMedicos() async {
 }
 
 Future<List<Especialidad>> fetchEspecialidades() async {
-  final response = await http.get(Uri.parse('http://192.168.0.100:8000/usuarios/api/especialidades/'));
+  final response = await http.get(Uri.parse('$baseUrl/usuarios/api/especialidades/'));
 
   if (response.statusCode == 200) {
     final utf8DecodedBody = utf8.decode(response.bodyBytes);
@@ -766,7 +767,7 @@ Future<List<Especialidad>> fetchEspecialidades() async {
 }
 
 Future<List<GrupoSanguineo>> fetchGruposSanguineos() async {
-  final response = await http.get(Uri.parse('http://192.168.0.100:8000/usuarios/api/grupos-sanguineos/'));
+  final response = await http.get(Uri.parse('$baseUrl/usuarios/api/grupos-sanguineos/'));
 
   if (response.statusCode == 200) {
     final utf8DecodedBody = utf8.decode(response.bodyBytes);

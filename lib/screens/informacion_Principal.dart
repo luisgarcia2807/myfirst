@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../constans.dart';
 
 class InformacionPrincipalPaciente extends StatefulWidget {
   final int idusuario;
@@ -27,7 +28,7 @@ class _InformacionPrincipalPaciente extends State<InformacionPrincipalPaciente> 
   String tipoSangre = '';
 
   Future<void> obtenerDatos() async {
-    final url = Uri.parse('http://192.168.0.104:8000/usuarios/api/usuario/${widget.idusuario}/');
+    final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
 
     try {
       final response = await http.get(url);
@@ -60,7 +61,7 @@ class _InformacionPrincipalPaciente extends State<InformacionPrincipalPaciente> 
   }
   // Función para obtener el paciente, id_sangre y tipo de sangre
   Future<void> obtenerDatosPacienteSangre(int idUsuario) async {
-    final url = Uri.parse('http://192.168.0.104:8000/usuarios/api/pacientes/por-usuario/$idUsuario/');
+    final url = Uri.parse('$baseUrl/usuarios/api/pacientes/por-usuario/$idUsuario/');
 
     try {
       final response = await http.get(url);

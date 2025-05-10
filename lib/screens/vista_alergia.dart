@@ -3,9 +3,11 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/alergias.dart';
+import '../constans.dart';
 
 class VistaAlergia extends StatefulWidget {
   final int idusuario;
+
   const VistaAlergia({super.key, required this.idusuario});
 
   @override
@@ -35,7 +37,7 @@ class _VistaAlergia extends State<VistaAlergia> {
   final TextEditingController _descripcionAlergiaController = TextEditingController();
 
   Future<void> obtenerDatos() async {
-    final url = Uri.parse('http://192.168.0.104:8000/usuarios/api/usuario/${widget.idusuario}/');
+    final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
 
     try {
       final response = await http.get(url);
@@ -67,7 +69,7 @@ class _VistaAlergia extends State<VistaAlergia> {
     }
   }
   Future<void> obtenerDatosPacienteSangre(int idUsuario) async {
-    final url = Uri.parse('http://192.168.0.104:8000/usuarios/api/pacientes/por-usuario/$idUsuario/');
+    final url = Uri.parse('$baseUrl/usuarios/api/pacientes/por-usuario/$idUsuario/');
 
     try {
       final response = await http.get(url);
@@ -87,6 +89,7 @@ class _VistaAlergia extends State<VistaAlergia> {
       print('Error: $e');
     }
   }
+
   void _mostrarDialogoAlergia() {
     Future<List<Alergia>> futureAlergias = fetchAlergias(tipoSeleccionado!);
 
@@ -96,104 +99,124 @@ class _VistaAlergia extends State<VistaAlergia> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
+              scrollable: true, // Para evitar overflow vertical
               title: Text("Añadir Alergia"),
               content: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Tipo de alergia
-                    DropdownButtonFormField<String>(
-                      value: tipoSeleccionado,
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          tipoSeleccionado = newValue;
-                          futureAlergias = fetchAlergias(newValue!);
-                          selectedAlergiaId = null;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        labelText: "Tipo de alergia",
-                        border: OutlineInputBorder(),
-                      ),
-                      items: ['medicamento', 'alimento', 'ambiental', 'otro']
-                          .map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                    ),
-
-                    SizedBox(height: 10),
-
-                    // Lista de alergias según tipo
-                    FutureBuilder<List<Alergia>>(
-                      future: futureAlergias,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        } else if (snapshot.hasError) {
-                          return Text('Error: ${snapshot.error}');
-                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return Text('No hay alergias disponibles');
-                        } else {
-                          List<Alergia> alergias = snapshot.data!;
-                          return DropdownButtonFormField<int>(
-                            decoration: InputDecoration(
-                              labelText: 'Alergia',
-                              border: OutlineInputBorder(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.85, // Ajustar el ancho máximo
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Tipo de alergia
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: DropdownButtonFormField<String>(
+                          value: tipoSeleccionado,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              tipoSeleccionado = newValue;
+                              futureAlergias = fetchAlergias(newValue!);
+                              selectedAlergiaId = null;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: "Tipo de alergia",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
                             ),
-                            value: selectedAlergiaId,
-                            onChanged: (int? newValue) {
-                              setState(() {
-                                selectedAlergiaId = newValue;
-                              });
-                            },
-                            items: alergias.map((Alergia alergia) {
-                              return DropdownMenuItem<int>(
-                                value: alergia.id,
-                                child: Text(alergia.nombre),
-                              );
-                            }).toList(),
-                          );
-                        }
-                      },
-                    ),
-
-                    SizedBox(height: 10),
-
-                    // Nivel de alergia
-                    DropdownButtonFormField<String>(
-                      value: nivelSeleccionado,
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          nivelSeleccionado = newValue;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Nivel de alergia',
-                        border: OutlineInputBorder(),
+                          ),
+                          items: ['medicamento', 'alimento', 'ambiental', 'otro']
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                        ),
                       ),
-                      items: ['leve', 'moderada', 'severo'].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                    ),
 
-                    SizedBox(height: 10),
-
-                    // Descripción
-                    TextField(
-                      controller: _descripcionAlergiaController,
-                      decoration: InputDecoration(
-                        labelText: "Descripción",
-                        border: OutlineInputBorder(),
+                      // Lista de alergias según tipo
+                      FutureBuilder<List<Alergia>>(
+                        future: futureAlergias,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return Text('No hay alergias disponibles');
+                          } else {
+                            List<Alergia> alergias = snapshot.data!;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: DropdownButtonFormField<int>(
+                                decoration: InputDecoration(
+                                  labelText: 'Alergia',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                ),
+                                value: selectedAlergiaId,
+                                onChanged: (int? newValue) {
+                                  setState(() {
+                                    selectedAlergiaId = newValue;
+                                  });
+                                },
+                                items: alergias.map((Alergia alergia) {
+                                  return DropdownMenuItem<int>(
+                                    value: alergia.id,
+                                    child: Text(alergia.nombre),
+                                  );
+                                }).toList(),
+                              ),
+                            );
+                          }
+                        },
                       ),
-                      maxLines: 3,
-                    ),
-                  ],
+
+                      // Nivel de alergia
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: DropdownButtonFormField<String>(
+                          value: nivelSeleccionado,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              nivelSeleccionado = newValue;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Nivel de alergia',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                          items: ['leve', 'moderada', 'severo'].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+
+                      // Descripción
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: TextField(
+                          controller: _descripcionAlergiaController,
+                          decoration: InputDecoration(
+                            labelText: "Descripción",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                          maxLines: 3,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               actions: [
@@ -206,7 +229,7 @@ class _VistaAlergia extends State<VistaAlergia> {
                 TextButton(
                   onPressed: () async {
                     if (selectedAlergiaId != null && nivelSeleccionado != null) {
-                      final url = Uri.parse('http://192.168.0.104:8000/usuarios/api/pacientes-alergias/');
+                      final url = Uri.parse('$baseUrl/usuarios/api/pacientes-alergias/');
                       final Map<String, dynamic> data = {
                         'paciente': idPaciente,
                         'alergia': selectedAlergiaId,
@@ -246,7 +269,6 @@ class _VistaAlergia extends State<VistaAlergia> {
                   },
                   child: Text("Guardar"),
                 ),
-
               ],
             );
           },
@@ -254,9 +276,13 @@ class _VistaAlergia extends State<VistaAlergia> {
       },
     );
   }
+
+
+
+
   Future<void> _fetchAlergias() async {
     final response = await http.get(
-      Uri.parse('http://127.0.0.1:8000/usuarios/api/pacientes/1/alergias/'),
+      Uri.parse('$baseUrl/usuarios/api/pacientes/$idPaciente/alergias/'),
     );
 
     if (response.statusCode == 200) {
@@ -272,11 +298,14 @@ class _VistaAlergia extends State<VistaAlergia> {
   IconData _getIcon(String tipo) {
     switch (tipo) {
       case 'Medicamento':
-        return Icons.local_hospital;  // Un ícono de hospital para medicamentos
+        return Icons.local_hospital;  // Ícono para medicamentos
       case 'Ambiental':
-        return Icons.ac_unit;  // Un ícono de clima para alergias ambientales
+        return Icons.ac_unit;  // Ícono para alergias ambientales
+      case 'Alimento':
+        return Icons.restaurant_menu;  // Ícono más sano que simboliza comida 🍏
       default:
-        return Icons.help_outline;  // Un ícono de ayuda para otros tipos
+        return Icons.precision_manufacturing
+    ;  // Ícono genérico para otros tipos
     }
   }
   Color _getColor(String tipo) {
@@ -285,17 +314,26 @@ class _VistaAlergia extends State<VistaAlergia> {
         return Colors.blue;  // Color azul para alergias a medicamentos
       case 'Ambiental':
         return Colors.green;  // Color verde para alergias ambientales
+      case 'Alimento':
+        return Colors.red;  // Ícono más sano que simboliza comida 🍏
       default:
         return Colors.grey;  // Color gris para otros tipos
     }
   }
+
+
   @override
   void initState() {
     super.initState();
-    obtenerDatos();
-    obtenerDatosPacienteSangre(widget.idusuario);
-    _fetchAlergias();
+    _inicializarDatos();
   }
+
+  Future<void> _inicializarDatos() async {
+    await obtenerDatos(); // no es necesario await si no depende de datos
+    await obtenerDatosPacienteSangre(widget.idusuario);
+    await _fetchAlergias(); // Llamar después de que idPaciente esté disponible
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -342,18 +380,19 @@ class _VistaAlergia extends State<VistaAlergia> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
+                            SizedBox(height: 12),
                             Text(
                               "GESTOR DE ALERGIA",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize:60,
+                                fontSize:30,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             SizedBox(height: 8),
                             Text(
                               nombreUsuario,
-                              style: TextStyle(color: Colors.white.withOpacity(0.7),fontSize: 24),
+                              style: TextStyle(color: Colors.white.withOpacity(0.7),fontSize: 30),
                             ),
                           ],
                         ),
@@ -398,69 +437,79 @@ class _VistaAlergia extends State<VistaAlergia> {
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.grey, // Fondo blanco y opacidad
-                    borderRadius: BorderRadius.only(
+                    color: Colors.grey[200], // Fondo gris claro para una mejor apariencia
+                    borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(30),
                       topRight: Radius.circular(30),
                     ),
                   ),
                   padding: const EdgeInsets.all(20),
                   child: alergias.isEmpty
-                      ? Center(child: CircularProgressIndicator()) // Mostrar un indicador mientras se cargan los datos
+                      ? const Center(child: CircularProgressIndicator()) // Indicador de carga
                       : ListView.builder(
                     itemCount: alergias.length,
                     itemBuilder: (context, index) {
                       String tipo = alergias[index]['tipo_alergia'];
                       return Card(
-                        margin: EdgeInsets.only(bottom: 10),
-                        color: Colors.white, // Fondo blanco para todo el cuadro
-                        child: ListTile(
-                          contentPadding: EdgeInsets.all(0),
-                          title: Row(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15), // Bordes redondeados
+                        ),
+                        color: Colors.white,
+                        elevation: 3, // Efecto de sombra para mejor separación
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0), // Margen interno para mejor espaciado
+                          child: Row(
                             children: [
-                              // Parte izquierda con el fondo del color de la alergia
-                              SizedBox(height: 2,),
+                              // Parte izquierda con fondo de color dinámico
                               Container(
-                                padding: EdgeInsets.only(left: 8),
-                                width: 60, // Tamaño ajustado para el emoji
-                                height: 120,
-
-                                 // Tamaño ajustado para el emoji
+                                width: 60,
+                                height: 100,
                                 decoration: BoxDecoration(
-                                  color: _getColor(tipo), // Color de fondo basado en el tipo de alergia
-                                  borderRadius: BorderRadius.circular(10), // Redondeo para el fondo del emoji
+                                  color: _getColor(tipo), // Color dinámico basado en el tipo de alergia
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: Icon(
-                                  _getIcon(tipo),
-                                  size: 50, // Tamaño ajustado del ícono
-                                  color: Colors.white, // Color del emoji (blanco para resaltar)
+                                child: Center(
+                                  child: Icon(
+                                    _getIcon(tipo),
+                                    size: 40, // Tamaño equilibrado del ícono
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
-                              SizedBox(width: 15), // Espacio entre el emoji y el texto
-                              // Parte derecha con el fondo blanco
+                              const SizedBox(width: 15),
+
+                              // Información de la alergia
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       alergias[index]['nombre_alergia'],
-                                      style: TextStyle(color: Colors.black),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
                                     ),
                                     Text(
                                       'Tipo: ${alergias[index]['tipo_alergia']}',
-                                      style: TextStyle(color: Colors.black54),
+                                      style: const TextStyle(color: Colors.black54),
                                     ),
                                     Text(
                                       'Gravedad: ${alergias[index]['gravedad']}',
-                                      style: TextStyle(color: Colors.black54),
+                                      style: const TextStyle(color: Colors.black54),
                                     ),
                                     Text(
                                       'Observación: ${alergias[index]['observacion']}',
-                                      style: TextStyle(color: Colors.black54),
+                                      style: const TextStyle(color: Colors.black54),
                                     ),
                                   ],
                                 ),
                               ),
+
+                              // Icono de opciones
+                              const Icon(Icons.more_vert, color: Colors.black54),
                             ],
                           ),
                         ),
@@ -486,7 +535,7 @@ class _VistaAlergia extends State<VistaAlergia> {
 }
 
 Future<List<Alergia>> fetchAlergias(String tipo) async {
-  final url = Uri.parse('http://192.168.0.104:8000/usuarios/api/alergias/?tipo=$tipo');
+  final url = Uri.parse('$baseUrl/usuarios/api/alergias/?tipo=$tipo');
   final response = await http.get(url);
 
   if (response.statusCode == 200) {

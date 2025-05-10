@@ -8,6 +8,7 @@ import 'olvido_contrasena.dart';
 import 'registrarse.dart';
 import 'package:mifirst/widgets/custom_scaffold.dart';
 import '../theme/theme.dart';
+import '../constans.dart';
 
 class SingInScreen extends StatefulWidget {
   const SingInScreen ({super.key});
@@ -28,7 +29,7 @@ class _SingInScreenState extends State<SingInScreen>{
       return;
     }
 
-    final url = Uri.parse('http://192.168.0.100:8000/api/token/');  // Reemplaza la IP si es necesario
+    final url = Uri.parse('$baseUrl/api/token/');  // Reemplaza la IP si es necesario
 
     final response = await http.post(
       url,
