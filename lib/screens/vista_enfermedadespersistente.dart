@@ -1,0 +1,552 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../models/alergias.dart';
+import '../constans.dart';
+import '../models/enfermedadespersistente.dart';
+
+class VistaEnfermedadPersistente extends StatefulWidget {
+  final int idusuario;
+
+  const VistaEnfermedadPersistente({super.key, required this.idusuario});
+
+  @override
+  State<VistaEnfermedadPersistente> createState() => _VistaEnfermedadPersistente();
+}
+
+class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
+  String nombreUsuario = '';
+  String apellidoUsuario = '';
+  String cedulaUsuario = '';
+  String emailUsuario = '';
+  String telefonoUsuario = '';
+  String fechaNacimientoUsuario = '';
+  bool estadoUsuario = false;
+  int idRolUsuario = 0;
+  bool isLoading = true;
+  int idPaciente = 0;
+  int idSangre = 0;
+  String tipoSangre = '';
+  String? nivelSeleccionado;
+  String? tipoSeleccionado= 'endocrina';
+  int? selectedEnfermedadesPersistenteId;
+  List<dynamic> EnfermedadesPersistente = [];  // Lista para almacenar las alergias
+
+
+
+  final TextEditingController _descripcionEnfermdadController = TextEditingController();
+
+  Future<void> obtenerDatos() async {
+    final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        var datos = jsonDecode(utf8.decode(response.bodyBytes));
+        setState(() {
+          nombreUsuario = datos['nombre'];
+          apellidoUsuario = datos['apellido'];
+          cedulaUsuario = datos['cedula'];
+          emailUsuario = datos['email'];
+          telefonoUsuario = datos['telefono'];
+          fechaNacimientoUsuario = datos['fecha_nacimiento'];
+          estadoUsuario = datos['estado'];
+          idRolUsuario = datos['id_rol'];
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        print('Error al obtener los datos: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      print('Error: $e');
+    }
+  }
+  Future<void> obtenerDatosPacienteSangre(int idUsuario) async {
+    final url = Uri.parse('$baseUrl/usuarios/api/pacientes/por-usuario/$idUsuario/');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        var datos = jsonDecode(utf8.decode(response.bodyBytes));
+        setState(() {
+          idPaciente = datos['id_paciente']; // Asignamos el id del paciente
+          idSangre = datos['id_sangre']['id_sangre']; // Asignamos el id de sangre
+          tipoSangre = datos['id_sangre']['tipo_sangre']; // Asignamos el tipo de sangre
+          isLoading = false; // Cambiamos el estado de carga
+        });
+      } else {
+        print('Error al obtener el tipo de sangre: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  void _mostrarDialogoEnfermedades() {
+    Future<List<EnfermedadPersistente>> futureEnfermedadesPersistente = fetchEnfermedadesPersistente(tipoSeleccionado!);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              scrollable: true, // Para evitar overflow vertical
+              title: Text("Añadir Enfermedad persistente"),
+              content: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.85, // Ajustar el ancho máximo
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Tipo de enfermedad
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: DropdownButtonFormField<String>(
+                          value: tipoSeleccionado,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              tipoSeleccionado = newValue;
+                              futureEnfermedadesPersistente = fetchEnfermedadesPersistente(newValue!);
+                              selectedEnfermedadesPersistenteId= null;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: "Tipo de alergia",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
+                            ),
+                          ),
+                          items: ['Endocrina', 'Cardiovascular', 'Respiratoria', 'Neurologica','Psiquiatrica','Gastrointestinal','Reumatologica','Renal','Hematologica','Infecciosa']
+
+
+                        .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+
+                      // Lista de alergias según tipo
+                      FutureBuilder<List<EnfermedadPersistente>>(
+                        future: futureEnfermedadesPersistente,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return Text('No hay Enfermedad Persistente disponibles');
+                          } else {
+                            List<EnfermedadPersistente> EnfermedadesPersistente = snapshot.data!;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: DropdownButtonFormField<int>(
+                                decoration: InputDecoration(
+                                  labelText: 'Enfermedad Persistente',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                ),
+                                value: selectedEnfermedadesPersistenteId,
+                                onChanged: (int? newValue) {
+                                  setState(() {
+                                    selectedEnfermedadesPersistenteId = newValue;
+                                  });
+                                },
+                                items: EnfermedadesPersistente.map((EnfermedadPersistente EnfermedadesPersistente) {
+                                  return DropdownMenuItem<int>(
+                                    value: EnfermedadesPersistente.id,
+                                    child: Text(EnfermedadesPersistente.nombre),
+                                  );
+                                }).toList(),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+
+
+                      // Descripción
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: TextField(
+                          controller: _descripcionEnfermdadController,
+                          decoration: InputDecoration(
+                            labelText: "Descripción",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                          maxLines: 3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text("Cancelar"),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (selectedEnfermedadesPersistenteId != null ) {
+                      final url = Uri.parse('$baseUrl/usuarios/api/pacientes_enfermedades/');
+                      final Map<String, dynamic> data = {
+                        'paciente': idPaciente,
+                        'enfermedad': selectedEnfermedadesPersistenteId,
+                        'fecha_diagnostico': "2025-05-11",
+                        'observacion': _descripcionEnfermdadController.text,
+                      };
+
+                      try {
+                        final response = await http.post(
+                          url,
+                          headers: {"Content-Type": "application/json"},
+                          body: json.encode(data),
+                        );
+
+                        if (response.statusCode == 201) {
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Enfermedad persistente guardada correctamente")),
+                          );
+                          await _fetchEnfermedadesPersistente();
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Error al guardar: ${response.statusCode}")),
+                          );
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Error al conectar con el servidor")),
+                        );
+                        print('Error: $e');
+                      }
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Completa todos los campos")),
+                      );
+                    }
+                  },
+                  child: Text("Guardar"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+
+  Future<void> _fetchEnfermedadesPersistente() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/usuarios/api/enfermedades/$idPaciente/paciente/'),
+    );
+
+    if (response.statusCode == 200) {
+      // Si la petición fue exitosa, procesamos la respuesta
+      setState(() {
+        EnfermedadesPersistente = jsonDecode(utf8.decode(response.bodyBytes));  // Decodificar la respuesta JSON
+      });
+    } else {
+      // Si hubo un error en la petición
+      throw Exception('Error al cargar Enfermedades');
+    }
+  }
+  IconData _getIcon(String tipo) {
+    switch (tipo) {
+      case 'Endocrina':
+        return Icons.water_drop;
+      case 'Cardiovascular':
+        return Icons.favorite;
+      case 'Respiratoria':
+        return Icons.air;
+      case 'Neurológica':
+        return Icons.memory;
+      case 'Psiquiátrica':
+        return Icons.psychology;
+      case 'Gastrointestinal':
+        return Icons.lunch_dining;
+      case 'Reumatológica':
+        return Icons.accessibility_new;
+      case 'Renal':
+        return Icons.opacity;
+      case 'Hematológica':
+        return Icons.bloodtype;
+      case 'Infecciosa':
+        return Icons.sick;
+      default:
+        return Icons.device_unknown;
+    }
+  }
+
+  Color _getColor(String tipo) {
+    switch (tipo) {
+      case 'Endocrina':
+        return Colors.purple;
+      case 'Cardiovascular':
+        return Colors.red;
+      case 'Respiratoria':
+        return Colors.lightBlue;
+      case 'Neurológica':
+        return Colors.indigo;
+      case 'Psiquiátrica':
+        return Colors.deepOrange;
+      case 'Gastrointestinal':
+        return Colors.brown;
+      case 'Reumatológica':
+        return Colors.teal;
+      case 'Renal':
+        return Colors.blueGrey;
+      case 'Hematológica':
+        return Colors.pink;
+      case 'Infecciosa':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+
+
+  @override
+  void initState() {
+    super.initState();
+    _inicializarDatos();
+  }
+
+  Future<void> _inicializarDatos() async {
+    await obtenerDatos(); // no es necesario await si no depende de datos
+    await obtenerDatosPacienteSangre(widget.idusuario);
+    await _fetchEnfermedadesPersistente(); // Llamar después de que idPaciente esté disponible
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+
+    return Scaffold(
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF0D47A1), // Azul oscuro
+                Color(0xFF1976D2), // Azul medio
+                Color(0xFF42A5F5), // Azul claro
+                Color(0xFF7E57C2), // Morado
+                Color(0xFF26C6DA), // Turquesa,
+              ]),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                child: Column(
+                  children: [
+                    SizedBox(height: 25),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.blueAccent,
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          padding: EdgeInsets.all(12),
+                          child: Icon(
+                            Icons.person_pin,
+                            color: Colors.white,
+                            size: 100,
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(height: 12),
+                            Text(
+                              "GESTOR DE ENFERMEDADES",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize:22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              nombreUsuario,
+                              style: TextStyle(color: Colors.white.withOpacity(0.7),fontSize: 30),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            GestureDetector(
+                              onTap: _mostrarDialogoEnfermedades,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                padding: EdgeInsets.all(12),
+                                child: Icon(
+                                  Icons.add_circle_outline_sharp,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: EdgeInsets.all(12),
+                              child: Icon(
+                                Icons.remove_circle,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 25),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200], // Fondo gris claro para una mejor apariencia
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(20),
+                  child: EnfermedadesPersistente.isEmpty
+                      ? const Center(child: CircularProgressIndicator()) // Indicador de carga
+                      : ListView.builder(
+                    itemCount: EnfermedadesPersistente.length,
+                    itemBuilder: (context, index) {
+                      String tipo = EnfermedadesPersistente[index]['Tipo_enfermedad'];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15), // Bordes redondeados
+                        ),
+                        color: Colors.white,
+                        elevation: 3, // Efecto de sombra para mejor separación
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0), // Margen interno para mejor espaciado
+                          child: Row(
+                            children: [
+                              // Parte izquierda con fondo de color dinámico
+                              Container(
+                                width: 60,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  color: _getColor(tipo), // Color dinámico basado en el tipo de alergia
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    _getIcon(tipo),
+                                    size: 40, // Tamaño equilibrado del ícono
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 15),
+
+
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      EnfermedadesPersistente [index]['nombre_enfermedad'],
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Tipo: ${EnfermedadesPersistente[index]['Tipo_enfermedad']}',
+                                      style: const TextStyle(color: Colors.black54),
+                                    ),
+                                    Text(
+                                      'Observación: ${EnfermedadesPersistente[index]['observacion']}',
+                                      style: const TextStyle(color: Colors.black54),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Icono de opciones
+                              const Icon(Icons.more_vert, color: Colors.black54),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              )
+
+
+
+
+
+
+
+
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Future<List<EnfermedadPersistente>> fetchEnfermedadesPersistente(String tipo) async {
+  final url = Uri.parse('$baseUrl/usuarios/api/enfermedades-persistentes/?tipo=$tipo');
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final utf8DecodedBody = utf8.decode(response.bodyBytes);
+    // Si la solicitud es exitosa, parsea los datos
+    List<dynamic> data = json.decode(utf8DecodedBody);
+    return data.map((json) => EnfermedadPersistente.fromJson(json)).toList();
+  } else {
+    throw Exception('Error al cargar las alergias');
+  }
+}
