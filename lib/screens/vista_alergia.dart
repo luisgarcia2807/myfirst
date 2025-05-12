@@ -8,7 +8,7 @@ import '../constans.dart';
 class VistaAlergia extends StatefulWidget {
   final int idusuario;
 
-  const VistaAlergia({super.key, required this.idusuario});
+  const VistaAlergia( {super.key, required this.idusuario});
 
   @override
   State<VistaAlergia> createState() => _VistaAlergia();
@@ -89,7 +89,6 @@ class _VistaAlergia extends State<VistaAlergia> {
       print('Error: $e');
     }
   }
-
   void _mostrarDialogoAlergia() {
     Future<List<Alergia>> futureAlergias = fetchAlergias(tipoSeleccionado!);
 
@@ -277,9 +276,6 @@ class _VistaAlergia extends State<VistaAlergia> {
     );
   }
 
-
-
-
   Future<void> _fetchAlergias() async {
     final response = await http.get(
       Uri.parse('$baseUrl/usuarios/api/pacientes/$idPaciente/alergias/'),
@@ -327,12 +323,12 @@ class _VistaAlergia extends State<VistaAlergia> {
     super.initState();
     _inicializarDatos();
   }
-
   Future<void> _inicializarDatos() async {
     await obtenerDatos(); // no es necesario await si no depende de datos
     await obtenerDatosPacienteSangre(widget.idusuario);
     await _fetchAlergias(); // Llamar después de que idPaciente esté disponible
   }
+
 
 
   @override

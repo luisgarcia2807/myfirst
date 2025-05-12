@@ -29,7 +29,7 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
   int idSangre = 0;
   String tipoSangre = '';
   String? nivelSeleccionado;
-  String? tipoSeleccionado= 'endocrina';
+  String? tipoSeleccionado= 'Endocrina';
   int? selectedEnfermedadesPersistenteId;
   List<dynamic> EnfermedadesPersistente = [];  // Lista para almacenar las alergias
 
@@ -128,7 +128,7 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                               borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
                             ),
                           ),
-                          items: ['Endocrina', 'Cardiovascular', 'Respiratoria', 'Neurologica','Psiquiatrica','Gastrointestinal','Reumatologica','Renal','Hematologica','Infecciosa']
+                          items: ['Endocrina', 'Cardiovascular', 'Respiratoria', 'Neurologica','Psiquiatrica','Gastrointestinal','Reumatologica','Renal','Hematologica','Infectologia']
 
 
                         .map<DropdownMenuItem<String>>((String value) {

@@ -26,6 +26,8 @@ class _InformacionPrincipalPaciente extends State<InformacionPrincipalPaciente> 
   int idPaciente = 0; // Para almacenar el id del paciente
   int idSangre = 0;   // Para almacenar el id de sangre
   String tipoSangre = '';
+  List<dynamic> alergias = [];
+  List<dynamic> EnfermedadesPersistente = [];
 
   Future<void> obtenerDatos() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
@@ -81,6 +83,36 @@ class _InformacionPrincipalPaciente extends State<InformacionPrincipalPaciente> 
       print('Error: $e');
     }
   }
+  Future<void> _fetchAlergias() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/usuarios/api/pacientes/$idPaciente/alergias/'),
+    );
+
+    if (response.statusCode == 200) {
+      // Si la petición fue exitosa, procesamos la respuesta
+      setState(() {
+        alergias = jsonDecode(utf8.decode(response.bodyBytes));  // Decodificar la respuesta JSON
+      });
+    } else {
+      // Si hubo un error en la petición
+      throw Exception('Error al cargar alergias');
+    }
+  }
+  Future<void> _fetchEnfermedadesPersistente() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/usuarios/api/enfermedades/$idPaciente/paciente/'),
+    );
+
+    if (response.statusCode == 200) {
+      // Si la petición fue exitosa, procesamos la respuesta
+      setState(() {
+        EnfermedadesPersistente = jsonDecode(utf8.decode(response.bodyBytes));  // Decodificar la respuesta JSON
+      });
+    } else {
+      // Si hubo un error en la petición
+      throw Exception('Error al cargar Enfermedades');
+    }
+  }
 
   int calcularEdad(String fechaNacimiento) {
     DateTime fecha = DateTime.parse(fechaNacimiento);
@@ -95,8 +127,14 @@ class _InformacionPrincipalPaciente extends State<InformacionPrincipalPaciente> 
   @override
   void initState() {
     super.initState();
-    obtenerDatos();
-    obtenerDatosPacienteSangre(widget.idusuario);
+    _inicializarDatos();
+  }
+  Future<void> _inicializarDatos() async {
+    await obtenerDatos(); // no es necesario await si no depende de datos
+    await obtenerDatosPacienteSangre(widget.idusuario);
+    await _fetchAlergias(); // Llamar después de que idPaciente esté disponible
+    await _fetchEnfermedadesPersistente(); // Llamar después de que idPaciente esté disponible
+
   }
 
   @override
@@ -294,8 +332,15 @@ class _InformacionPrincipalPaciente extends State<InformacionPrincipalPaciente> 
                                   children: [
                                     Text("Alergias conocidas", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.orange[800])),
                                     SizedBox(height: 10),
-                                    Text("• Penicilina"),
-                                    Text("• Mariscos"),
+                                    alergias.isEmpty
+                                        ? Text("No se registran alergias")
+                                        : Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: alergias.map<Widget>((alergia) {
+                                        return Text("• ${alergia['nombre_alergia']}");
+                                      }).toList(),
+                                    ),
+
                                   ],
                                 ),
                               ),
@@ -323,8 +368,15 @@ class _InformacionPrincipalPaciente extends State<InformacionPrincipalPaciente> 
                                   children: [
                                     Text("Enfermedades persistentes", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.blue[800])),
                                     SizedBox(height: 10),
-                                    Text("• Diabetes tipo 2"),
-                                    Text("• Asma"),
+                                    EnfermedadesPersistente.isEmpty
+                                        ? Text("No se registran Enfermedades")
+                                        : Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: EnfermedadesPersistente.map<Widget>((EnfermedadesPersistente) {
+                                        return Text("• ${EnfermedadesPersistente['nombre_enfermedad']}");
+                                      }).toList(),
+                                    ),
+
                                   ],
                                 ),
                               ),

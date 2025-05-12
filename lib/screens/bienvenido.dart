@@ -135,7 +135,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => InformacionPrincipalPaciente(idusuario: 16),
+                              builder: (context) => PacienteScreen(idusuario: 16),
                             ),
                           );
                         },

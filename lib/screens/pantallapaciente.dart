@@ -3,8 +3,12 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/registrarCredencial.dart';
+import 'package:mifirst/screens/vista_alergia.dart';
+import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
+import 'package:mifirst/screens/vista_vacuna.dart';
 import '../util/emoticon_face.dart';
 import '../constans.dart';
+import 'informacion_Principal.dart';
 
 class PacienteScreen extends StatefulWidget {
   final int idusuario;
@@ -47,15 +51,7 @@ class _PacienteScreen extends State<PacienteScreen> {
           estadoUsuario = datos['estado'];
           idRolUsuario = datos['id_rol'];
         });
-        // Imprimir los datos obtenidos
-        print('Nombre: $nombreUsuario');
-        print('Apellido: $apellidoUsuario');
-        print('Cédula: $cedulaUsuario');
-        print('Email: $emailUsuario');
-        print('Teléfono: $telefonoUsuario');
-        print('Fecha de nacimiento: $fechaNacimientoUsuario');
-        print('Estado: $estadoUsuario');
-        print('ID Rol: $idRolUsuario');
+
       } else {
         // Si el servidor no responde con un código 200
         print('Error al obtener los datos: ${response.statusCode}');
@@ -143,21 +139,39 @@ class _PacienteScreen extends State<PacienteScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
                         children: [
-                          Text(
-                            "Hola $nombreUsuario $apellidoUsuario", // Aquí mostramos el nombre completo
-                            style: TextStyle(
-                              color: Colors.black87,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.blueAccent,
+                              borderRadius: BorderRadius.circular(1000),
+                            ),
+                            padding: EdgeInsets.all(15),
+                            child: Icon(
+                              Icons.person_pin,
+                              color: Colors.white,
+                              size: 40,
                             ),
                           ),
-                          SizedBox(height: 8.0),
-                          Text(
-                            fechaHoy,
-                            style: TextStyle(color: Colors.grey[600]),
+                          SizedBox(width: 8.0),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(height: 4.0),
+                              Text(
+                                "Hola $nombreUsuario $apellidoUsuario", // Aquí mostramos el nombre completo
+                                style: TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 1.0),
+                              Text(
+                                fechaHoy,
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -244,7 +258,7 @@ class _PacienteScreen extends State<PacienteScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Información reciente',
+                      'Información Principal',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
@@ -261,7 +275,58 @@ class _PacienteScreen extends State<PacienteScreen> {
                             title: 'Información Médica',
                             subtitle: 'Datos clave',
                             color: Colors.blueAccent.shade700,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => InformacionPrincipalPaciente(idusuario: widget.idusuario),
+                                ),
+                              );
+                            },
                           ),
+                          CardItem(
+                            emoji: '💊', // Emoji más expresivo para alergias
+                            title: 'Alergias',
+                            subtitle: 'Ver todas',
+                            color: Colors.orange,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => VistaAlergia(idusuario: widget.idusuario),
+                                ),
+                              );
+                            },
+                          ),
+                          CardItem(
+                            emoji: '💉', // Emoji representativo para vacunas
+                            title: 'Vacunas',
+                            subtitle: 'Ver todas',
+                            color: Colors.green.shade700,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => VistaVacuna(idusuario: widget.idusuario),
+                                ),
+                              );
+                            },
+                          ),
+                          CardItem(
+                            emoji: '🏥', // Representa enfermedades o chequeo médico
+                            title: 'Enfermedades Persistentes',
+                            subtitle: 'Revisar historial',
+                            color: Colors.blueGrey,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => VistaEnfermedadPersistente(idusuario: widget.idusuario),
+                                ),
+                              );
+                            },
+                          ),
+
                           CardItem(
                             emoji: '🔬',
                             title: 'Exámenes',
@@ -293,6 +358,7 @@ class CardItem extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color color;
+  final VoidCallback? onTap; // Nueva propiedad
 
   const CardItem({
     Key? key,
@@ -300,40 +366,49 @@ class CardItem extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.color,
+    this.onTap, // Acepta función opcional
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 160,
-      margin: EdgeInsets.symmetric(horizontal: 10),
-      padding: EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [color.withOpacity(0.7), color.withOpacity(0.5)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return GestureDetector(
+      onTap: onTap, // Detecta el toque
+      child: Container(
+        width: 160,
+        margin: const EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [color.withOpacity(0.7), color.withOpacity(0.5)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(10),
         ),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        children: [
-          Text(
-            emoji,
-            style: TextStyle(fontSize: 30),
-          ),
-          SizedBox(height: 10),
-          Text(
-            title,
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          SizedBox(height: 5),
-          Text(
-            subtitle,
-            style: TextStyle(color: Colors.white70),
-          ),
-        ],
+        child: Column(
+          children: [
+            Text(
+              emoji,
+              style: const TextStyle(fontSize: 30),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              subtitle,
+              style: const TextStyle(color: Colors.white70),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
