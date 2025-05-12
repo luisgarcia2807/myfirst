@@ -3,6 +3,7 @@ import 'package:mifirst/screens/iniciar_sesion.dart';
 import 'package:mifirst/screens/pantalla_doctor_escritorio.dart';
 import 'package:mifirst/screens/pantalla_doctor_mobile.dart';
 import 'package:mifirst/screens/pantallapaciente.dart';
+import 'package:mifirst/screens/pruebadeimagen.dart';
 import 'package:mifirst/screens/registrar_doctor.dart';
 import 'package:mifirst/screens/registrarse.dart';
 import 'package:mifirst/screens/vista_alergia.dart';
@@ -13,6 +14,7 @@ import 'package:mifirst/widgets/custom_scaffold.dart';
 
 import '../util/Informacion_principal.dart';
 import 'centro_medico_screen.dart';
+import 'fotoPerfil.dart';
 import 'informacion_Principal.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -124,7 +126,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => VistaEnfermedadPersistente(idusuario: 1),
+                              builder: (context) => CambiarFotoScreen(idusuario: 1,),
                             ),
                           );
                         },
@@ -137,7 +139,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => CentroMedicoDesktopScreen(),
+                              builder: (context) => PacienteScreen(idusuario: 16,),
                             ),
                           );
                         },

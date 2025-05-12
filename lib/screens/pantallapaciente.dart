@@ -29,6 +29,7 @@ class _PacienteScreen extends State<PacienteScreen> {
   String fechaNacimientoUsuario = '';
   bool estadoUsuario = false;
   int idRolUsuario = 0;
+  String? foto='';
 
   // Método para obtener los datos de la API
   Future<void> obtenerDatos() async {
@@ -50,6 +51,18 @@ class _PacienteScreen extends State<PacienteScreen> {
           fechaNacimientoUsuario = datos['fecha_nacimiento'];
           estadoUsuario = datos['estado'];
           idRolUsuario = datos['id_rol'];
+          foto =datos['foto_perfil'];
+
+          if (foto != null && foto!.isNotEmpty) {
+            // Reemplazamos 'localhost' por tu baseUrl
+            String nuevaFotoUrl = foto!.replaceFirst('http://localhost:8000', baseUrl);
+            print(nuevaFotoUrl); // Esto imprimirá la URL con tu baseUrl
+          } else {
+            // Si la foto es nula o vacía, puedes manejar el caso como desees
+            print('La foto no está disponible');
+          }
+
+
         });
 
       } else {
@@ -137,46 +150,57 @@ class _PacienteScreen extends State<PacienteScreen> {
                 children: [
                   SizedBox(height: 25),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.blueAccent,
-                              borderRadius: BorderRadius.circular(1000),
-                            ),
-                            padding: EdgeInsets.all(15),
-                            child: Icon(
-                              Icons.person_pin,
-                              color: Colors.white,
-                              size: 40,
-                            ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blueAccent,
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        padding: EdgeInsets.all(3), // Reducido
+                        child: foto == null || foto!.isEmpty
+                            ? Icon(
+                          Icons.person_pin,
+                          color: Colors.white,
+                          size: 70, // Reducido
+                        )
+                            : ClipOval(
+                          child: Image.network(
+                            '$baseUrl$foto',
+                            width: 70, // Reducido
+                            height: 70,
+                            fit: BoxFit.cover,
                           ),
-                          SizedBox(width: 8.0),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(height: 4.0),
-                              Text(
-                                "Hola $nombreUsuario $apellidoUsuario", // Aquí mostramos el nombre completo
-                                style: TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        ),
+                      ),
+
+                      SizedBox(width: 8.0),
+                      Expanded( // <- ¡Esta línea soluciona el overflow!
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 4.0),
+                            Text(
+                              "Hola $nombreUsuario $apellidoUsuario",
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
                               ),
-                              SizedBox(height: 1.0),
-                              Text(
-                                fechaHoy,
-                                style: TextStyle(color: Colors.grey[600]),
-                              ),
-                            ],
-                          ),
-                        ],
+                              overflow: TextOverflow.ellipsis, // <-- por si aún se desborda
+                            ),
+                            SizedBox(height: 1.0),
+                            Text(
+                              fechaHoy,
+                              style: TextStyle(color: Colors.grey[600]),
+                              overflow: TextOverflow.ellipsis, // opcional
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
+
+
                   SizedBox(height: 25),
                   Container(
                     decoration: BoxDecoration(
