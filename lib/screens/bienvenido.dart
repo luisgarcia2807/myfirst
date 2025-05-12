@@ -12,6 +12,7 @@ import 'package:mifirst/theme/theme.dart';
 import 'package:mifirst/widgets/custom_scaffold.dart';
 
 import '../util/Informacion_principal.dart';
+import 'centro_medico_screen.dart';
 import 'informacion_Principal.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -136,7 +137,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => DoctorDesktopScreen(),
+                              builder: (context) => CentroMedicoDesktopScreen(),
                             ),
                           );
                         },
