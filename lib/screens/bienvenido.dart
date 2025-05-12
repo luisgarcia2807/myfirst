@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mifirst/screens/iniciar_sesion.dart';
+import 'package:mifirst/screens/pantalla_doctor_escritorio.dart';
 import 'package:mifirst/screens/pantalla_doctor_mobile.dart';
 import 'package:mifirst/screens/pantallapaciente.dart';
 import 'package:mifirst/screens/registrar_doctor.dart';
@@ -135,7 +136,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => PacienteScreen(idusuario: 16),
+                              builder: (context) => DoctorDesktopScreen(),
                             ),
                           );
                         },
