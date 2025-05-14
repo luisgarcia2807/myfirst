@@ -24,6 +24,7 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
   String fechaNacimientoUsuario = '';
   bool estadoUsuario = false;
   int idRolUsuario = 0;
+  String? foto='';
   bool isLoading = true;
   int idPaciente = 0;
   int idSangre = 0;
@@ -54,6 +55,16 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
           fechaNacimientoUsuario = datos['fecha_nacimiento'];
           estadoUsuario = datos['estado'];
           idRolUsuario = datos['id_rol'];
+          foto =datos['foto_perfil'];
+
+          if (foto != null && foto!.isNotEmpty) {
+            // Reemplazamos 'localhost' por tu baseUrl
+            String nuevaFotoUrl = foto!.replaceFirst('http://localhost:8000', baseUrl);
+            print(nuevaFotoUrl); // Esto imprimirá la URL con tu baseUrl
+          } else {
+            // Si la foto es nula o vacía, puedes manejar el caso como desees
+            print('La foto no está disponible');
+          }
           isLoading = false;
         });
       } else {
@@ -374,14 +385,23 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                       children: [
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.blueAccent,
+                            color: Colors.white60,
                             borderRadius: BorderRadius.circular(100),
                           ),
-                          padding: EdgeInsets.all(12),
-                          child: Icon(
+                          padding: EdgeInsets.all(3), // Reducido
+                          child: foto == null || foto!.isEmpty
+                              ? Icon(
                             Icons.person_pin,
                             color: Colors.white,
-                            size: 100,
+                            size: 100, // Reducido
+                          )
+                              : ClipOval(
+                            child: Image.network(
+                              '$baseUrl$foto',
+                              width: 100, // Reducido
+                              height: 100,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                         Column(
@@ -404,36 +424,6 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                           ],
                         ),
                         SizedBox(height: 12.0),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            GestureDetector(
-                              onTap: _mostrarDialogoEnfermedades,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                padding: EdgeInsets.all(12),
-                                child: Icon(
-                                  Icons.add_circle_outline_sharp,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: EdgeInsets.all(12),
-                              child: Icon(
-                                Icons.remove_circle,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ],
@@ -444,83 +434,141 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.grey[200], // Fondo gris claro para una mejor apariencia
+                    color: Colors.grey[200],
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(30),
                       topRight: Radius.circular(30),
                     ),
                   ),
                   padding: const EdgeInsets.all(20),
-                  child: EnfermedadesPersistente.isEmpty
-                      ? const Center(child: CircularProgressIndicator()) // Indicador de carga
-                      : ListView.builder(
-                    itemCount: EnfermedadesPersistente.length,
-                    itemBuilder: (context, index) {
-                      String tipo = EnfermedadesPersistente[index]['Tipo_enfermedad'];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15), // Bordes redondeados
-                        ),
-                        color: Colors.white,
-                        elevation: 3, // Efecto de sombra para mejor separación
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0), // Margen interno para mejor espaciado
-                          child: Row(
-                            children: [
-                              // Parte izquierda con fondo de color dinámico
-                              Container(
-                                width: 60,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  color: _getColor(tipo), // Color dinámico basado en el tipo de alergia
-                                  borderRadius: BorderRadius.circular(10),
+                  child: Column(
+                    children: [
+                      // Botón de "Añadir enfermedad"
+                      Align(
+                        alignment: Alignment.center,
+                        child: GestureDetector(
+                          onTap: _mostrarDialogoEnfermedades, // Reemplaza con tu función
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFF0D47A1),
+                                  Color(0xFF1976D2),
+                                  Color(0xFF42A5F5),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(
+                                  Icons.add_circle_outline_sharp,
+                                  color: Colors.white,
                                 ),
-                                child: Center(
-                                  child: Icon(
-                                    _getIcon(tipo),
-                                    size: 40, // Tamaño equilibrado del ícono
+                                SizedBox(width: 8),
+                                Text(
+                                  "Añadir enfermedad",
+                                  style: TextStyle(
                                     color: Colors.white,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Lista de enfermedades persistentes
+                      Expanded(
+                        child: EnfermedadesPersistente.isEmpty
+                            ? const Center(child: CircularProgressIndicator())
+                            : ListView.builder(
+                          itemCount: EnfermedadesPersistente.length,
+                          itemBuilder: (context, index) {
+                            String tipo = EnfermedadesPersistente[index]['Tipo_enfermedad'];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
                               ),
-                              const SizedBox(width: 15),
-
-
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              color: Colors.white,
+                              elevation: 3,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
                                   children: [
-                                    Text(
-                                      EnfermedadesPersistente [index]['nombre_enfermedad'],
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
+                                    // Parte izquierda con color e ícono
+                                    Container(
+                                      width: 60,
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        color: _getColor(tipo),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Center(
+                                        child: Icon(
+                                          _getIcon(tipo),
+                                          size: 40,
+                                          color: Colors.white,
+                                        ),
                                       ),
                                     ),
-                                    Text(
-                                      'Tipo: ${EnfermedadesPersistente[index]['Tipo_enfermedad']}',
-                                      style: const TextStyle(color: Colors.black54),
+                                    const SizedBox(width: 15),
+
+                                    // Información de la enfermedad
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            EnfermedadesPersistente[index]['nombre_enfermedad'],
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Tipo: ${EnfermedadesPersistente[index]['Tipo_enfermedad']}',
+                                            style: const TextStyle(color: Colors.black54),
+                                          ),
+                                          Text(
+                                            'Observación: ${EnfermedadesPersistente[index]['observacion']}',
+                                            style: const TextStyle(color: Colors.black54),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    Text(
-                                      'Observación: ${EnfermedadesPersistente[index]['observacion']}',
-                                      style: const TextStyle(color: Colors.black54),
+
+                                    // Iconos de editar y eliminar
+                                    Column(
+                                      children: [
+                                        const Icon(Icons.edit, color: Colors.black54),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete, color: Colors.red),
+                                          onPressed: () {
+                                            // Lógica para eliminar la enfermedad
+                                          },
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ),
-
-                              // Icono de opciones
-                              const Icon(Icons.more_vert, color: Colors.black54),
-                            ],
-                          ),
+                            );
+                          },
                         ),
-                      );
-                    },
+                      ),
+                    ],
                   ),
                 ),
               )
+
 
 
 

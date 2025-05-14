@@ -8,6 +8,7 @@ import 'package:mifirst/screens/registrar_doctor.dart';
 import 'package:mifirst/screens/registrarse.dart';
 import 'package:mifirst/screens/vista_alergia.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
+import 'package:mifirst/screens/vista_tramientofrecuente.dart';
 import 'package:mifirst/screens/vista_vacuna.dart';
 import 'package:mifirst/theme/theme.dart';
 import 'package:mifirst/widgets/custom_scaffold.dart';
@@ -113,7 +114,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const SignUpScreen(),
+                              builder: (context) => const Vistatratamientofrecuente(idusuario: 1,),
                             ),
                           );
                         },
@@ -139,7 +140,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => PacienteScreen(idusuario: 16,),
+                              builder: (context) => PacienteScreen(idusuario: 1,),
                             ),
                           );
                         },

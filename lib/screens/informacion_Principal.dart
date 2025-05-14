@@ -26,6 +26,8 @@ class _InformacionPrincipalPaciente extends State<InformacionPrincipalPaciente> 
   int idPaciente = 0; // Para almacenar el id del paciente
   int idSangre = 0;   // Para almacenar el id de sangre
   String tipoSangre = '';
+  String? foto='';
+
   List<dynamic> alergias = [];
   List<dynamic> EnfermedadesPersistente = [];
 
@@ -46,6 +48,16 @@ class _InformacionPrincipalPaciente extends State<InformacionPrincipalPaciente> 
           fechaNacimientoUsuario = datos['fecha_nacimiento'];
           estadoUsuario = datos['estado'];
           idRolUsuario = datos['id_rol'];
+          foto =datos['foto_perfil'];
+
+          if (foto != null && foto!.isNotEmpty) {
+            // Reemplazamos 'localhost' por tu baseUrl
+            String nuevaFotoUrl = foto!.replaceFirst('http://localhost:8000', baseUrl);
+            print(nuevaFotoUrl); // Esto imprimirá la URL con tu baseUrl
+          } else {
+            // Si la foto es nula o vacía, puedes manejar el caso como desees
+            print('La foto no está disponible');
+          }
           isLoading = false; // Cambiamos el estado de carga cuando los datos se han cargado
         });
       } else {
@@ -172,14 +184,23 @@ class _InformacionPrincipalPaciente extends State<InformacionPrincipalPaciente> 
                       children: [
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.blueAccent,
+                            color: Colors.white60,
                             borderRadius: BorderRadius.circular(100),
                           ),
-                          padding: EdgeInsets.all(12),
-                          child: Icon(
+                          padding: EdgeInsets.all(3), // Reducido
+                          child: foto == null || foto!.isEmpty
+                              ? Icon(
                             Icons.person_pin,
                             color: Colors.white,
-                            size: 100,
+                            size: 100, // Reducido
+                          )
+                              : ClipOval(
+                            child: Image.network(
+                              '$baseUrl$foto',
+                              width: 100, // Reducido
+                              height: 100,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                         Column(

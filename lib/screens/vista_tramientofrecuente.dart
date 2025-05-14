@@ -2,18 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/vacuna.dart';
+import '../models/alergias.dart';
 import '../constans.dart';
+import '../models/enfermedadespersistente.dart';
 
-class VistaVacuna extends StatefulWidget {
+class Vistatratamientofrecuente extends StatefulWidget {
   final int idusuario;
-  const VistaVacuna({super.key, required this.idusuario});
+
+  const Vistatratamientofrecuente({super.key, required this.idusuario});
 
   @override
-  State<VistaVacuna> createState() => _VistaVacuna();
+  State<Vistatratamientofrecuente> createState() => _Vistatratamientofrecuente();
 }
 
-class _VistaVacuna extends State<VistaVacuna> {
+class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
   String nombreUsuario = '';
   String apellidoUsuario = '';
   String cedulaUsuario = '';
@@ -22,19 +24,19 @@ class _VistaVacuna extends State<VistaVacuna> {
   String fechaNacimientoUsuario = '';
   bool estadoUsuario = false;
   int idRolUsuario = 0;
+  String? foto='';
   bool isLoading = true;
   int idPaciente = 0;
   int idSangre = 0;
   String tipoSangre = '';
-  String? foto='';
   String? nivelSeleccionado;
-  String? tipoSeleccionado= 'medicamento';
-  int? selectedAlergiaId;
-  List<dynamic> vacunas = [];  // Lista para almacenar las alergias
+  String? tipoSeleccionado= 'Endocrina';
+  int? selectedEnfermedadesPersistenteId;
+  List<dynamic> EnfermedadesPersistente = [];  // Lista para almacenar las alergias
 
 
 
-  final TextEditingController _descripcionAlergiaController = TextEditingController();
+  final TextEditingController _descripcionEnfermdadController = TextEditingController();
 
   Future<void> obtenerDatos() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
@@ -99,14 +101,9 @@ class _VistaVacuna extends State<VistaVacuna> {
       print('Error: $e');
     }
   }
-  void _mostrarDialogoVacuna() {
-    DateTime? fechaSeleccionada;
-    int? selectedVacunaId;
-    int maxdosis = 1; // Mostrar al menos 1 opción por defecto
-    int? selectedDosis;
 
-    final TextEditingController _fechaController = TextEditingController();
-    final TextEditingController _descripcionVacunaController = TextEditingController();
+  void _mostrarDialogoEnfermedades() {
+    Future<List<EnfermedadPersistente>> futureEnfermedadesPersistente = fetchEnfermedadesPersistente(tipoSeleccionado!);
 
     showDialog(
       context: context,
@@ -114,125 +111,120 @@ class _VistaVacuna extends State<VistaVacuna> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text("Registrar Vacuna"),
+              scrollable: true, // Para evitar overflow vertical
+              title: Text("Añadir Enfermedad persistente"),
               content: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Vacuna
-                    FutureBuilder<List<Vacuna>>(
-                      future: fetchVacunas(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        } else if (snapshot.hasError) {
-                          return Text('Error: ${snapshot.error}');
-                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return Text('No hay vacunas disponibles');
-                        } else {
-                          List<Vacuna> vacunas = snapshot.data!;
-                          return DropdownButtonFormField<int>(
-                            decoration: InputDecoration(
-                              labelText: 'Vacuna',
-                              border: OutlineInputBorder(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.85, // Ajustar el ancho máximo
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Tipo de enfermedad
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: DropdownButtonFormField<String>(
+                          value: tipoSeleccionado,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              tipoSeleccionado = newValue;
+                              futureEnfermedadesPersistente = fetchEnfermedadesPersistente(newValue!);
+                              selectedEnfermedadesPersistenteId= null;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: "Tipo de alergia",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
                             ),
-                            value: selectedVacunaId,
-                            onChanged: (int? newValue) {
-                              setState(() {
-                                selectedVacunaId = newValue;
-                                Vacuna selectedVacuna = vacunas.firstWhere((v) => v.id == newValue!);
-                                maxdosis = selectedVacuna.maxDosis;
-                                selectedDosis = null; // Reiniciar dosis al cambiar vacuna
-                              });
-                            },
-                            items: vacunas.map((Vacuna vacuna) {
-                              return DropdownMenuItem<int>(
-                                value: vacuna.id,
-                                child: Text('${vacuna.nombre}'),
-                              );
-                            }).toList(),
-                          );
-                        }
-                      },
-                    ),
-                    SizedBox(height: 10),
+                          ),
+                          items: ['Endocrina', 'Cardiovascular', 'Respiratoria', 'Neurologica','Psiquiatrica','Gastrointestinal','Reumatologica','Renal','Hematologica','Infectologia']
 
-                    // Fecha
-                    TextField(
-                      controller: _fechaController,
-                      readOnly: true,
-                      decoration: InputDecoration(
-                        labelText: 'Fecha de aplicación',
-                        border: OutlineInputBorder(),
-                        suffixIcon: Icon(Icons.calendar_today),
-                      ),
-                      onTap: () async {
-                        final pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.now(),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime.now(),
-                        );
-                        if (pickedDate != null) {
-                          setState(() {
-                            _fechaController.text = '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
-                          });
-                        }
-                      },
-                    ),
-                    SizedBox(height: 10),
 
-                    // Dosis (siempre visible)
-                    DropdownButtonFormField<int>(
-                      decoration: InputDecoration(
-                        labelText: 'Selecciona la dosis',
-                        border: OutlineInputBorder(),
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                        ),
                       ),
-                      value: selectedDosis,
-                      onChanged: (int? newValue) {
-                        setState(() {
-                          selectedDosis = newValue;
-                        });
-                      },
-                      items: List.generate(maxdosis, (index) {
-                        return DropdownMenuItem<int>(
-                          value: index + 1,
-                          child: Text('Dosis ${index + 1}'),
-                        );
-                      }),
-                    ),
-                    SizedBox(height: 10),
 
-                    // Descripción
-                    TextField(
-                      controller: _descripcionVacunaController,
-                      decoration: InputDecoration(
-                        labelText: "Descripción",
-                        border: OutlineInputBorder(),
+                      // Lista de alergias según tipo
+                      FutureBuilder<List<EnfermedadPersistente>>(
+                        future: futureEnfermedadesPersistente,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return Text('No hay Enfermedad Persistente disponibles');
+                          } else {
+                            List<EnfermedadPersistente> EnfermedadesPersistente = snapshot.data!;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: DropdownButtonFormField<int>(
+                                decoration: InputDecoration(
+                                  labelText: 'Enfermedad Persistente',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                ),
+                                value: selectedEnfermedadesPersistenteId,
+                                onChanged: (int? newValue) {
+                                  setState(() {
+                                    selectedEnfermedadesPersistenteId = newValue;
+                                  });
+                                },
+                                items: EnfermedadesPersistente.map((EnfermedadPersistente EnfermedadesPersistente) {
+                                  return DropdownMenuItem<int>(
+                                    value: EnfermedadesPersistente.id,
+                                    child: Text(EnfermedadesPersistente.nombre),
+                                  );
+                                }).toList(),
+                              ),
+                            );
+                          }
+                        },
                       ),
-                      maxLines: 3,
-                    ),
-                  ],
+
+
+                      // Descripción
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: TextField(
+                          controller: _descripcionEnfermdadController,
+                          decoration: InputDecoration(
+                            labelText: "Descripción",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                          maxLines: 3,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
                   child: Text("Cancelar"),
                 ),
                 TextButton(
                   onPressed: () async {
-                    if (selectedVacunaId != null &&
-                        _fechaController.text.isNotEmpty &&
-                        selectedDosis != null) {
-                      final url = Uri.parse('$baseUrl/usuarios/api/vacunas-pacientes/');
+                    if (selectedEnfermedadesPersistenteId != null ) {
+                      final url = Uri.parse('$baseUrl/usuarios/api/pacientes_enfermedades/');
                       final Map<String, dynamic> data = {
                         'paciente': idPaciente,
-                        'vacuna': selectedVacunaId,
-                        'fecha_aplicacion': _fechaController.text,
-                        'dosis': selectedDosis,
-                        'observacion': _descripcionVacunaController.text,
-
+                        'enfermedad': selectedEnfermedadesPersistenteId,
+                        'fecha_diagnostico': "2025-05-11",
+                        'observacion': _descripcionEnfermdadController.text,
                       };
 
                       try {
@@ -245,9 +237,9 @@ class _VistaVacuna extends State<VistaVacuna> {
                         if (response.statusCode == 201) {
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Vacuna registrada correctamente")),
+                            SnackBar(content: Text("Enfermedad persistente guardada correctamente")),
                           );
-                          await _fetchVacunas(); // <--- Esta línea actualiza la lista
+                          await _fetchEnfermedadesPersistente();
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Error al guardar: ${response.statusCode}")),
@@ -276,20 +268,76 @@ class _VistaVacuna extends State<VistaVacuna> {
   }
 
 
-  //mostrar Vacuna
-  Future<void> _fetchVacunas() async {
+
+  Future<void> _fetchEnfermedadesPersistente() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/usuarios/api/pacientes/$idPaciente/vacunas/'),
+      Uri.parse('$baseUrl/usuarios/api/enfermedades/$idPaciente/paciente/'),
     );
 
     if (response.statusCode == 200) {
+      // Si la petición fue exitosa, procesamos la respuesta
       setState(() {
-        vacunas = jsonDecode(utf8.decode(response.bodyBytes));
+        EnfermedadesPersistente = jsonDecode(utf8.decode(response.bodyBytes));  // Decodificar la respuesta JSON
       });
     } else {
-      throw Exception('Error al cargar vacunas');
+      // Si hubo un error en la petición
+      throw Exception('Error al cargar Enfermedades');
     }
   }
+  IconData _getIcon(String tipo) {
+    switch (tipo) {
+      case 'Endocrina':
+        return Icons.water_drop;
+      case 'Cardiovascular':
+        return Icons.favorite;
+      case 'Respiratoria':
+        return Icons.air;
+      case 'Neurológica':
+        return Icons.memory;
+      case 'Psiquiátrica':
+        return Icons.psychology;
+      case 'Gastrointestinal':
+        return Icons.lunch_dining;
+      case 'Reumatológica':
+        return Icons.accessibility_new;
+      case 'Renal':
+        return Icons.opacity;
+      case 'Hematológica':
+        return Icons.bloodtype;
+      case 'Infecciosa':
+        return Icons.sick;
+      default:
+        return Icons.device_unknown;
+    }
+  }
+
+  Color _getColor(String tipo) {
+    switch (tipo) {
+      case 'Endocrina':
+        return Colors.purple;
+      case 'Cardiovascular':
+        return Colors.red;
+      case 'Respiratoria':
+        return Colors.lightBlue;
+      case 'Neurológica':
+        return Colors.indigo;
+      case 'Psiquiátrica':
+        return Colors.deepOrange;
+      case 'Gastrointestinal':
+        return Colors.brown;
+      case 'Reumatológica':
+        return Colors.teal;
+      case 'Renal':
+        return Colors.blueGrey;
+      case 'Hematológica':
+        return Colors.pink;
+      case 'Infecciosa':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
 
 
   @override
@@ -301,7 +349,7 @@ class _VistaVacuna extends State<VistaVacuna> {
   Future<void> _inicializarDatos() async {
     await obtenerDatos(); // no es necesario await si no depende de datos
     await obtenerDatosPacienteSangre(widget.idusuario);
-    await _fetchVacunas(); // Llamar después de que idPaciente esté disponible
+    await _fetchEnfermedadesPersistente(); // Llamar después de que idPaciente esté disponible
   }
 
 
@@ -361,14 +409,14 @@ class _VistaVacuna extends State<VistaVacuna> {
                           children: [
                             SizedBox(height: 12),
                             Text(
-                              "GESTOR DE VACUNA",
+                              "GESTOR DE TRATAMIENTO",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize:30,
+                                fontSize:22,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 6),
+                            SizedBox(height: 8),
                             Text(
                               nombreUsuario,
                               style: TextStyle(color: Colors.white.withOpacity(0.7),fontSize: 30),
@@ -376,7 +424,6 @@ class _VistaVacuna extends State<VistaVacuna> {
                           ],
                         ),
                         SizedBox(height: 12.0),
-
                       ],
                     ),
                   ],
@@ -396,11 +443,11 @@ class _VistaVacuna extends State<VistaVacuna> {
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      // Botón "Añadir vacuna"
+                      // Botón de "Añadir enfermedad"
                       Align(
                         alignment: Alignment.center,
                         child: GestureDetector(
-                          onTap: _mostrarDialogoVacuna, // Define tu función aquí
+                          onTap: _mostrarDialogoEnfermedades, // Reemplaza con tu función
                           child: Container(
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
@@ -424,7 +471,7 @@ class _VistaVacuna extends State<VistaVacuna> {
                                 ),
                                 SizedBox(width: 8),
                                 Text(
-                                  "Añadir vacuna",
+                                  "Añadir Tratamiento frecuente",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -436,14 +483,14 @@ class _VistaVacuna extends State<VistaVacuna> {
                         ),
                       ),
                       const SizedBox(height: 12),
-
-                      // Lista de vacunas
+                      // Lista de enfermedades persistentes
                       Expanded(
-                        child: vacunas.isEmpty
+                        child: EnfermedadesPersistente.isEmpty
                             ? const Center(child: CircularProgressIndicator())
                             : ListView.builder(
-                          itemCount: vacunas.length,
+                          itemCount: EnfermedadesPersistente.length,
                           itemBuilder: (context, index) {
+                            String tipo = EnfermedadesPersistente[index]['Tipo_enfermedad'];
                             return Card(
                               margin: const EdgeInsets.only(bottom: 10),
                               shape: RoundedRectangleBorder(
@@ -451,34 +498,35 @@ class _VistaVacuna extends State<VistaVacuna> {
                               ),
                               color: Colors.white,
                               elevation: 3,
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.all(10),
-                                title: Row(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
                                   children: [
-                                    // Icono de vacuna
+                                    // Parte izquierda con color e ícono
                                     Container(
                                       width: 60,
-                                      height: 60,
+                                      height: 100,
                                       decoration: BoxDecoration(
-                                        color: Colors.blue,
+                                        color: _getColor(tipo),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
-                                      child: const Center(
-                                        child: Text(
-                                          '💉',
-                                          style: TextStyle(fontSize: 30),
+                                      child: Center(
+                                        child: Icon(
+                                          _getIcon(tipo),
+                                          size: 40,
+                                          color: Colors.white,
                                         ),
                                       ),
                                     ),
                                     const SizedBox(width: 15),
 
-                                    // Información de la vacuna
+                                    // Información de la enfermedad
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            vacunas[index]['nombre_vacuna'],
+                                            EnfermedadesPersistente[index]['nombre_enfermedad'],
                                             style: const TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
@@ -486,21 +534,18 @@ class _VistaVacuna extends State<VistaVacuna> {
                                             ),
                                           ),
                                           Text(
-                                            'Dosis: ${vacunas[index]['dosis']} / ${vacunas[index]['max_dosis']}',
+                                            'Tipo: ${EnfermedadesPersistente[index]['Tipo_enfermedad']}',
                                             style: const TextStyle(color: Colors.black54),
                                           ),
                                           Text(
-                                            'Fecha: ${vacunas[index]['fecha_aplicacion']}',
-                                            style: const TextStyle(color: Colors.black54),
-                                          ),
-                                          Text(
-                                            'Observación: ${vacunas[index]['observacion']}',
+                                            'Observación: ${EnfermedadesPersistente[index]['observacion']}',
                                             style: const TextStyle(color: Colors.black54),
                                           ),
                                         ],
                                       ),
                                     ),
 
+                                    // Iconos de editar y eliminar
                                     Column(
                                       children: [
                                         const Icon(Icons.edit, color: Colors.black54),
@@ -532,7 +577,6 @@ class _VistaVacuna extends State<VistaVacuna> {
 
 
 
-
             ],
           ),
         ),
@@ -541,16 +585,16 @@ class _VistaVacuna extends State<VistaVacuna> {
   }
 }
 
-Future<List<Vacuna>> fetchVacunas() async {
-  final url = Uri.parse('$baseUrl/usuarios/api/vacunas/');
+Future<List<EnfermedadPersistente>> fetchEnfermedadesPersistente(String tipo) async {
+  final url = Uri.parse('$baseUrl/usuarios/api/enfermedades-persistentes/?tipo=$tipo');
   final response = await http.get(url);
 
   if (response.statusCode == 200) {
     final utf8DecodedBody = utf8.decode(response.bodyBytes);
+    // Si la solicitud es exitosa, parsea los datos
     List<dynamic> data = json.decode(utf8DecodedBody);
-    return data.map((json) => Vacuna.fromJson(json)).toList();
+    return data.map((json) => EnfermedadPersistente.fromJson(json)).toList();
   } else {
-    throw Exception('Error al cargar las vacunas');
+    throw Exception('Error al cargar las alergias');
   }
 }
-
