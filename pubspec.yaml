@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   snippet_coder_utils: ^1.0.9
+  dotted_border: ^2.0.0+3
   image_picker: ^0.8.4+4
   http: ^0.13.5
   email_validator: ^2.1.17
