@@ -272,8 +272,6 @@ class _VistaVacuna extends State<VistaVacuna> {
       },
     );
   }
-
-
   //mostrar Vacuna
   Future<void> _fetchVacunas() async {
     final response = await http.get(
@@ -466,6 +464,10 @@ class _VistaVacuna extends State<VistaVacuna> {
                             : ListView.builder(
                           itemCount: vacunas.length,
                           itemBuilder: (context, index) {
+                            final item = vacunas[index];
+                            final aprobado = item['aprobado'] == true;
+                            final doctor = item['doctor_aprobador'];
+
                             return Card(
                               margin: const EdgeInsets.only(bottom: 10),
                               shape: RoundedRectangleBorder(
@@ -473,86 +475,143 @@ class _VistaVacuna extends State<VistaVacuna> {
                               ),
                               color: Colors.white,
                               elevation: 3,
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.all(10),
-                                title: Row(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Icono de vacuna
-                                    Container(
-                                      width: 60,
-                                      height: 60,
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Center(
-                                        child: Text(
-                                          '💉',
-                                          style: TextStyle(fontSize: 30),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 15),
-
-                                    // Información de la vacuna
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            vacunas[index]['nombre_vacuna'],
+                                    // Título + check de aprobado
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const SizedBox(width: 75),
+                                        Expanded(
+                                          child: Text(
+                                            item['nombre_vacuna'],
                                             style: const TextStyle(
-                                              fontSize: 16,
+                                              fontSize: 20,
                                               fontWeight: FontWeight.bold,
                                               color: Colors.black,
                                             ),
                                           ),
-                                          Text(
-                                            'Dosis: ${vacunas[index]['dosis']} / ${vacunas[index]['max_dosis']}',
-                                            style: const TextStyle(color: Colors.black54),
-                                          ),
-                                          Text(
-                                            'Fecha: ${vacunas[index]['fecha_aplicacion']}',
-                                            style: const TextStyle(color: Colors.black54),
-                                          ),
-                                          Text(
-                                            'Observación: ${vacunas[index]['observacion']}',
-                                            style: const TextStyle(color: Colors.black54),
-                                          ),
-                                        ],
-                                      ),
+                                        ),
+                                        if (aprobado)
+                                          const Icon(Icons.verified, color: Colors.blue, size: 26),
+                                      ],
                                     ),
+                                    const SizedBox(height: 10),
 
-                                    Column(
+                                    Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Icon(Icons.edit, color: Colors.black54),
-                                        IconButton(
-                                          icon: Icon(Icons.delete, color: Colors.red),
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title: Text('Confirmar eliminación'),
-                                                content: Text('¿Estás seguro de que deseas eliminar esta vacuna?'),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () => Navigator.of(context).pop(),
-                                                    child: Text('Cancelar'),
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () async {
-                                                      Navigator.of(context).pop();
-                                                      await eliminarVacuna(vacunas[index]['id']);// Usa aquí el ID real
-                                                    },
-                                                    child: Text('Eliminar'),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
+                                        // Ícono vacuna
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 10),
+                                          child: Container(
+                                            width: 60,
+                                            height: 60,
+                                            decoration: BoxDecoration(
+                                              color: Colors.blue,
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: const Center(
+                                              child: Text('💉', style: TextStyle(fontSize: 30)),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 15),
+
+                                        // Información
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text('Dosis: ${item['dosis']} / ${item['max_dosis']}', style: const TextStyle(color: Colors.black54)),
+                                              Text('Fecha: ${item['fecha_aplicacion']}', style: const TextStyle(color: Colors.black54)),
+
+                                              if (item['observacion'] != null && item['observacion'].toString().isNotEmpty)
+                                                Text('Observación: ${item['observacion']}', style: const TextStyle(color: Colors.black54)),
+
+                                              if (aprobado && doctor != null && doctor.toString().isNotEmpty)
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: 4),
+                                                  child: Text('Doctor: $doctor', style: const TextStyle(color: Colors.black87)),
+                                                ),
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
+                                    const SizedBox(height: 10),
+
+                                    // Botones si NO está aprobado
+                                    if (!aprobado)
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, color: Colors.black54),
+                                            onPressed: () {
+                                              final observacionController = TextEditingController(text: item['observacion']);
+                                              String dosisSeleccionada = item['dosis'].toString();
+
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Editar vacuna'),
+                                                  content: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      TextField(
+                                                        controller: observacionController,
+                                                        decoration: const InputDecoration(labelText: 'Observación'),
+                                                        maxLines: 2,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () async {
+
+                                                      },
+                                                      child: const Text('Guardar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Confirmar eliminación'),
+                                                  content: const Text('¿Estás seguro de que deseas eliminar esta vacuna?'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        Navigator.of(context).pop();
+                                                        await eliminarVacuna(item['id']);
+                                                      },
+                                                      child: const Text('Eliminar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
                                   ],
                                 ),
                               ),
@@ -560,6 +619,9 @@ class _VistaVacuna extends State<VistaVacuna> {
                           },
                         ),
                       ),
+
+
+
                     ],
                   ),
                 ),

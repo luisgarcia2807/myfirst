@@ -533,7 +533,10 @@ class _VistaAlergia extends State<VistaAlergia> {
                             : ListView.builder(
                           itemCount: alergias.length,
                           itemBuilder: (context, index) {
-                            String tipo = alergias[index]['tipo_alergia'];
+                            final item = alergias[index];
+                            final tipo = item['tipo_alergia'];
+                            final aprobado = item['aprobado'] == true;
+
                             return Card(
                               margin: const EdgeInsets.only(bottom: 10),
                               shape: RoundedRectangleBorder(
@@ -542,167 +545,174 @@ class _VistaAlergia extends State<VistaAlergia> {
                               color: Colors.white,
                               elevation: 3,
                               child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Row(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Parte izquierda con fondo dinámico
-                                    Container(
-                                      width: 60,
-                                      height: 100,
-                                      decoration: BoxDecoration(
-                                        color: _getColor(tipo),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Center(
-                                        child: Icon(
-                                          _getIcon(tipo),
-                                          size: 40,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 15),
-
-                                    // Información de la alergia
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            alergias[index]['nombre_alergia'],
+                                    // Título + check de aprobado
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const SizedBox(width: 75),
+                                        Expanded(
+                                          child: Text(
+                                            item['nombre_alergia'],
                                             style: const TextStyle(
-                                              fontSize: 16,
+                                              fontSize: 20,
                                               fontWeight: FontWeight.bold,
                                               color: Colors.black,
                                             ),
                                           ),
-                                          Text(
-                                            'Tipo: ${alergias[index]['tipo_alergia']}',
-                                            style: const TextStyle(color: Colors.black54),
-                                          ),
-                                          Text(
-                                            'Gravedad: ${alergias[index]['gravedad']}',
-                                            style: const TextStyle(color: Colors.black54),
-                                          ),
-                                          Text(
-                                            'Observación: ${alergias[index]['observacion']}',
-                                            style: const TextStyle(color: Colors.black54),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                    // Icono de opciones y botón de eliminar
-                                    Column(
-                                      children: [
-                                        IconButton(
-                                          icon: Icon(Icons.edit, color: Colors.black54),
-                                          onPressed: () {
-                                            final TextEditingController observacionController = TextEditingController(
-                                              text: alergias[index]['observacion'],
-                                            );
-
-                                            String gravedadSeleccionada = alergias[index]['gravedad'].toString().toLowerCase();
-
-
-
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title: Text('Editar alergia'),
-                                                content: Column(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    // Menú de selección de gravedad
-                                                    DropdownButtonFormField<String>(
-                                                      value: gravedadSeleccionada,
-                                                      decoration: InputDecoration(labelText: 'Gravedad'),
-                                                      items: ['leve', 'moderada', 'grave'].map((valor) {
-                                                        return DropdownMenuItem(
-                                                          value: valor,
-                                                          child: Text(valor),
-                                                        );
-                                                      }).toList(),
-                                                      onChanged: (valor) {
-                                                        if (valor != null) {
-                                                          gravedadSeleccionada = valor;
-                                                        }
-                                                      },
-                                                    ),
-                                                    const SizedBox(height: 10),
-
-                                                    // Campo de texto para observación
-                                                    TextField(
-                                                      controller: observacionController,
-                                                      decoration: InputDecoration(labelText: 'Observación'),
-                                                      maxLines: 2,
-                                                    ),
-                                                  ],
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () => Navigator.of(context).pop(),
-                                                    child: Text('Cancelar'),
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () async {
-                                                      Navigator.of(context).pop();
-
-                                                      await editarAlergia(
-                                                        id: alergias[index]['id'],
-                                                        gravedad: gravedadSeleccionada,
-                                                        observacion: observacionController.text,
-                                                      );
-
-                                                      // Actualiza los valores en la lista
-                                                      setState(() {
-                                                        alergias[index]['gravedad'] = gravedadSeleccionada;
-                                                        alergias[index]['observacion'] = observacionController.text;
-                                                      });
-                                                    },
-                                                    child: Text('Guardar'),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
                                         ),
+                                        if (aprobado)
+                                          const Icon(Icons.verified, color: Colors.blue, size: 26),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
 
-                                        IconButton(
-                                          icon: Icon(Icons.delete, color: Colors.red),
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title: Text('Confirmar eliminación'),
-                                                content: Text('¿Estás seguro de que deseas eliminar esta alergia?'),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () => Navigator.of(context).pop(),
-                                                    child: Text('Cancelar'),
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () async {
-                                                      Navigator.of(context).pop();
-                                                      await eliminarAlergia(alergias[index]['id']);// Usa aquí el ID real
-                                                    },
-                                                    child: Text('Eliminar'),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
+                                    Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Ícono tipo alergia
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 10),
+                                          child: Container(
+                                            width: 60,
+                                            height: 60,
+                                            decoration: BoxDecoration(
+                                              color: _getColor(tipo),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: Center(
+                                              child: Icon(_getIcon(tipo), size: 30, color: Colors.white),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 15),
+
+                                        // Información
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text('Tipo: ${item['tipo_alergia']}', style: const TextStyle(color: Colors.black54)),
+                                              Text('Gravedad: ${item['gravedad']}', style: const TextStyle(color: Colors.black54)),
+
+                                              if (item['observacion'] != null && item['observacion'].toString().isNotEmpty)
+                                                Text('Observación: ${item['observacion']}', style: const TextStyle(color: Colors.black54)),
+
+                                              if (item['doctor_aprobador'] != null && item['doctor_aprobador'].toString().isNotEmpty)
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: 4),
+                                                  child: Text('Doctor: ${item['doctor_aprobador']}', style: const TextStyle(color: Colors.black87)),
+                                                ),
+                                            ],
+                                          ),
                                         ),
 
                                       ],
                                     ),
+                                    const SizedBox(height: 10),
+
+                                    // Botones si no está aprobado
+                                    if (!aprobado)
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, color: Colors.black54),
+                                            onPressed: () {
+                                              final observacionController = TextEditingController(text: item['observacion']);
+                                              String gravedadSeleccionada = item['gravedad'].toString().toLowerCase();
+
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Editar alergia'),
+                                                  content: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      DropdownButtonFormField<String>(
+                                                        value: gravedadSeleccionada,
+                                                        decoration: const InputDecoration(labelText: 'Gravedad'),
+                                                        items: ['leve', 'moderada', 'grave'].map((valor) {
+                                                          return DropdownMenuItem(
+                                                            value: valor,
+                                                            child: Text(valor),
+                                                          );
+                                                        }).toList(),
+                                                        onChanged: (valor) {
+                                                          if (valor != null) gravedadSeleccionada = valor;
+                                                        },
+                                                      ),
+                                                      const SizedBox(height: 10),
+                                                      TextField(
+                                                        controller: observacionController,
+                                                        decoration: const InputDecoration(labelText: 'Observación'),
+                                                        maxLines: 2,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        Navigator.of(context).pop();
+                                                        await editarAlergia(
+                                                          id: item['id'],
+                                                          gravedad: gravedadSeleccionada,
+                                                          observacion: observacionController.text,
+                                                        );
+                                                        setState(() {
+                                                          item['gravedad'] = gravedadSeleccionada;
+                                                          item['observacion'] = observacionController.text;
+                                                        });
+                                                      },
+                                                      child: const Text('Guardar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Confirmar eliminación'),
+                                                  content: const Text('¿Estás seguro de que deseas eliminar esta alergia?'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        Navigator.of(context).pop();
+                                                        await eliminarAlergia(item['id']);
+                                                      },
+                                                      child: const Text('Eliminar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
                                   ],
                                 ),
                               ),
                             );
                           },
                         ),
-                      ),
+                      )
+
                     ],
                   ),
                 ),

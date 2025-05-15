@@ -488,7 +488,7 @@ class _VistaTratamientofrecuente extends State<VistaTratamientofrecuente> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Lista de vacunas
+                      // Lista de Tratamiento
                       Expanded(
                         child: Tratamientofrecuente.isEmpty
                             ? const Center(child: CircularProgressIndicator())
@@ -503,200 +503,185 @@ class _VistaTratamientofrecuente extends State<VistaTratamientofrecuente> {
                               ),
                               color: Colors.white,
                               elevation: 3,
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.all(10),
-                                title: Row(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Icono de vacuna
-                                    Container(
-                                      width: 60,
-                                      height: 60,
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Center(
-                                        child: Text(
-                                          '💉',
-                                          style: TextStyle(fontSize: 30),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 15),
 
-                                    // Información + check en Stack
-                                    Expanded(
-                                      child: Stack(
-                                        children: [
-                                          // Texto y detalles con padding para no tapar por el icono
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 8.0, right: 40),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                // Nombre con espacio para el icono a la derecha
-                                                Padding(
-                                                  padding: const EdgeInsets.only(right: 40.0),
-                                                  child: Text(
-                                                    item['nombre_medicamento'],
-                                                    style: const TextStyle(
-                                                      fontSize: 20,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: Colors.black,
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 8),
-                                                Text(
-                                                  'Inicio: ${item['fecha_inicio']}',
-                                                  style: const TextStyle(color: Colors.black54),
-                                                ),
-                                                Text(
-                                                  'Dosis: ${item['dosis']}',
-                                                  style: const TextStyle(color: Colors.black54),
-                                                ),
-                                                Text(
-                                                  'Frecuencia: ${item['frecuencia']}',
-                                                  style: const TextStyle(color: Colors.black54),
-                                                ),
-                                                if (item['observaciones'] != null &&
-                                                    item['observaciones'].toString().isNotEmpty)
-                                                  Text(
-                                                    'Observaciones: ${item['observaciones']}',
-                                                    style: const TextStyle(color: Colors.black54),
-                                                  ),
-                                                const SizedBox(height: 4),
-                                                if (item['aprobado'] != true)
-                                                  const Text(
-                                                    'No aprobado',
-                                                    style: TextStyle(
-                                                      color: Colors.red,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                if (item['doctor_aprobador'] != null &&
-                                                    item['doctor_aprobador'].toString().isNotEmpty)
-                                                  Text(
-                                                    'Doctor: ${item['doctor_aprobador']}',
-                                                    style: const TextStyle(color: Colors.black87),
-                                                  ),
-                                              ],
+                                    // Título + Check
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        SizedBox(width: 75,),
+                                        Expanded(
+                                          child: Text(
+                                            item['nombre_medicamento'],
+                                            style: const TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
                                             ),
                                           ),
-
-                                          // Icono verificado azul en la esquina superior derecha del Stack
-                                          if (item['aprobado'] == true)
-                                            const Positioned(
-                                              top: 0,
-                                              right: 0,
-                                              child: Icon(
-                                                Icons.verified,
-                                                color: Colors.blue,
-                                                size: 28,
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                    SizedBox(height: 50,),
-
-                                    // Botones editar y eliminar
-                                    Column(
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.edit, color: Colors.black54),
-                                          onPressed: () {
-                                            final dosisController = TextEditingController(text: item['dosis']);
-                                            final frecuenciaController = TextEditingController(text: item['frecuencia']);
-                                            final observacionController = TextEditingController(text: item['observacion']);
-
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title: const Text('Editar Tratamiento Frecuente'),
-                                                content: Column(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    const SizedBox(height: 10),
-                                                    TextField(
-                                                      controller: dosisController,
-                                                      decoration: const InputDecoration(labelText: 'Dosis'),
-                                                      maxLines: 2,
-                                                    ),
-                                                    TextField(
-                                                      controller: frecuenciaController,
-                                                      decoration: const InputDecoration(labelText: 'Frecuencia'),
-                                                      maxLines: 2,
-                                                    ),
-                                                    TextField(
-                                                      controller: observacionController,
-                                                      decoration: const InputDecoration(labelText: 'Observación'),
-                                                      maxLines: 2,
-                                                    ),
-                                                  ],
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () => Navigator.of(context).pop(),
-                                                    child: const Text('Cancelar'),
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () async {
-                                                      Navigator.of(context).pop();
-                                                      await editarTratamientofrecuente(
-                                                        id: item['id'],
-                                                        dosis: dosisController.text,
-                                                        frecuencia: frecuenciaController.text,
-                                                        observacion: observacionController.text,
-                                                      );
-                                                      setState(() {
-                                                        item['dosis'] = dosisController.text;
-                                                        item['frecuencia'] = frecuenciaController.text;
-                                                        item['observacion'] = observacionController.text;
-                                                      });
-                                                    },
-                                                    child: const Text('Guardar'),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
                                         ),
-                                        IconButton(
-                                          icon: const Icon(Icons.delete, color: Colors.red),
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title: const Text('Confirmar eliminación'),
-                                                content: const Text('¿Estás seguro de que deseas eliminar este Tratamiento Frecuente?'),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () => Navigator.of(context).pop(),
-                                                    child: const Text('Cancelar'),
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () async {
-                                                      Navigator.of(context).pop();
-                                                      await eliminarTratamientofrecuente(item['id']);
-                                                    },
-                                                    child: const Text('Eliminar'),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
+                                        if (item['aprobado'] == true)
+                                          const Icon(Icons.verified, color: Colors.blue, size: 26),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+
+                                    Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Ícono de jeringa más abajo
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 10),
+                                          child: Container(
+                                            width: 60,
+                                            height: 60,
+                                            decoration: BoxDecoration(
+                                              color: Colors.blue,
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: const Center(
+                                              child: Text('💉', style: TextStyle(fontSize: 30)),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 15),
+
+                                        // Información del tratamiento
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text('Inicio: ${item['fecha_inicio']}',
+                                                  style: const TextStyle(color: Colors.black54)),
+                                              Text('Dosis: ${item['dosis']}',
+                                                  style: const TextStyle(color: Colors.black54)),
+                                              Text('Frecuencia: ${item['frecuencia']}',
+                                                  style: const TextStyle(color: Colors.black54)),
+                                              if (item['observaciones'] != null && item['observaciones'].toString().isNotEmpty)
+                                                Text('Observaciones: ${item['observaciones']}',
+                                                    style: const TextStyle(color: Colors.black54)),
+                                              if (item['doctor_aprobador'] != null &&
+                                                  item['doctor_aprobador'].toString().isNotEmpty)
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: 4),
+                                                  child: Text('Doctor: ${item['doctor_aprobador']}',
+                                                      style: const TextStyle(color: Colors.black87)),
+                                                ),
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
+
+
+
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        if (item['aprobado'] != true) // Solo mostrar si NO está aprobado
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, color: Colors.black54),
+                                            tooltip: 'Editar',
+                                            onPressed: () {
+                                              final dosisController = TextEditingController(text: item['dosis']);
+                                              final frecuenciaController = TextEditingController(text: item['frecuencia']);
+                                              final observacionController = TextEditingController(text: item['observacion']);
+
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Editar Tratamiento Frecuente'),
+                                                  content: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      const SizedBox(height: 10),
+                                                      TextField(
+                                                        controller: dosisController,
+                                                        decoration: const InputDecoration(labelText: 'Dosis'),
+                                                        maxLines: 2,
+                                                      ),
+                                                      TextField(
+                                                        controller: frecuenciaController,
+                                                        decoration: const InputDecoration(labelText: 'Frecuencia'),
+                                                        maxLines: 2,
+                                                      ),
+                                                      TextField(
+                                                        controller: observacionController,
+                                                        decoration: const InputDecoration(labelText: 'Observación'),
+                                                        maxLines: 2,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        Navigator.of(context).pop();
+                                                        await editarTratamientofrecuente(
+                                                          id: item['id'],
+                                                          dosis: dosisController.text,
+                                                          frecuencia: frecuenciaController.text,
+                                                          observacion: observacionController.text,
+                                                        );
+                                                        setState(() {
+                                                          item['dosis'] = dosisController.text;
+                                                          item['frecuencia'] = frecuenciaController.text;
+                                                          item['observacion'] = observacionController.text;
+                                                        });
+                                                      },
+                                                      child: const Text('Guardar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        if (item['aprobado'] != true) // Solo mostrar si NO está aprobado
+                                          IconButton(
+                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            tooltip: 'Eliminar',
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Confirmar eliminación'),
+                                                  content: const Text('¿Estás seguro de que deseas eliminar este Tratamiento Frecuente?'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        Navigator.of(context).pop();
+                                                        await eliminarTratamientofrecuente(item['id']);
+                                                      },
+                                                      child: const Text('Eliminar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                      ],
+                                    )
+
                                   ],
                                 ),
                               ),
                             );
                           },
                         ),
-                      ),
+                      )
+
+
 
                     ],
                   ),

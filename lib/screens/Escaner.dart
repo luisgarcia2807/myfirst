@@ -24,6 +24,18 @@ class _ScanViewState extends State<ScanView> {
   File? _pdfFile;
   bool _mejorarImagen = false;
 
+  final List<String> _opcionesExamen = [
+    'Radiografía',
+    'Análisis de sangre',
+    'Ecografía',
+    'Resonancia magnética',
+    'Otro'
+  ];
+  String? _nombreExamenSeleccionado;
+  final TextEditingController _descripcionController = TextEditingController();
+  DateTime _fechaRealizacion = DateTime.now();
+  final int pacienteId = 1; // ⚠️ Cambiar por el ID real del paciente
+
   Future<void> _pickAndCropImage() async {
     final status = await Permission.camera.request();
     if (!status.isGranted) {
@@ -96,15 +108,18 @@ class _ScanViewState extends State<ScanView> {
 
   Future<void> _subirPdfAlServidor(File archivo) async {
     try {
-      final uri = Uri.parse('$baseUrl/usuarios/api/subir-pdf/');
+      final uri = Uri.parse('$baseUrl/usuarios/api/examenes/');
       final request = http.MultipartRequest('POST', uri);
 
       request.files.add(await http.MultipartFile.fromPath('archivo', archivo.path));
-      request.fields['nombre'] = 'documento_${DateTime.now().millisecondsSinceEpoch}';
+      request.fields['paciente'] = pacienteId.toString();
+      request.fields['nombre_examen'] = _nombreExamenSeleccionado ?? 'Sin especificar';
+      request.fields['descripcion'] = _descripcionController.text;
+      request.fields['fecha_realizacion'] = _fechaRealizacion.toIso8601String().split('T').first;
 
       final response = await request.send();
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('PDF subido correctamente')),
         );
@@ -133,8 +148,17 @@ class _ScanViewState extends State<ScanView> {
 
   @override
   Widget build(BuildContext context) {
+    final colores = [
+      const Color(0xFF0D47A1),
+      const Color(0xFF1976D2),
+      const Color(0xFF42A5F5),
+      const Color(0xFF7E57C2),
+      const Color(0xFF26C6DA),
+    ];
+
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: colores[0],
         title: const Text('Escanear y Subir PDF'),
         actions: [
           Switch(
@@ -147,61 +171,113 @@ class _ScanViewState extends State<ScanView> {
           ),
         ],
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _imagenes.isNotEmpty
-              ? SizedBox(
-            height: 200,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _imagenes.length,
-              itemBuilder: (context, index) {
-                return Stack(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Image.file(_imagenes[index]),
-                    ),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: IconButton(
-                        icon: const Icon(Icons.close, color: Colors.red),
-                        onPressed: () {
-                          setState(() => _imagenes.removeAt(index));
-                        },
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          )
-              : const Padding(
-            padding: EdgeInsets.all(20),
-            child: Text('No se han añadido imágenes.'),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: Column(
+            children: [
+              if (_imagenes.isNotEmpty)
+                SizedBox(
+                  height: 200,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _imagenes.length,
+                    itemBuilder: (context, index) {
+                      return Stack(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Image.file(_imagenes[index]),
+                          ),
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: IconButton(
+                              icon: const Icon(Icons.close, color: Colors.red),
+                              onPressed: () => setState(() => _imagenes.removeAt(index)),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                )
+              else
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text('No se han añadido imágenes.'),
+                ),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: 'Tipo de examen'),
+                value: _nombreExamenSeleccionado,
+                items: _opcionesExamen.map((String tipo) {
+                  return DropdownMenuItem<String>(
+                    value: tipo,
+                    child: Text(tipo),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _nombreExamenSeleccionado = newValue;
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _descripcionController,
+                decoration: const InputDecoration(
+                  labelText: 'Descripción (opcional)',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Fecha: ${_fechaRealizacion.toLocal().toString().split(' ')[0]}'),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: () async {
+                      final fecha = await showDatePicker(
+                        context: context,
+                        initialDate: _fechaRealizacion,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now(),
+                      );
+                      if (fecha != null) {
+                        setState(() => _fechaRealizacion = fecha);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Agregar imagen'),
+                onPressed: _pickAndCropImage,
+                style: ElevatedButton.styleFrom(backgroundColor: colores[2]),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.upload_file),
+                label: const Text('Guardar y subir PDF'),
+                onPressed: _saveAsPdf,
+                style: ElevatedButton.styleFrom(backgroundColor: colores[3]),
+              ),
+              const SizedBox(height: 10),
+              if (_pdfFile != null)
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('Ver PDF generado'),
+                  onPressed: _verPdfPreview,
+                  style: ElevatedButton.styleFrom(backgroundColor: colores[4]),
+                ),
+            ],
           ),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.camera_alt),
-            label: const Text('Agregar imagen'),
-            onPressed: _pickAndCropImage,
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.upload_file),
-            label: const Text('Guardar y subir PDF'),
-            onPressed: _saveAsPdf,
-          ),
-          const SizedBox(height: 10),
-          if (_pdfFile != null)
-            ElevatedButton.icon(
-              icon: const Icon(Icons.picture_as_pdf),
-              label: const Text('Ver PDF generado'),
-              onPressed: _verPdfPreview,
-            ),
-        ],
+        ),
       ),
     );
   }
