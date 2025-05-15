@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/registrarCredencial.dart';
 import 'package:mifirst/screens/vista_alergia.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
+import 'package:mifirst/screens/vista_tramientofrecuente.dart';
 import 'package:mifirst/screens/vista_vacuna.dart';
 import '../util/emoticon_face.dart';
 import '../constans.dart';
@@ -350,6 +351,21 @@ class _PacienteScreen extends State<PacienteScreen> {
                               );
                             },
                           ),
+                          CardItem(
+                            emoji: '🧴',
+                            title: 'Tratamientos frecuentes',
+                            subtitle: 'Ver todos',
+                            color: Colors.purple, // Cambia el color si prefieres otro
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => VistaTratamientofrecuente(idusuario: widget.idusuario),
+                                ),
+                              );
+                            },
+                          ),
+
 
                           CardItem(
                             emoji: '🔬',

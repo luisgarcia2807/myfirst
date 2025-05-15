@@ -32,8 +32,6 @@ class _VistaVacuna extends State<VistaVacuna> {
   int? selectedAlergiaId;
   List<dynamic> vacunas = [];  // Lista para almacenar las alergias
 
-
-
   final TextEditingController _descripcionAlergiaController = TextEditingController();
 
   Future<void> obtenerDatos() async {
@@ -291,6 +289,30 @@ class _VistaVacuna extends State<VistaVacuna> {
     }
   }
 
+  Future<void> eliminarVacuna(int idvacunaPaciente) async {
+    final url = Uri.parse('$baseUrl/usuarios/api/vacunas-pacientes/$idvacunaPaciente/');
+
+    try {
+      final response = await http.delete(url);
+
+      if (response.statusCode == 204) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Alergia eliminada correctamente")),
+        );
+        await _fetchVacunas(); // Actualizar la lista después de eliminar
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error al eliminar: ${response.statusCode}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al conectar con el servidor")),
+      );
+      print('Error: $e');
+    }
+  }
+
 
   @override
   void initState() {
@@ -505,9 +527,28 @@ class _VistaVacuna extends State<VistaVacuna> {
                                       children: [
                                         const Icon(Icons.edit, color: Colors.black54),
                                         IconButton(
-                                          icon: const Icon(Icons.delete, color: Colors.red),
+                                          icon: Icon(Icons.delete, color: Colors.red),
                                           onPressed: () {
-                                            // Lógica para eliminar la enfermedad
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: Text('Confirmar eliminación'),
+                                                content: Text('¿Estás seguro de que deseas eliminar esta vacuna?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.of(context).pop(),
+                                                    child: Text('Cancelar'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () async {
+                                                      Navigator.of(context).pop();
+                                                      await eliminarVacuna(vacunas[index]['id']);// Usa aquí el ID real
+                                                    },
+                                                    child: Text('Eliminar'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
                                           },
                                         ),
                                       ],

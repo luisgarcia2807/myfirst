@@ -328,6 +328,56 @@ class _VistaAlergia extends State<VistaAlergia> {
     }
   }
 
+  Future<void> eliminarAlergia(int idAlergiaPaciente) async {
+    final url = Uri.parse('$baseUrl/usuarios/api/pacientes-alergias/$idAlergiaPaciente/');
+
+    try {
+      final response = await http.delete(url);
+
+      if (response.statusCode == 204) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Alergia eliminada correctamente")),
+        );
+        await _fetchAlergias(); // Actualizar la lista después de eliminar
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error al eliminar: ${response.statusCode}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al conectar con el servidor")),
+      );
+      print('Error: $e');
+    }
+  }
+
+  Future<void> editarAlergia({required int id, required String gravedad, required String observacion,}) async {
+
+    final url = Uri.parse('$baseUrl//usuarios/api/pacientes-alergias/$id/');
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'gravedad': gravedad,
+          'observacion': observacion,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('Alergia actualizada exitosamente');
+      } else {
+        print('Error al editar alergia: ${response.statusCode}');
+        print(response.body);
+      }
+    } catch (e) {
+      print('Excepción al editar alergia: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -545,13 +595,105 @@ class _VistaAlergia extends State<VistaAlergia> {
                                     // Icono de opciones y botón de eliminar
                                     Column(
                                       children: [
-                                        const Icon(Icons.edit, color: Colors.black54),
                                         IconButton(
-                                          icon: const Icon(Icons.delete, color: Colors.red),
+                                          icon: Icon(Icons.edit, color: Colors.black54),
                                           onPressed: () {
-                                            // Aquí agregas la lógica para eliminar el registro
+                                            final TextEditingController observacionController = TextEditingController(
+                                              text: alergias[index]['observacion'],
+                                            );
+
+                                            String gravedadSeleccionada = alergias[index]['gravedad'].toString().toLowerCase();
+
+
+
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: Text('Editar alergia'),
+                                                content: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    // Menú de selección de gravedad
+                                                    DropdownButtonFormField<String>(
+                                                      value: gravedadSeleccionada,
+                                                      decoration: InputDecoration(labelText: 'Gravedad'),
+                                                      items: ['leve', 'moderada', 'grave'].map((valor) {
+                                                        return DropdownMenuItem(
+                                                          value: valor,
+                                                          child: Text(valor),
+                                                        );
+                                                      }).toList(),
+                                                      onChanged: (valor) {
+                                                        if (valor != null) {
+                                                          gravedadSeleccionada = valor;
+                                                        }
+                                                      },
+                                                    ),
+                                                    const SizedBox(height: 10),
+
+                                                    // Campo de texto para observación
+                                                    TextField(
+                                                      controller: observacionController,
+                                                      decoration: InputDecoration(labelText: 'Observación'),
+                                                      maxLines: 2,
+                                                    ),
+                                                  ],
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.of(context).pop(),
+                                                    child: Text('Cancelar'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () async {
+                                                      Navigator.of(context).pop();
+
+                                                      await editarAlergia(
+                                                        id: alergias[index]['id'],
+                                                        gravedad: gravedadSeleccionada,
+                                                        observacion: observacionController.text,
+                                                      );
+
+                                                      // Actualiza los valores en la lista
+                                                      setState(() {
+                                                        alergias[index]['gravedad'] = gravedadSeleccionada;
+                                                        alergias[index]['observacion'] = observacionController.text;
+                                                      });
+                                                    },
+                                                    child: Text('Guardar'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
                                           },
                                         ),
+
+                                        IconButton(
+                                          icon: Icon(Icons.delete, color: Colors.red),
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: Text('Confirmar eliminación'),
+                                                content: Text('¿Estás seguro de que deseas eliminar esta alergia?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.of(context).pop(),
+                                                    child: Text('Cancelar'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () async {
+                                                      Navigator.of(context).pop();
+                                                      await eliminarAlergia(alergias[index]['id']);// Usa aquí el ID real
+                                                    },
+                                                    child: Text('Eliminar'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+
                                       ],
                                     ),
                                   ],

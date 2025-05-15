@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/alergias.dart';
+import '../models/tratamientoFrecuente.dart';
+import '../models/tratamientoFrecuente.dart';
+import '../models/vacuna.dart';
 import '../constans.dart';
-import '../models/enfermedadespersistente.dart';
 
-class Vistatratamientofrecuente extends StatefulWidget {
+class VistaTratamientofrecuente extends StatefulWidget {
   final int idusuario;
-
-  const Vistatratamientofrecuente({super.key, required this.idusuario});
+  const VistaTratamientofrecuente({super.key, required this.idusuario});
 
   @override
-  State<Vistatratamientofrecuente> createState() => _Vistatratamientofrecuente();
+  State<VistaTratamientofrecuente> createState() => _VistaTratamientofrecuente();
 }
 
-class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
+class _VistaTratamientofrecuente extends State<VistaTratamientofrecuente> {
   String nombreUsuario = '';
   String apellidoUsuario = '';
   String cedulaUsuario = '';
@@ -24,19 +24,17 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
   String fechaNacimientoUsuario = '';
   bool estadoUsuario = false;
   int idRolUsuario = 0;
-  String? foto='';
   bool isLoading = true;
   int idPaciente = 0;
   int idSangre = 0;
   String tipoSangre = '';
+  String? foto='';
   String? nivelSeleccionado;
-  String? tipoSeleccionado= 'Endocrina';
-  int? selectedEnfermedadesPersistenteId;
-  List<dynamic> EnfermedadesPersistente = [];  // Lista para almacenar las alergias
+  String? tipoSeleccionado= 'Losartan';
+  int? selectedAlergiaId;
+  List<dynamic> Tratamientofrecuente = [];  // Lista para almacenar las alergias
 
-
-
-  final TextEditingController _descripcionEnfermdadController = TextEditingController();
+  final TextEditingController _descripcionAlergiaController = TextEditingController();
 
   Future<void> obtenerDatos() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
@@ -101,9 +99,14 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
       print('Error: $e');
     }
   }
+  void _mostrarDialogoTratamientoFrecuente() {
+    DateTime? fechaSeleccionada;
+    int? selectedTratamientofrecuenteid;
 
-  void _mostrarDialogoEnfermedades() {
-    Future<List<EnfermedadPersistente>> futureEnfermedadesPersistente = fetchEnfermedadesPersistente(tipoSeleccionado!);
+    final TextEditingController _fechaController = TextEditingController();
+    final TextEditingController _dosisController = TextEditingController();
+    final TextEditingController _frecuenciaController = TextEditingController();
+    final TextEditingController _observacionesController = TextEditingController();
 
     showDialog(
       context: context,
@@ -111,120 +114,125 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              scrollable: true, // Para evitar overflow vertical
-              title: Text("Añadir Enfermedad persistente"),
+              title: Text("Registrar Tratamiento Frecuente"),
               content: SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.85, // Ajustar el ancho máximo
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Tipo de enfermedad
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: DropdownButtonFormField<String>(
-                          value: tipoSeleccionado,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              tipoSeleccionado = newValue;
-                              futureEnfermedadesPersistente = fetchEnfermedadesPersistente(newValue!);
-                              selectedEnfermedadesPersistenteId= null;
-                            });
-                          },
-                          decoration: InputDecoration(
-                            labelText: "Tipo de alergia",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Medicamento Crónico
+                    FutureBuilder<List<TratamientoFrecuente>>(
+                      future: fetchTratamientofrecuente(), // Debes implementar esta función
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return Center(child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return Text('No hay medicamentos disponibles');
+                        } else {
+                          List<TratamientoFrecuente> Tratamientofrecuente = snapshot.data!;
+                          return DropdownButtonFormField<int>(
+                            decoration: InputDecoration(
+                              labelText: 'Losartan',
+                              border: OutlineInputBorder(),
                             ),
-                          ),
-                          items: ['Endocrina', 'Cardiovascular', 'Respiratoria', 'Neurologica','Psiquiatrica','Gastrointestinal','Reumatologica','Renal','Hematologica','Infectologia']
+                            value: selectedTratamientofrecuenteid,
+                            onChanged: (int? newValue) {
+                              setState(() {
+                                selectedTratamientofrecuenteid = newValue;
+                              });
+                            },
+                            items: Tratamientofrecuente.map((tf) {
+                              return DropdownMenuItem<int>(
+                                value: tf.id,
+                                child: Text('${tf.nombre}'),
+                              );
+                            }).toList(),
+                          );
+                        }
+                      },
+                    ),
+                    SizedBox(height: 10),
 
-
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                        ),
+                    // Fecha de inicio
+                    TextField(
+                      controller: _fechaController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: 'Fecha de inicio',
+                        border: OutlineInputBorder(),
+                        suffixIcon: Icon(Icons.calendar_today),
                       ),
+                      onTap: () async {
+                        final pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            _fechaController.text = '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
+                          });
+                        }
+                      },
+                    ),
+                    SizedBox(height: 10),
 
-                      // Lista de alergias según tipo
-                      FutureBuilder<List<EnfermedadPersistente>>(
-                        future: futureEnfermedadesPersistente,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          } else if (snapshot.hasError) {
-                            return Text('Error: ${snapshot.error}');
-                          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                            return Text('No hay Enfermedad Persistente disponibles');
-                          } else {
-                            List<EnfermedadPersistente> EnfermedadesPersistente = snapshot.data!;
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0),
-                              child: DropdownButtonFormField<int>(
-                                decoration: InputDecoration(
-                                  labelText: 'Enfermedad Persistente',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                ),
-                                value: selectedEnfermedadesPersistenteId,
-                                onChanged: (int? newValue) {
-                                  setState(() {
-                                    selectedEnfermedadesPersistenteId = newValue;
-                                  });
-                                },
-                                items: EnfermedadesPersistente.map((EnfermedadPersistente EnfermedadesPersistente) {
-                                  return DropdownMenuItem<int>(
-                                    value: EnfermedadesPersistente.id,
-                                    child: Text(EnfermedadesPersistente.nombre),
-                                  );
-                                }).toList(),
-                              ),
-                            );
-                          }
-                        },
+                    // Dosis
+                    TextField(
+                      controller: _dosisController,
+                      decoration: InputDecoration(
+                        labelText: 'Dosis',
+                        border: OutlineInputBorder(),
                       ),
+                    ),
+                    SizedBox(height: 10),
 
-
-                      // Descripción
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: TextField(
-                          controller: _descripcionEnfermdadController,
-                          decoration: InputDecoration(
-                            labelText: "Descripción",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                          ),
-                          maxLines: 3,
-                        ),
+                    // Frecuencia
+                    TextField(
+                      controller: _frecuenciaController,
+                      decoration: InputDecoration(
+                        labelText: 'Frecuencia',
+                        border: OutlineInputBorder(),
                       ),
-                    ],
-                  ),
+                    ),
+                    SizedBox(height: 10),
+
+                    // Observaciones
+                    TextField(
+                      controller: _observacionesController,
+                      decoration: InputDecoration(
+                        labelText: 'Observaciones',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                  ],
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
+                  onPressed: () => Navigator.of(context).pop(),
                   child: Text("Cancelar"),
                 ),
                 TextButton(
                   onPressed: () async {
-                    if (selectedEnfermedadesPersistenteId != null ) {
-                      final url = Uri.parse('$baseUrl/usuarios/api/pacientes_enfermedades/');
+                    if (selectedTratamientofrecuenteid != null &&
+                        _fechaController.text.isNotEmpty &&
+                        _dosisController.text.isNotEmpty &&
+                        _frecuenciaController.text.isNotEmpty) {
+
+                      final url = Uri.parse('$baseUrl/usuarios/api/paciente_medicamento_cronico/');
                       final Map<String, dynamic> data = {
-                        'paciente': idPaciente,
-                        'enfermedad': selectedEnfermedadesPersistenteId,
-                        'fecha_diagnostico': "2025-05-11",
-                        'observacion': _descripcionEnfermdadController.text,
+                        'id_paciente': idPaciente,
+                        'id_medicamento_cronico': selectedTratamientofrecuenteid,
+                        'fecha_inicio': _fechaController.text,
+                        'dosis': _dosisController.text,
+                        'frecuencia': _frecuenciaController.text,
+                        'observaciones': _observacionesController.text,
+                        'aprobado': false,
+                        'doctor_aprobador': null,
                       };
 
                       try {
@@ -237,9 +245,9 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
                         if (response.statusCode == 201) {
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Enfermedad persistente guardada correctamente")),
+                            SnackBar(content: Text("Tratamiento registrado correctamente")),
                           );
-                          await _fetchEnfermedadesPersistente();
+                          await _fetchTratamientofrecuente(); // Si tienes función para actualizar la lista
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Error al guardar: ${response.statusCode}")),
@@ -253,7 +261,7 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
                       }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Completa todos los campos")),
+                        SnackBar(content: Text("Completa todos los campos obligatorios")),
                       );
                     }
                   },
@@ -269,76 +277,71 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
 
 
 
-  Future<void> _fetchEnfermedadesPersistente() async {
+  //mostrar Tratamiento
+  Future<void> _fetchTratamientofrecuente() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/usuarios/api/enfermedades/$idPaciente/paciente/'),
+      Uri.parse('$baseUrl/usuarios/api/tratamientos-cronicos/$idPaciente/'),
     );
 
     if (response.statusCode == 200) {
-      // Si la petición fue exitosa, procesamos la respuesta
       setState(() {
-        EnfermedadesPersistente = jsonDecode(utf8.decode(response.bodyBytes));  // Decodificar la respuesta JSON
+        Tratamientofrecuente = jsonDecode(utf8.decode(response.bodyBytes));
       });
     } else {
-      // Si hubo un error en la petición
-      throw Exception('Error al cargar Enfermedades');
-    }
-  }
-  IconData _getIcon(String tipo) {
-    switch (tipo) {
-      case 'Endocrina':
-        return Icons.water_drop;
-      case 'Cardiovascular':
-        return Icons.favorite;
-      case 'Respiratoria':
-        return Icons.air;
-      case 'Neurológica':
-        return Icons.memory;
-      case 'Psiquiátrica':
-        return Icons.psychology;
-      case 'Gastrointestinal':
-        return Icons.lunch_dining;
-      case 'Reumatológica':
-        return Icons.accessibility_new;
-      case 'Renal':
-        return Icons.opacity;
-      case 'Hematológica':
-        return Icons.bloodtype;
-      case 'Infecciosa':
-        return Icons.sick;
-      default:
-        return Icons.device_unknown;
+      throw Exception('Error al cargar vacunas');
     }
   }
 
-  Color _getColor(String tipo) {
-    switch (tipo) {
-      case 'Endocrina':
-        return Colors.purple;
-      case 'Cardiovascular':
-        return Colors.red;
-      case 'Respiratoria':
-        return Colors.lightBlue;
-      case 'Neurológica':
-        return Colors.indigo;
-      case 'Psiquiátrica':
-        return Colors.deepOrange;
-      case 'Gastrointestinal':
-        return Colors.brown;
-      case 'Reumatológica':
-        return Colors.teal;
-      case 'Renal':
-        return Colors.blueGrey;
-      case 'Hematológica':
-        return Colors.pink;
-      case 'Infecciosa':
-        return Colors.green;
-      default:
-        return Colors.grey;
+  Future<void> eliminarTratamientofrecuente(int idAlergiaPaciente) async {
+    final url = Uri.parse('$baseUrl/usuarios/api/paciente_medicamento_cronico/$idAlergiaPaciente/');
+
+    try {
+      final response = await http.delete(url);
+
+      if (response.statusCode == 204) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Tratamiento eliminada correctamente")),
+        );
+        await _fetchTratamientofrecuente(); // Actualizar la lista después de eliminar
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error al eliminar: ${response.statusCode}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al conectar con el servidor")),
+      );
+      print('Error: $e');
     }
   }
+  Future<void> editarTratamientofrecuente({required int id, required String dosis, required String frecuencia, required String observacion,}) async {
 
+    final url = Uri.parse('$baseUrl//usuarios/api/paciente_medicamento_cronico/$id/');
 
+    try {
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'dosis':dosis,
+          'frecuencia': frecuencia,
+          'observacion': observacion,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('Alergia actualizada exitosamente');
+      } else {
+        print('Error al editar alergia: ${response.statusCode}');
+        print(response.body);
+      }
+    } catch (e) {
+      print('Excepción al editar alergia: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -349,7 +352,7 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
   Future<void> _inicializarDatos() async {
     await obtenerDatos(); // no es necesario await si no depende de datos
     await obtenerDatosPacienteSangre(widget.idusuario);
-    await _fetchEnfermedadesPersistente(); // Llamar después de que idPaciente esté disponible
+    await _fetchTratamientofrecuente(); // Llamar después de que idPaciente esté disponible
   }
 
 
@@ -409,14 +412,14 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
                           children: [
                             SizedBox(height: 12),
                             Text(
-                              "GESTOR DE TRATAMIENTO",
+                              "GESTOR DE TRATAMIENTO FRECUENTE",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize:22,
+                                fontSize:16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 8),
+                            SizedBox(height: 6),
                             Text(
                               nombreUsuario,
                               style: TextStyle(color: Colors.white.withOpacity(0.7),fontSize: 30),
@@ -424,6 +427,7 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
                           ],
                         ),
                         SizedBox(height: 12.0),
+
                       ],
                     ),
                   ],
@@ -443,11 +447,11 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      // Botón de "Añadir enfermedad"
+                      // Botón "Añadir Tratamiento"
                       Align(
                         alignment: Alignment.center,
                         child: GestureDetector(
-                          onTap: _mostrarDialogoEnfermedades, // Reemplaza con tu función
+                          onTap: _mostrarDialogoTratamientoFrecuente, // Define tu función aquí
                           child: Container(
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
@@ -471,7 +475,7 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
                                 ),
                                 SizedBox(width: 8),
                                 Text(
-                                  "Añadir Tratamiento frecuente",
+                                  "Añadir Tratamiento Frecuente",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -483,14 +487,15 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Lista de enfermedades persistentes
+
+                      // Lista de vacunas
                       Expanded(
-                        child: EnfermedadesPersistente.isEmpty
+                        child: Tratamientofrecuente.isEmpty
                             ? const Center(child: CircularProgressIndicator())
                             : ListView.builder(
-                          itemCount: EnfermedadesPersistente.length,
+                          itemCount: Tratamientofrecuente.length,
                           itemBuilder: (context, index) {
-                            String tipo = EnfermedadesPersistente[index]['Tipo_enfermedad'];
+                            final item = Tratamientofrecuente[index];
                             return Card(
                               margin: const EdgeInsets.only(bottom: 10),
                               shape: RoundedRectangleBorder(
@@ -498,61 +503,189 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
                               ),
                               color: Colors.white,
                               elevation: 3,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Row(
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(10),
+                                title: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Parte izquierda con color e ícono
+                                    // Icono de vacuna
                                     Container(
                                       width: 60,
-                                      height: 100,
+                                      height: 60,
                                       decoration: BoxDecoration(
-                                        color: _getColor(tipo),
+                                        color: Colors.blue,
                                         borderRadius: BorderRadius.circular(10),
                                       ),
-                                      child: Center(
-                                        child: Icon(
-                                          _getIcon(tipo),
-                                          size: 40,
-                                          color: Colors.white,
+                                      child: const Center(
+                                        child: Text(
+                                          '💉',
+                                          style: TextStyle(fontSize: 30),
                                         ),
                                       ),
                                     ),
                                     const SizedBox(width: 15),
 
-                                    // Información de la enfermedad
+                                    // Información + check en Stack
                                     Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                      child: Stack(
                                         children: [
-                                          Text(
-                                            EnfermedadesPersistente[index]['nombre_enfermedad'],
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black,
+                                          // Texto y detalles con padding para no tapar por el icono
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 8.0, right: 40),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                // Nombre con espacio para el icono a la derecha
+                                                Padding(
+                                                  padding: const EdgeInsets.only(right: 40.0),
+                                                  child: Text(
+                                                    item['nombre_medicamento'],
+                                                    style: const TextStyle(
+                                                      fontSize: 20,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  'Inicio: ${item['fecha_inicio']}',
+                                                  style: const TextStyle(color: Colors.black54),
+                                                ),
+                                                Text(
+                                                  'Dosis: ${item['dosis']}',
+                                                  style: const TextStyle(color: Colors.black54),
+                                                ),
+                                                Text(
+                                                  'Frecuencia: ${item['frecuencia']}',
+                                                  style: const TextStyle(color: Colors.black54),
+                                                ),
+                                                if (item['observaciones'] != null &&
+                                                    item['observaciones'].toString().isNotEmpty)
+                                                  Text(
+                                                    'Observaciones: ${item['observaciones']}',
+                                                    style: const TextStyle(color: Colors.black54),
+                                                  ),
+                                                const SizedBox(height: 4),
+                                                if (item['aprobado'] != true)
+                                                  const Text(
+                                                    'No aprobado',
+                                                    style: TextStyle(
+                                                      color: Colors.red,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                if (item['doctor_aprobador'] != null &&
+                                                    item['doctor_aprobador'].toString().isNotEmpty)
+                                                  Text(
+                                                    'Doctor: ${item['doctor_aprobador']}',
+                                                    style: const TextStyle(color: Colors.black87),
+                                                  ),
+                                              ],
                                             ),
                                           ),
-                                          Text(
-                                            'Tipo: ${EnfermedadesPersistente[index]['Tipo_enfermedad']}',
-                                            style: const TextStyle(color: Colors.black54),
-                                          ),
-                                          Text(
-                                            'Observación: ${EnfermedadesPersistente[index]['observacion']}',
-                                            style: const TextStyle(color: Colors.black54),
-                                          ),
+
+                                          // Icono verificado azul en la esquina superior derecha del Stack
+                                          if (item['aprobado'] == true)
+                                            const Positioned(
+                                              top: 0,
+                                              right: 0,
+                                              child: Icon(
+                                                Icons.verified,
+                                                color: Colors.blue,
+                                                size: 28,
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ),
+                                    SizedBox(height: 50,),
 
-                                    // Iconos de editar y eliminar
+                                    // Botones editar y eliminar
                                     Column(
                                       children: [
-                                        const Icon(Icons.edit, color: Colors.black54),
+                                        IconButton(
+                                          icon: const Icon(Icons.edit, color: Colors.black54),
+                                          onPressed: () {
+                                            final dosisController = TextEditingController(text: item['dosis']);
+                                            final frecuenciaController = TextEditingController(text: item['frecuencia']);
+                                            final observacionController = TextEditingController(text: item['observacion']);
+
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: const Text('Editar Tratamiento Frecuente'),
+                                                content: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    const SizedBox(height: 10),
+                                                    TextField(
+                                                      controller: dosisController,
+                                                      decoration: const InputDecoration(labelText: 'Dosis'),
+                                                      maxLines: 2,
+                                                    ),
+                                                    TextField(
+                                                      controller: frecuenciaController,
+                                                      decoration: const InputDecoration(labelText: 'Frecuencia'),
+                                                      maxLines: 2,
+                                                    ),
+                                                    TextField(
+                                                      controller: observacionController,
+                                                      decoration: const InputDecoration(labelText: 'Observación'),
+                                                      maxLines: 2,
+                                                    ),
+                                                  ],
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.of(context).pop(),
+                                                    child: const Text('Cancelar'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () async {
+                                                      Navigator.of(context).pop();
+                                                      await editarTratamientofrecuente(
+                                                        id: item['id'],
+                                                        dosis: dosisController.text,
+                                                        frecuencia: frecuenciaController.text,
+                                                        observacion: observacionController.text,
+                                                      );
+                                                      setState(() {
+                                                        item['dosis'] = dosisController.text;
+                                                        item['frecuencia'] = frecuenciaController.text;
+                                                        item['observacion'] = observacionController.text;
+                                                      });
+                                                    },
+                                                    child: const Text('Guardar'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
                                         IconButton(
                                           icon: const Icon(Icons.delete, color: Colors.red),
                                           onPressed: () {
-                                            // Lógica para eliminar la enfermedad
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: const Text('Confirmar eliminación'),
+                                                content: const Text('¿Estás seguro de que deseas eliminar este Tratamiento Frecuente?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.of(context).pop(),
+                                                    child: const Text('Cancelar'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () async {
+                                                      Navigator.of(context).pop();
+                                                      await eliminarTratamientofrecuente(item['id']);
+                                                    },
+                                                    child: const Text('Eliminar'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
                                           },
                                         ),
                                       ],
@@ -564,10 +697,12 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
                           },
                         ),
                       ),
+
                     ],
                   ),
                 ),
               )
+
 
 
 
@@ -585,16 +720,16 @@ class _Vistatratamientofrecuente extends State<Vistatratamientofrecuente> {
   }
 }
 
-Future<List<EnfermedadPersistente>> fetchEnfermedadesPersistente(String tipo) async {
-  final url = Uri.parse('$baseUrl/usuarios/api/enfermedades-persistentes/?tipo=$tipo');
+Future<List<TratamientoFrecuente>> fetchTratamientofrecuente() async {
+  final url = Uri.parse('$baseUrl/usuarios/api/medicamentos/');
   final response = await http.get(url);
 
   if (response.statusCode == 200) {
     final utf8DecodedBody = utf8.decode(response.bodyBytes);
-    // Si la solicitud es exitosa, parsea los datos
     List<dynamic> data = json.decode(utf8DecodedBody);
-    return data.map((json) => EnfermedadPersistente.fromJson(json)).toList();
+    return data.map((json) => TratamientoFrecuente.fromJson(json)).toList();
   } else {
-    throw Exception('Error al cargar las alergias');
+    throw Exception('Error al cargar las vacunas');
   }
 }
+

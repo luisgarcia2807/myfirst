@@ -14,6 +14,7 @@ import 'package:mifirst/theme/theme.dart';
 import 'package:mifirst/widgets/custom_scaffold.dart';
 
 import '../util/Informacion_principal.dart';
+import 'Escaner.dart';
 import 'centro_medico_screen.dart';
 import 'fotoPerfil.dart';
 import 'informacion_Principal.dart';
@@ -114,7 +115,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const Vistatratamientofrecuente(idusuario: 1,),
+                              builder: (context) => ScanView(),
                             ),
                           );
                         },

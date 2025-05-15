@@ -338,6 +338,55 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
     }
   }
 
+  Future<void> eliminarEnfermedadesPersistente(int idAlergiaPaciente) async {
+    final url = Uri.parse('$baseUrl/usuarios/api/pacientes_enfermedades/$idAlergiaPaciente/');
+
+    try {
+      final response = await http.delete(url);
+
+      if (response.statusCode == 204) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Alergia eliminada correctamente")),
+        );
+        await _fetchEnfermedadesPersistente(); // Actualizar la lista después de eliminar
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error al eliminar: ${response.statusCode}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al conectar con el servidor")),
+      );
+      print('Error: $e');
+    }
+  }
+  Future<void> editarEnfermedadesPersistente({required int id, required String observacion,}) async {
+
+    final url = Uri.parse('$baseUrl//usuarios/api/pacientes_enfermedades/$id/');
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'observacion': observacion,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('Alergia actualizada exitosamente');
+      } else {
+        print('Error al editar alergia: ${response.statusCode}');
+        print(response.body);
+      }
+    } catch (e) {
+      print('Excepción al editar alergia: $e');
+    }
+  }
+
 
 
   @override
@@ -548,11 +597,80 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                                     // Iconos de editar y eliminar
                                     Column(
                                       children: [
-                                        const Icon(Icons.edit, color: Colors.black54),
                                         IconButton(
-                                          icon: const Icon(Icons.delete, color: Colors.red),
+                                          icon: Icon(Icons.edit, color: Colors.black54),
                                           onPressed: () {
-                                            // Lógica para eliminar la enfermedad
+                                            final TextEditingController observacionController = TextEditingController(
+                                              text: EnfermedadesPersistente[index]['observacion'],
+                                            );
+
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: Text('Editar alergia'),
+                                                content: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+
+
+                                                    // Campo de texto para observación
+                                                    TextField(
+                                                      controller: observacionController,
+                                                      decoration: InputDecoration(labelText: 'Observación'),
+                                                      maxLines: 2,
+                                                    ),
+                                                  ],
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.of(context).pop(),
+                                                    child: Text('Cancelar'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () async {
+                                                      Navigator.of(context).pop();
+
+                                                      await editarEnfermedadesPersistente(
+                                                        id: EnfermedadesPersistente[index]['id'],
+                                                        observacion: observacionController.text,
+                                                      );
+
+                                                      // Actualiza los valores en la lista
+                                                      setState(() {
+
+                                                        EnfermedadesPersistente[index]['observacion'] = observacionController.text;
+                                                      });
+                                                    },
+                                                    child: Text('Guardar'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: Icon(Icons.delete, color: Colors.red),
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: Text('Confirmar eliminación'),
+                                                content: Text('¿Estás seguro de que deseas eliminar esta alergia?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.of(context).pop(),
+                                                    child: Text('Cancelar'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () async {
+                                                      Navigator.of(context).pop();
+                                                      await eliminarEnfermedadesPersistente(EnfermedadesPersistente[index]['id']);// Usa aquí el ID real
+                                                    },
+                                                    child: Text('Eliminar'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
                                           },
                                         ),
                                       ],
