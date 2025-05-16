@@ -8,6 +8,7 @@ import 'package:mifirst/screens/registrar_doctor.dart';
 import 'package:mifirst/screens/registrarse.dart';
 import 'package:mifirst/screens/vista_alergia.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
+import 'package:mifirst/screens/vista_examenlaboratorio.dart';
 import 'package:mifirst/screens/vista_tramientofrecuente.dart';
 import 'package:mifirst/screens/vista_vacuna.dart';
 import 'package:mifirst/theme/theme.dart';
@@ -128,7 +129,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => CambiarFotoScreen(idusuario: 1,),
+                              builder: (context) => ExamenesPage(idusuario: 1,),
                             ),
                           );
                         },

@@ -32,10 +32,8 @@ class _VistaAlergia extends State<VistaAlergia> {
   String? tipoSeleccionado= 'medicamento';
   int? selectedAlergiaId;
   List<dynamic> alergias = [];  // Lista para almacenar las alergias
-
-
-
   final TextEditingController _descripcionAlergiaController = TextEditingController();
+
 
   Future<void> obtenerDatos() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');

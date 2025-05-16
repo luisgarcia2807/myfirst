@@ -53,52 +53,91 @@ class _ScanViewState extends State<ScanView> {
     }
 
     final picked = await ImagePicker().pickImage(source: ImageSource.camera);
-    if (picked != null) {
-      _imageBytesToCrop = await picked.readAsBytes();
+    if (picked == null) return;
 
-      // Mostrar diálogo para recortar la imagen
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          contentPadding: EdgeInsets.zero,
-          content: SizedBox(
-            width: 300,
-            height: 400,
-            child: Crop(
-              image: _imageBytesToCrop!,
-              controller: _cropController,
-              onCropped: (croppedData) async {
-                Navigator.of(context).pop();
+    _imageBytesToCrop = await picked.readAsBytes();
 
-                final tempDir = await getTemporaryDirectory();
-                final path =
-                    '${tempDir.path}/cropped_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                File finalImage = await File(path).writeAsBytes(croppedData);
+    // Mostrar diálogo para recortar
+    await showDialog(
+      context: context,
+      barrierDismissible: false, // Evita que se cierre al tocar fuera
+      builder: (_) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            contentPadding: EdgeInsets.zero,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 300,
+                  height: 400,
+                  child: Crop(
+                    image: _imageBytesToCrop!,
+                    controller: _cropController,
+                    onCropped: (croppedData) async {
+                      try {
+                        final tempDir = await getTemporaryDirectory();
+                        final path = '${tempDir.path}/cropped_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                        File finalImage = await File(path).writeAsBytes(croppedData);
 
-                if (_mejorarImagen) {
-                  final img.Image? original =
-                  img.decodeImage(await finalImage.readAsBytes());
-                  if (original != null) {
-                    final mejorada =
-                    img.adjustColor(original, contrast: 1.2, brightness: 0.1);
-                    final mejoradaPath =
-                        '${tempDir.path}/mejorada_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                    final nuevaImagen =
-                    File(mejoradaPath)..writeAsBytesSync(img.encodeJpg(mejorada));
-                    finalImage = nuevaImagen;
-                  }
-                }
+                        // Mejorar imagen si corresponde
+                        if (_mejorarImagen) {
+                          final original = img.decodeImage(croppedData);
+                          if (original != null) {
+                            final mejorada = img.adjustColor(
+                              original,
+                              contrast: 1.2,
+                              brightness: 0.1,
+                            );
+                            final mejoradaPath = '${tempDir.path}/mejorada_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                            finalImage = File(mejoradaPath)
+                              ..writeAsBytesSync(img.encodeJpg(mejorada));
+                          }
+                        }
 
-                setState(() => _imagenes.add(finalImage));
-              },
-              fixArea: true,
-              aspectRatio: 1.0,
+                        if (mounted) {
+                          setState(() => _imagenes.add(finalImage));
+                          Navigator.of(context).pop(); // Cierra el diálogo
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error al procesar imagen: $e')),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Cerrar recorte
+                      },
+                      child: const Text('Cancelar'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Delay para evitar conflictos con el contexto
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          _cropController.crop();
+                        });
+                      },
+                      child: const Text('Aceptar'),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-        ),
-      );
-    }
+          );
+        },
+      ),
+    );
   }
+
 
   Future<void> _saveAsPdf() async {
     if (_imagenes.isEmpty) return;
