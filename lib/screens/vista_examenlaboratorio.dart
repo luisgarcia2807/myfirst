@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:mifirst/screens/Escaner.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
@@ -312,41 +313,99 @@ class _ExamenesPageState extends State<ExamenesPage> {
                         padding: const EdgeInsets.all(20),
                         child: Column(
                           children: [
-                            Align(
-                              alignment: Alignment.center,
-                              child: GestureDetector(
-                                onTap: () {},
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Color(0xFF0D47A1),
-                                        Color(0xFF1976D2),
-                                        Color(0xFF42A5F5),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.add_circle_outline_sharp, color: Colors.white),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        "Añadir Examen",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Flexible(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ScanView(idPaciente: idPaciente),
                                         ),
+                                      );
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Color(0xFF0D47A1),
+                                            Color(0xFF1976D2),
+                                            Color(0xFF42A5F5),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
-                                    ],
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.camera_alt_outlined, color: Colors.white, size: 20),
+                                          SizedBox(width: 6),
+                                          Flexible(
+                                            child: Text(
+                                              "Scanear Examen",
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                                const SizedBox(width: 10),
+                                Flexible(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      // Función futura
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Color(0xFF0D47A1),
+                                            Color(0xFF1976D2),
+                                            Color(0xFF42A5F5),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.file_present_sharp, color: Colors.white, size: 20),
+                                          SizedBox(width: 6),
+                                          Flexible(
+                                            child: Text(
+                                              "Subir Examen",
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
+
+
                             const SizedBox(height: 12),
                             Expanded(
                               child: examenes.isEmpty

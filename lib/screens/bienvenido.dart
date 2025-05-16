@@ -3,6 +3,7 @@ import 'package:mifirst/screens/iniciar_sesion.dart';
 import 'package:mifirst/screens/pantalla_doctor_escritorio.dart';
 import 'package:mifirst/screens/pantalla_doctor_mobile.dart';
 import 'package:mifirst/screens/pantallapaciente.dart';
+import 'package:mifirst/screens/prueba%20de%20imagen.dart';
 import 'package:mifirst/screens/pruebadeimagen.dart';
 import 'package:mifirst/screens/registrar_doctor.dart';
 import 'package:mifirst/screens/registrarse.dart';
@@ -116,7 +117,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ScanView(),
+                              builder: (context) => ScanView(idPaciente: 2,),
                             ),
                           );
                         },
@@ -129,7 +130,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ExamenesPage(idusuario: 1,),
+                              builder: (context) => ExamenesPage(idusuario: 16,),
                             ),
                           );
                         },

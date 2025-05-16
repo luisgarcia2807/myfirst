@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';  // Para Uint8List
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mifirst/screens/prueba%20de%20imagen.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
@@ -16,7 +17,8 @@ import 'package:crop_your_image/crop_your_image.dart';
 import '../constans.dart'; // Ajusta la ruta según tu proyecto
 
 class ScanView extends StatefulWidget {
-  const ScanView({super.key});
+  final int idPaciente;
+  const ScanView({super.key, required this.idPaciente});
 
   @override
   State<ScanView> createState() => _ScanViewState();
@@ -24,8 +26,14 @@ class ScanView extends StatefulWidget {
 
 class _ScanViewState extends State<ScanView> {
   List<File> _imagenes = [];
+  List<File> _imagenesRecortadas = []; // <-- Nueva lista para las imágenes recortadas originales
+  List<Uint8List> imagenesOriginales = [];
   File? _pdfFile;
   bool _mejorarImagen = false;
+  bool _usarRecortadas = false;
+
+
+
 
   final List<String> _opcionesExamen = [
     'Radiografía',
@@ -57,10 +65,9 @@ class _ScanViewState extends State<ScanView> {
 
     _imageBytesToCrop = await picked.readAsBytes();
 
-    // Mostrar diálogo para recortar
     await showDialog(
       context: context,
-      barrierDismissible: false, // Evita que se cierre al tocar fuera
+      barrierDismissible: false,
       builder: (_) => StatefulBuilder(
         builder: (context, setStateDialog) {
           return AlertDialog(
@@ -77,26 +84,42 @@ class _ScanViewState extends State<ScanView> {
                     onCropped: (croppedData) async {
                       try {
                         final tempDir = await getTemporaryDirectory();
-                        final path = '${tempDir.path}/cropped_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                        File finalImage = await File(path).writeAsBytes(croppedData);
 
-                        // Mejorar imagen si corresponde
+                        // 1. Guardar la imagen recortada (como "original" desde tu punto de vista)
+                        final croppedPath = '${tempDir.path}/original_recortada_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                        final croppedFile = await File(croppedPath).writeAsBytes(croppedData);
+
+                        if (mounted) {
+                          setState(() => _imagenesRecortadas.add(croppedFile)); // Guardar recortada como "original"
+                        }
+
+                        // 2. Procesar la imagen recortada
+                        Uint8List? imagenProcesadaBytes = await ProcesadorDeDocumento.procesar(croppedFile);
+
+                        if (imagenProcesadaBytes == null) {
+                          throw Exception('Error al procesar imagen');
+                        }
+
+                        // 3. Guardar la imagen procesada
+                        final processedPath = '${tempDir.path}/procesada_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                        File processedFile = await File(processedPath).writeAsBytes(imagenProcesadaBytes);
+
+                        // 4. Mejora adicional si se habilitó
                         if (_mejorarImagen) {
-                          final original = img.decodeImage(croppedData);
+                          final original = img.decodeImage(imagenProcesadaBytes);
                           if (original != null) {
                             final mejorada = img.adjustColor(
                               original,
                               contrast: 1.2,
                               brightness: 0.1,
                             );
-                            final mejoradaPath = '${tempDir.path}/mejorada_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                            finalImage = File(mejoradaPath)
+                            processedFile = File(processedPath)
                               ..writeAsBytesSync(img.encodeJpg(mejorada));
                           }
                         }
 
                         if (mounted) {
-                          setState(() => _imagenes.add(finalImage));
+                          setState(() => _imagenes.add(processedFile)); // Guardar la imagen procesada
                           Navigator.of(context).pop(); // Cierra el diálogo
                         }
                       } catch (e) {
@@ -115,15 +138,14 @@ class _ScanViewState extends State<ScanView> {
                   children: [
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).pop(); // Cerrar recorte
+                        Navigator.of(context).pop(); // Cancelar recorte
                       },
                       child: const Text('Cancelar'),
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        // Delay para evitar conflictos con el contexto
                         Future.delayed(const Duration(milliseconds: 100), () {
-                          _cropController.crop();
+                          _cropController.crop(); // Inicia recorte
                         });
                       },
                       child: const Text('Aceptar'),
@@ -139,17 +161,23 @@ class _ScanViewState extends State<ScanView> {
   }
 
 
+  // Modificar _saveAsPdf para que solo cree el PDF y lo guarde
+
   Future<void> _saveAsPdf() async {
-    if (_imagenes.isEmpty) return;
+    final listaImagenes = _usarRecortadas ? _imagenesRecortadas : _imagenes;
+
+    if (listaImagenes.isEmpty) return;
 
     final pdf = pw.Document();
 
-    for (File imagen in _imagenes) {
+    for (File imagen in listaImagenes) {
       final image = pw.MemoryImage(imagen.readAsBytesSync());
       pdf.addPage(
         pw.Page(
           pageFormat: PdfPageFormat.a4,
-          build: (context) => pw.Center(child: pw.Image(image, fit: pw.BoxFit.contain)),
+          build: (context) => pw.Center(
+            child: pw.Image(image, fit: pw.BoxFit.contain),
+          ),
         ),
       );
     }
@@ -161,11 +189,27 @@ class _ScanViewState extends State<ScanView> {
     setState(() => _pdfFile = file);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('PDF creado. Subiendo...')),
+      const SnackBar(content: Text('PDF creado correctamente')),
+    );
+  }
+
+
+// Nuevo método para subir PDF manualmente
+  Future<void> _uploadPdf() async {
+    if (_pdfFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Primero crea el PDF')),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Subiendo PDF...')),
     );
 
-    await _subirPdfAlServidor(file);
+    await _subirPdfAlServidor(_pdfFile!);
   }
+
 
   Future<void> _subirPdfAlServidor(File archivo) async {
     try {
@@ -173,7 +217,7 @@ class _ScanViewState extends State<ScanView> {
       final request = http.MultipartRequest('POST', uri);
 
       request.files.add(await http.MultipartFile.fromPath('archivo', archivo.path));
-      request.fields['paciente'] = pacienteId.toString();
+      request.fields['paciente'] = widget.idPaciente.toString();
       request.fields['nombre_examen'] = _nombreExamenSeleccionado ?? 'Sin especificar';
       request.fields['descripcion'] = _descripcionController.text;
       request.fields['fecha_realizacion'] = _fechaRealizacion.toIso8601String().split('T').first;
@@ -216,6 +260,7 @@ class _ScanViewState extends State<ScanView> {
       const Color(0xFF7E57C2),
       const Color(0xFF26C6DA),
     ];
+    final listaAMostrar = _usarRecortadas ? _imagenesRecortadas : _imagenes;
 
     return Scaffold(
       appBar: AppBar(
@@ -237,38 +282,46 @@ class _ScanViewState extends State<ScanView> {
         child: Center(
           child: Column(
             children: [
-              if (_imagenes.isNotEmpty)
-                SizedBox(
-                  height: 200,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _imagenes.length,
-                    itemBuilder: (context, index) {
-                      return Stack(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Image.file(_imagenes[index]),
-                          ),
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                            child: IconButton(
-                              icon: const Icon(Icons.close, color: Colors.red),
-                              onPressed: () => setState(() => _imagenes.removeAt(index)),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
+
+              if (listaAMostrar.isNotEmpty)
+          SizedBox(
+          height: 200,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: listaAMostrar.length,
+            itemBuilder: (context, index) {
+              return Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Image.file(listaAMostrar[index]),
                   ),
-                )
-              else
-                const Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Text('No se han añadido imágenes.'),
-                ),
-              DropdownButtonFormField<String>(
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.red),
+                      onPressed: () => setState(() {
+                        if (_usarRecortadas) {
+                          _imagenesRecortadas.removeAt(index);
+                        } else {
+                          _imagenes.removeAt(index);
+                        }
+                      }),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        )
+          else
+          const Padding(
+          padding: EdgeInsets.all(20),
+      child: Text('No se han añadido imágenes.'),
+    ),
+
+    DropdownButtonFormField<String>(
                 decoration: const InputDecoration(labelText: 'Tipo de examen'),
                 value: _nombreExamenSeleccionado,
                 items: _opcionesExamen.map((String tipo) {
@@ -323,16 +376,39 @@ class _ScanViewState extends State<ScanView> {
                   backgroundColor: colores[1],
                 ),
               ),
+              SwitchListTile(
+                title: const Text('Usar imágenes recortadas'),
+                value: _usarRecortadas,
+                onChanged: (value) {
+                  setState(() {
+                    _usarRecortadas = value;
+                  });
+                },
+              ),
+
               const SizedBox(height: 10),
               ElevatedButton.icon(
                 icon: const Icon(Icons.picture_as_pdf),
-                label: const Text('Crear y Subir PDF'),
+                label: const Text('Crear PDF'),
                 onPressed: _saveAsPdf,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colores[2],
                 ),
               ),
+
               const SizedBox(height: 10),
+
+              ElevatedButton.icon(
+                icon: const Icon(Icons.cloud_upload),
+                label: const Text('Subir PDF'),
+                onPressed: _pdfFile != null ? _uploadPdf : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colores[4],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
               if (_pdfFile != null)
                 ElevatedButton.icon(
                   icon: const Icon(Icons.visibility),
@@ -342,6 +418,9 @@ class _ScanViewState extends State<ScanView> {
                     backgroundColor: colores[3],
                   ),
                 ),
+
+              const SizedBox(height: 10),
+
             ],
           ),
         ),
