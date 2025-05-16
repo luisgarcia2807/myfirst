@@ -1,7 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';  // Para Uint8List
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
@@ -10,7 +10,10 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 
-import '../constans.dart'; // Asegúrate de que esta ruta sea correcta
+// Import para crop_your_image:
+import 'package:crop_your_image/crop_your_image.dart';
+
+import '../constans.dart'; // Ajusta la ruta según tu proyecto
 
 class ScanView extends StatefulWidget {
   const ScanView({super.key});
@@ -34,7 +37,11 @@ class _ScanViewState extends State<ScanView> {
   String? _nombreExamenSeleccionado;
   final TextEditingController _descripcionController = TextEditingController();
   DateTime _fechaRealizacion = DateTime.now();
-  final int pacienteId = 1; // ⚠️ Cambiar por el ID real del paciente
+  final int pacienteId = 1; // Cambia por el ID real del paciente
+
+  // Controlador para crop_your_image
+  final _cropController = CropController();
+  Uint8List? _imageBytesToCrop;
 
   Future<void> _pickAndCropImage() async {
     final status = await Permission.camera.request();
@@ -47,34 +54,49 @@ class _ScanViewState extends State<ScanView> {
 
     final picked = await ImagePicker().pickImage(source: ImageSource.camera);
     if (picked != null) {
-      final cropped = await ImageCropper().cropImage(
-        sourcePath: picked.path,
-        aspectRatioPresets: [CropAspectRatioPreset.original],
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Recortar imagen',
-            toolbarColor: Colors.blue,
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: CropAspectRatioPreset.original,
-            lockAspectRatio: false,
+      _imageBytesToCrop = await picked.readAsBytes();
+
+      // Mostrar diálogo para recortar la imagen
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          contentPadding: EdgeInsets.zero,
+          content: SizedBox(
+            width: 300,
+            height: 400,
+            child: Crop(
+              image: _imageBytesToCrop!,
+              controller: _cropController,
+              onCropped: (croppedData) async {
+                Navigator.of(context).pop();
+
+                final tempDir = await getTemporaryDirectory();
+                final path =
+                    '${tempDir.path}/cropped_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                File finalImage = await File(path).writeAsBytes(croppedData);
+
+                if (_mejorarImagen) {
+                  final img.Image? original =
+                  img.decodeImage(await finalImage.readAsBytes());
+                  if (original != null) {
+                    final mejorada =
+                    img.adjustColor(original, contrast: 1.2, brightness: 0.1);
+                    final mejoradaPath =
+                        '${tempDir.path}/mejorada_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                    final nuevaImagen =
+                    File(mejoradaPath)..writeAsBytesSync(img.encodeJpg(mejorada));
+                    finalImage = nuevaImagen;
+                  }
+                }
+
+                setState(() => _imagenes.add(finalImage));
+              },
+              fixArea: true,
+              aspectRatio: 1.0,
+            ),
           ),
-        ],
+        ),
       );
-      if (cropped != null) {
-        File finalImage = File(cropped.path);
-
-        if (_mejorarImagen) {
-          final img.Image? original = img.decodeImage(await finalImage.readAsBytes());
-          if (original != null) {
-            final mejorada = img.adjustColor(original, contrast: 1.2, brightness: 0.1);
-            final tempPath = '${(await getTemporaryDirectory()).path}/mejorada_${DateTime.now().millisecondsSinceEpoch}.jpg';
-            final nuevaImagen = File(tempPath)..writeAsBytesSync(img.encodeJpg(mejorada));
-            finalImage = nuevaImagen;
-          }
-        }
-
-        setState(() => _imagenes.add(finalImage));
-      }
     }
   }
 
@@ -258,22 +280,28 @@ class _ScanViewState extends State<ScanView> {
                 icon: const Icon(Icons.camera_alt),
                 label: const Text('Agregar imagen'),
                 onPressed: _pickAndCropImage,
-                style: ElevatedButton.styleFrom(backgroundColor: colores[2]),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colores[1],
+                ),
               ),
               const SizedBox(height: 10),
               ElevatedButton.icon(
-                icon: const Icon(Icons.upload_file),
-                label: const Text('Guardar y subir PDF'),
+                icon: const Icon(Icons.picture_as_pdf),
+                label: const Text('Crear y Subir PDF'),
                 onPressed: _saveAsPdf,
-                style: ElevatedButton.styleFrom(backgroundColor: colores[3]),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colores[2],
+                ),
               ),
               const SizedBox(height: 10),
               if (_pdfFile != null)
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.picture_as_pdf),
-                  label: const Text('Ver PDF generado'),
+                  icon: const Icon(Icons.visibility),
+                  label: const Text('Ver PDF'),
                   onPressed: _verPdfPreview,
-                  style: ElevatedButton.styleFrom(backgroundColor: colores[4]),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colores[3],
+                  ),
                 ),
             ],
           ),
@@ -285,14 +313,17 @@ class _ScanViewState extends State<ScanView> {
 
 class PdfPreviewScreen extends StatelessWidget {
   final File file;
+
   const PdfPreviewScreen({super.key, required this.file});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Vista previa del PDF")),
+      appBar: AppBar(
+        title: const Text('Vista previa PDF'),
+      ),
       body: PdfPreview(
-        build: (format) => file.readAsBytes(),
+        build: (format) => file.readAsBytesSync(),
       ),
     );
   }
