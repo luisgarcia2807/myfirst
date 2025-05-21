@@ -5,7 +5,10 @@ import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/registrarCredencial.dart';
 import 'package:mifirst/screens/vista_alergia.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
+import 'package:mifirst/screens/vista_examenlaboratorio.dart';
+import 'package:mifirst/screens/vista_imagenologia.dart';
 import 'package:mifirst/screens/vista_tramientofrecuente.dart';
+import 'package:mifirst/screens/vista_tratamiento_actual.dart';
 import 'package:mifirst/screens/vista_vacuna.dart';
 import '../util/emoticon_face.dart';
 import '../constans.dart';
@@ -310,10 +313,10 @@ class _PacienteScreen extends State<PacienteScreen> {
                             },
                           ),
                           CardItem(
-                            emoji: '💊', // Emoji más expresivo para alergias
+                            emoji: '🧪', // Emoji más expresivo para alergias
                             title: 'Alergias',
                             subtitle: 'Ver todas',
-                            color: Colors.orange,
+                            color: Colors.green.shade700,
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -327,7 +330,7 @@ class _PacienteScreen extends State<PacienteScreen> {
                             emoji: '💉', // Emoji representativo para vacunas
                             title: 'Vacunas',
                             subtitle: 'Ver todas',
-                            color: Colors.green.shade700,
+                            color: Colors.orange,
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -337,6 +340,21 @@ class _PacienteScreen extends State<PacienteScreen> {
                               );
                             },
                           ),
+                          CardItem(
+                            emoji: '💊',
+                            title: 'Tratamiento Actual',
+                            subtitle: 'Medicamentos en curso',
+                            color: Colors.teal.shade600,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => VistaTratamientoActualmente(idusuario: widget.idusuario),
+                                ),
+                              );
+                            },
+                          ),
+
                           CardItem(
                             emoji: '🏥', // Representa enfermedades o chequeo médico
                             title: 'Enfermedades Persistentes',
@@ -371,8 +389,31 @@ class _PacienteScreen extends State<PacienteScreen> {
                             emoji: '🔬',
                             title: 'Exámenes',
                             subtitle: 'Últimos resultados',
-                            color: Colors.blueAccent.shade700,
+                            color: Colors.red.shade700,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ExamenesPage(idusuario: widget.idusuario),
+                                ),
+                              );
+                            },
                           ),
+                          CardItem(
+                            emoji: '🖼️',
+                            title: 'Imagenología',
+                            subtitle: 'Últimos resultados',
+                            color: Colors.indigo.shade700,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ImagenPage(idusuario: widget.idusuario),
+                                ),
+                              );
+                            },
+                          ),
+
                           CardItem(
                             emoji: '📑',
                             title: 'Póliza de Seguro',

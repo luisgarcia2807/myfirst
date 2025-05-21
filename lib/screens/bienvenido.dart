@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mifirst/screens/Escanerimagenologia.dart';
 import 'package:mifirst/screens/iniciar_sesion.dart';
 import 'package:mifirst/screens/pantalla_doctor_escritorio.dart';
 import 'package:mifirst/screens/pantalla_doctor_mobile.dart';
@@ -7,10 +8,13 @@ import 'package:mifirst/screens/prueba%20de%20imagen.dart';
 import 'package:mifirst/screens/pruebadeimagen.dart';
 import 'package:mifirst/screens/registrar_doctor.dart';
 import 'package:mifirst/screens/registrarse.dart';
+import 'package:mifirst/screens/subir_archivo_pdf.dart';
 import 'package:mifirst/screens/vista_alergia.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
 import 'package:mifirst/screens/vista_examenlaboratorio.dart';
+import 'package:mifirst/screens/vista_imagenologia.dart';
 import 'package:mifirst/screens/vista_tramientofrecuente.dart';
+import 'package:mifirst/screens/vista_tratamiento_actual.dart';
 import 'package:mifirst/screens/vista_vacuna.dart';
 import 'package:mifirst/theme/theme.dart';
 import 'package:mifirst/widgets/custom_scaffold.dart';
@@ -130,7 +134,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ExamenesPage(idusuario: 16,),
+                              builder: (context) => VistaTratamientoActualmente(idusuario: 16,),
                             ),
                           );
                         },

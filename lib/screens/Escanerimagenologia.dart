@@ -16,127 +16,174 @@ import 'package:crop_your_image/crop_your_image.dart';
 
 import '../constans.dart'; // Ajusta la ruta según tu proyecto
 
-class ScanView extends StatefulWidget {
+class ScanViewImagen extends StatefulWidget {
   final int idPaciente;
-  const ScanView({super.key, required this.idPaciente});
+  const ScanViewImagen({super.key, required this.idPaciente});
 
   @override
-  State<ScanView> createState() => _ScanViewState();
+  State<ScanViewImagen> createState() => _ScanViewImagenState();
 }
 
-class _ScanViewState extends State<ScanView> {
+class _ScanViewImagenState extends State<ScanViewImagen> {
   List<File> _imagenes = [];
   List<File> _imagenesRecortadas = []; // <-- Nueva lista para las imágenes recortadas originales
   List<Uint8List> imagenesOriginales = [];
   File? _pdfFile;
   bool _mejorarImagen = false;
-  bool _usarRecortadas = false;
+  bool _usarRecortadas = true;
 
   final Map<String, Map<String, List<Map<String, String>>>> tiposCategoriasExamenes = {
-    'laboratorio': {
-      'hematologia': [
-        {'value': 'hemograma_completo', 'label': 'Hemograma Completo'},
-        {'value': 'recuento_plaquetas', 'label': 'Recuento de Plaquetas'},
-        {'value': 'velocidad_sedimentacion', 'label': 'Velocidad de Sedimentación'},
-        {'value': 'grupo_sanguineo', 'label': 'Grupo Sanguíneo y Rh'},
+    'Rayos x': {
+      'torax': [
+        {'value': 'radiografía de tórax PA', 'label': 'Radiografía de tórax PA'},
+        {'value': 'radiografía de tórax lateral', 'label': 'Radiografía de tórax Lateral'},
       ],
-      'bioquimica': [
-        {'value': 'glucosa', 'label': 'Glucosa'},
-        {'value': 'urea', 'label': 'Urea'},
-        {'value': 'creatinina', 'label': 'Creatinina'},
-        {'value': 'colesterol_total', 'label': 'Colesterol Total'},
-        {'value': 'hdl', 'label': 'HDL'},
-        {'value': 'ldl', 'label': 'LDL'},
-        {'value': 'trigliceridos', 'label': 'Triglicéridos'},
-        {'value': 'acido_urico', 'label': 'Ácido Úrico'},
-        {'value': 'tgo', 'label': 'TGO (AST)'},
-        {'value': 'tgp', 'label': 'TGP (ALT)'},
-        {'value': 'bilirrubina_total', 'label': 'Bilirrubina Total'},
-        {'value': 'bilirrubina_directa', 'label': 'Bilirrubina Directa'},
-        {'value': 'bilirrubina_indirecta', 'label': 'Bilirrubina Indirecta'},
-        {'value': 'fosfatasa_alcalina', 'label': 'Fosfatasa Alcalina'},
-        {'value': 'ggt', 'label': 'GGT'},
-        {'value': 'amilasa', 'label': 'Amilasa'},
-        {'value': 'lipasa', 'label': 'Lipasa'},
-        {'value': 'electrolitos', 'label': 'Electrolitos (Na, K, Cl)'},
-        {'value': 'calcio', 'label': 'Calcio'},
-        {'value': 'magnesio', 'label': 'Magnesio'},
-        {'value': 'perfil_renal', 'label': 'Perfil Renal'},
-        {'value': 'perfil_hepatico', 'label': 'Perfil Hepático'},
-        {'value': 'perfil_lipidico', 'label': 'Perfil Lipídico'},
-        {'value': 'perfil_20', 'label': 'Perfil 20'},
-        {'value': 'perfil_21', 'label': 'Perfil 21'},
+      'abdomen': [
+        {'value': 'radiografía de abdomen simple', 'label': 'Radiografía de abdomen simple'},
       ],
-      'orina_y_heces': [
-        {'value': 'orina_rutina', 'label': 'Orina (Examen de Rutina)'},
-        {'value': 'urocultivo', 'label': 'Urocultivo'},
-        {'value': 'coprologico', 'label': 'Coprológico'},
-        {'value': 'parasitologico', 'label': 'Parasitológico'},
-        {'value': 'sangre_oculta', 'label': 'Sangre Oculta en Heces'},
+      'extremidades': [
+        {'value': 'radiografía de rodilla', 'label': 'Radiografía de rodilla'},
+        {'value': 'radiografía de mano', 'label': 'Radiografía de mano'},
+        {'value': 'radiografía de pie', 'label': 'Radiografía de pie'},
+        ],
+      'columna': [
+        {'value': 'radiografía de columna cervical', 'label': 'Radiografía de columna cervical'},
+        {'value': 'radiografía de columna lumbar', 'label': 'Radiografía de columna lumbar'},
+        {'value': 'radiografía de columna dorsal', 'label': 'Radiografía de columna dorsal'},
       ],
-      'inmunologia': [
-        {'value': 'vih', 'label': 'Prueba de VIH'},
-        {'value': 'vdrl', 'label': 'VDRL'},
-        {'value': 'hbsag', 'label': 'HBsAg (Hepatitis B)'},
-        {'value': 'anticore', 'label': 'Anti-HBc'},
-        {'value': 'anti_hcv', 'label': 'Anti-HCV'},
-        {'value': 'toxoplasmosis', 'label': 'Toxoplasmosis (IgG, IgM)'},
-        {'value': 'rubeola', 'label': 'Rubéola (IgG, IgM)'},
-        {'value': 'citomegalovirus', 'label': 'Citomegalovirus (IgG, IgM)'},
-        {'value': 'fiebre_tifoidea', 'label': 'Prueba de Widal'},
+      'cráneo': [
+        {'value': 'Radiografía de cráneo', 'label': 'Radiografía de cráneo'},
       ],
     },
-    'pruebas_funcionales': {
-      'espirometria': [
-        {'value': 'espirometria_simple', 'label': 'Espirometría Simple'},
-        {'value': 'espirometria_con_broncodilatador', 'label': 'Espirometría con Broncodilatador'},
+    'tomografia': {
+      'cráneo': [
+        {'value': 'TAC de cráneo sin contraste', 'label': 'TAC de cráneo sin contraste'},
+        ],
+      'torax': [
+        {'value': 'TAC torácico de alta resolución (HRCT)', 'label': 'TAC torácico de alta resolución (HRCT)'},
       ],
-      'prueba_esfuerzo': [
-        {'value': 'prueba_esfuerzo_estandar', 'label': 'Prueba de Esfuerzo Estándar'},
+      'abdomen y pelvis': [
+        {'value': 'TAC abdomino-pélvico con contraste', 'label': 'TAC abdomino-pélvico con contraste'},
       ],
-    },
-    'cardiologia': {
-      'electrocardiograma': [
-        {'value': 'ecg_reposo', 'label': 'Electrocardiograma en Reposo'},
+      'columna': [
+        {'value': 'TAC de columna lumbar', 'label': 'TAC de columna lumbar)'},
       ],
-      'ecocardiograma': [
-        {'value': 'eco_transtoracico', 'label': 'Ecocardiograma Transtorácico'},
-        {'value': 'eco_doppler', 'label': 'Ecocardiograma Doppler'},
-      ],
-      'holter': [
-        {'value': 'holter_24h', 'label': 'Holter 24h'},
-        {'value': 'holter_48h', 'label': 'Holter 48h'},
+      'vasos sanguineos': [
+        {'value': 'Angio-TAC de aorta', 'label': 'Angio-TAC de aorta'},
       ],
     },
-    'neurologia': {
-      'encefalograma': [
-        {'value': 'eeg', 'label': 'Electroencefalograma'},
+    'resonancia magnética': {
+      'cráneo': [
+        {'value': 'RMN cerebral funcional', 'label': 'RMN cerebral funcional'},
+        {'value': 'RMN de silla turca', 'label': 'RMN de silla turca'},
       ],
-      'potenciales_evocados': [
-        {'value': 'potenciales_auditivos', 'label': 'Potenciales Auditivos'},
-        {'value': 'potenciales_visuales', 'label': 'Potenciales Visuales'},
+      'columna': [
+        {'value': 'RMN de columna cervical', 'label': 'RMN de columna cervical'},
+        {'value': 'RMN de columna lumbar', 'label': 'RMN de columna lumbar'},
+      ],
+      'Abdomen': [
+        {'value': 'RMN hepática', 'label': 'RMN hepática'},
+        {'value': 'RMN pancreática', 'label': 'RMN pancreática'},
+      ],
+      'Articulaciones': [
+        {'value': 'RMN de rodilla', 'label': 'RMN de rodilla'},
+        {'value': 'RMN de hombro', 'label': 'RMN de hombro'},
+      ],
+      'Corazón': [
+        {'value': 'RMN cardíaca', 'label': 'RMN cardíaca'},
       ],
     },
-    'informes_medicos': {
-      'interconsultas': [
-        {'value': 'interconsulta_cardiologia', 'label': 'Interconsulta de Cardiología'},
-        {'value': 'interconsulta_neurologia', 'label': 'Interconsulta de Neurología'},
+    'Ecografía': {
+      'Abdominal': [
+        {'value': 'Ecografía hepática', 'label': 'Ecografía hepática'},
+        {'value': 'Ecografía de vesícula biliar', 'label': 'Ecografía de vesícula biliar'},
       ],
-      'resumenes_clinicos': [
-        {'value': 'epicrisis', 'label': 'Epicrisis'},
-        {'value': 'informe_alta', 'label': 'Informe de Alta'},
+      'Obstétrica y Ginecológica': [
+        {'value': 'Ecografía transvaginal', 'label': 'Ecografía transvaginal'},
+        {'value': 'Ecografía morfología fetal', 'label': 'Ecografía morfología fetal'},
       ],
-      'referencias': [
-        {'value': 'referencia_hospitalaria', 'label': 'Referencia Hospitalaria'},
+      'tiroidea': [
+        {'value': 'Ecografía de tiroides', 'label': 'Ecografía de tiroides'},
+      ],
+      'renal': [
+        {'value': 'Ecografía renal bilateral', 'label': 'Ecografía renal bilateral'},
+      ],
+      'Musculoesquelética': [
+        {'value': 'Eco de partes blandas', 'label': 'Eco de partes blandas'},
+      ],
+      'Doppler': [
+        {'value': 'Doppler carotideo', 'label': 'Doppler carotideo'},
+        {'value': 'Doppler de miembros inferiores', 'label': 'Doppler de miembros inferiores'},
       ],
     },
-    'otros_documentos': {
-      'otros': [
-        {'value': 'consentimiento_informado', 'label': 'Consentimiento Informado'},
-        {'value': 'historia_medica', 'label': 'Historia Médica'},
+    'mamografía': {
+      'Diagnóstica': [
+        {'value': 'Mamografía unilateral', 'label': 'Mamografía unilateral'},
+        {'value': 'Mamografía bilateral', 'label': 'Mamografía bilateral'},
       ],
-      'sin_categoria': [
-        {'value': 'no_clasificado', 'label': 'Documento No Clasificado'},
+      'Tamizaje': [
+        {'value': 'Mamografía de rutina', 'label': 'Mamografía de rutina'},
+        ],
+      'Digital': [
+        {'value': 'Mamografía digital directa', 'label': 'Mamografía digital directa'},
+      ],
+    },
+    'Densitometría Ósea': {
+      'Cadera': [
+        {'value': 'Densitometría ósea de cadera', 'label': 'Densitometría ósea de cadera'},
+        ],
+      'Columna': [
+        {'value': 'Densitometría ósea de columna lumbar', 'label': 'Densitometría ósea de columna lumbar'},
+      ],
+      'total': [
+        {'value': 'Densitometría corporal completa', 'label': 'Densitometría corporal completa'},
+      ],
+    },
+    'Medicina Nuclear': {
+      'osea': [
+        {'value': 'Gammagrafía ósea', 'label': 'Gammagrafía ósea'},
+       ],
+      'renal': [
+        {'value': 'Gammagrafía renal', 'label': 'Gammagrafía renal'},
+      ],
+      'tiroidea': [
+        {'value': 'Captación de yodo radiactivo (RAIU)', 'label': 'Captación de yodo radiactivo (RAIU)'},
+      ],
+      'Cardíaca': [
+        {'value': 'Perfusión miocárdica', 'label': 'Perfusión miocárdica'},
+      ],
+    },
+    'Angiografía': {
+      'Cerebral': [
+        {'value': 'Angiografía cerebrala', 'label': 'Angiografía cerebral'},
+      ],
+      'Coronaria': [
+        {'value': 'Cateterismo cardíaco', 'label': 'Cateterismo cardíaco'},
+      ],
+      'Periférica': [
+        {'value': 'Angiografía de extremidades', 'label': 'Angiografía de extremidades'},
+      ],
+    },
+    'Fluoroscopía': {
+      'Tracto digestivo': [
+        {'value': 'Serie esofagogastroduodenal', 'label': 'Serie esofagogastroduodenal'},
+        {'value': 'Enema opaco', 'label': 'Enema opaco'},
+
+      ],
+      'Articulaciones': [
+        {'value': 'Artrografía', 'label': 'Artrografía'},
+      ],
+
+    },
+    'pet scan': {
+      'Oncológica': [
+        {'value': 'PET/CT para estudio de cáncer', 'label': 'PET/CT para estudio de cáncer'},
+      ],
+      'Neurológica': [
+        {'value': 'PET cerebral', 'label': 'PET cerebral'},
+      ],
+      'Cardíaca': [
+        {'value': 'PET de viabilidad miocárdica', 'label': 'PET de viabilidad miocárdica'},
       ],
     },
   };
@@ -284,6 +331,7 @@ class _ScanViewState extends State<ScanView> {
     );
   }
 
+
   // Modificar _saveAsPdf para que solo cree el PDF y lo guarde
 
   Future<void> _saveAsPdf() async {
@@ -335,9 +383,18 @@ class _ScanViewState extends State<ScanView> {
 
 
   Future<void> _subirPdfAlServidor(File archivo) async {
+    print('hola\n\n\n');
+    print(widget.idPaciente.toString());
+    print(_tipoSeleccionado!);
+    print(_categoriaSeleccionada!);
+    print(_nombreExamenSeleccionado);
+    print(_descripcionController.text);
+    print(_fechaRealizacion);
+
     try {
-      final uri = Uri.parse('$baseUrl/usuarios/api/examenes/');
+      final uri = Uri.parse('$baseUrl/usuarios/api/imagenologia/');
       final request = http.MultipartRequest('POST', uri);
+      
 
       request.files.add(await http.MultipartFile.fromPath('archivo', archivo.path));
       request.fields['paciente'] = widget.idPaciente.toString();
@@ -348,6 +405,9 @@ class _ScanViewState extends State<ScanView> {
       request.fields['fecha_realizacion'] = _fechaRealizacion.toIso8601String().split('T').first;
 
       final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+      print('Respuesta del servidor: $responseBody');
+
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -390,7 +450,7 @@ class _ScanViewState extends State<ScanView> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: colores[0],
-        title: const Text('Escanear Imagenes', style: TextStyle(color:Colors.white),),
+        title: const Text('Tomar foto',style: TextStyle(color:Colors.white),),
         actions: [
           Switch(
             value: _usarRecortadas,
@@ -637,6 +697,7 @@ class _ScanViewState extends State<ScanView> {
                         },
                         validator: (value) => value == null ? 'Selecciona un examen' : null,
                       ),
+
                       const SizedBox(height: 20),
 
                       // Descripción
@@ -743,7 +804,6 @@ class _ScanViewState extends State<ScanView> {
           ),
         ),
       ),
-
     );
   }
 }

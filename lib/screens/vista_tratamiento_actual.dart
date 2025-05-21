@@ -2,18 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mifirst/screens/vista_seguimiento.dart';
+import '../models/tratamientoActual.dart';
+import '../models/tratamientoFrecuente.dart';
+import '../models/tratamientoFrecuente.dart';
 import '../models/vacuna.dart';
 import '../constans.dart';
 
-class VistaVacuna extends StatefulWidget {
+class VistaTratamientoActualmente extends StatefulWidget {
   final int idusuario;
-  const VistaVacuna({super.key, required this.idusuario});
+  const VistaTratamientoActualmente({super.key, required this.idusuario});
 
   @override
-  State<VistaVacuna> createState() => _VistaVacuna();
+  State<VistaTratamientoActualmente> createState() => _VistaTratamientoActualmente();
 }
 
-class _VistaVacuna extends State<VistaVacuna> {
+class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
   String nombreUsuario = '';
   String apellidoUsuario = '';
   String cedulaUsuario = '';
@@ -28,17 +32,23 @@ class _VistaVacuna extends State<VistaVacuna> {
   String tipoSangre = '';
   String? foto='';
   String? nivelSeleccionado;
-  String? tipoSeleccionado= 'medicamento';
+  String? tipoSeleccionado;
   int? selectedAlergiaId;
-  List<dynamic> vacunas = [];
-  DateTime? fechaSeleccionada;
-  int? selectedVacunaId;
-  int maxdosis = 1; // Mostrar al menos 1 opción por defecto
-  int? selectedDosis;
-  int? siguienteDosis;// Lista para almacenar las alergias
-  bool verUltimasDosis = true;
+  List<dynamic> Tratamientofrecuente = [];// Lista para almacenar las alergias
+  List<String> tiposMedicamentos = [
+    'Analgésico',
+    'Antiinflamatorio',
+    'Antibiótico',
+    'Hormonal',
+    'Broncodilatador',
+    'IBP',
+    'Antihistamínico',
+    'Antibacteriano',
+    'Corticoide',
+    'Analgésico combinado',
+  ];
 
-  final TextEditingController _descripcionAlergiaController = TextEditingController();
+
 
   Future<void> obtenerDatos() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
@@ -103,33 +113,14 @@ class _VistaVacuna extends State<VistaVacuna> {
       print('Error: $e');
     }
   }
-  Future<void> cargarSiguienteDosis(int vacunaId) async {
-    final response = await http.get(Uri.parse(
-      '$baseUrl/usuarios/api/proxima-dosis/$idPaciente/$vacunaId/',
-    ));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      setState(() {
-        siguienteDosis = data['proxima_dosis'];
-        selectedDosis = siguienteDosis;
-      });
-    } else {
-      setState(() {
-        siguienteDosis = null;
-        selectedDosis = null;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No puedes registrar más dosis para esta vacuna.')),
-      );
-    }
-  }
-  void _mostrarDialogoVacuna() {
-
-
+  void _mostrarDialogoTratamientoFrecuente() {
+    DateTime? fechaSeleccionada;
+    int? selectedTratamientofrecuenteid;
 
     final TextEditingController _fechaController = TextEditingController();
-    final TextEditingController _descripcionVacunaController = TextEditingController();
+    final TextEditingController _fechafinController = TextEditingController();
+    final TextEditingController _frecuenciaController = TextEditingController();
+    final TextEditingController _observacionesController = TextEditingController();
 
     showDialog(
       context: context,
@@ -137,75 +128,103 @@ class _VistaVacuna extends State<VistaVacuna> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text("Registrar Vacuna"),
+              title: Text("Registrar Tratamiento Frecuente"),
               content: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Vacuna
-                    FutureBuilder<List<Vacuna>>(
-                      future: fetchVacunas(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        } else if (snapshot.hasError) {
-                          return Text('Error: ${snapshot.error}');
-                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return Text('No hay vacunas disponibles');
-                        } else {
-                          List<Vacuna> vacunas = snapshot.data!;
-                          return SizedBox(
-                            width: 300, // puedes usar MediaQuery si quieres hacerlo adaptable
-                            child: DropdownButtonFormField<int>(
-                              isExpanded: true,
+                    // Medicamento Crónico
+                    Column(
+                      children: [
+                        DropdownButtonFormField<String>(
+                          value: tipoSeleccionado,
+                          hint: Text('Tipo de medicamento'),
+                          onChanged: (String? newTipo) {
+                            setState(() {
+                              tipoSeleccionado = newTipo;
+                              selectedTratamientofrecuenteid = null; // Reiniciar selección
+                            });
+                          },
+                          items: tiposMedicamentos.map((tipo) {
+                            return DropdownMenuItem<String>(
+                              value: tipo,
+                              child: Text(tipo),
+                            );
+                          }).toList(),
+                          decoration: InputDecoration(
+                            labelText: 'Tipo de medicamento',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        FutureBuilder<List<TratamientoFrecuente1>>(
+                          future: tipoSeleccionado != null
+                              ? fetchTratamientofrecuente(tipoSeleccionado!)
+                              : Future.value([]),
+                          builder: (context, snapshot) {
+                            List<TratamientoFrecuente1> tratamientofrecuente = snapshot.data ?? [];
+
+                            return DropdownButtonFormField<int>(
                               decoration: InputDecoration(
-                                labelText: 'Vacuna',
+                                labelText: 'Medicamento',
                                 border: OutlineInputBorder(),
                               ),
-                              value: selectedVacunaId,
-                              onChanged: (int? newValue) {
+                              isExpanded: true,
+                              value: selectedTratamientofrecuenteid,
+                              onChanged: snapshot.hasData && tratamientofrecuente.isNotEmpty
+                                  ? (int? newValue) {
                                 setState(() {
-                                  selectedVacunaId = newValue;
-                                  Vacuna selectedVacuna = vacunas.firstWhere((v) => v.id == newValue!);
-                                  maxdosis = selectedVacuna.maxDosis;
-                                  siguienteDosis = null;
-                                  selectedDosis = null;
+                                  selectedTratamientofrecuenteid = newValue;
                                 });
-                                if (newValue != null) {
-                                  cargarSiguienteDosis(newValue);
-                                }
-                              },
-
+                              }
+                                  : null,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
                               selectedItemBuilder: (BuildContext context) {
-                                return vacunas.map((vacuna) {
+                                return tratamientofrecuente.map((tf) {
+                                  String texto =
+                                      '${tf.nombre} ${tf.concentracion} - ${tf.principioActivo} ${tf.via_administracion}';
                                   return Text(
-                                    vacuna.nombre,
+                                    texto,
                                     overflow: TextOverflow.ellipsis,
-                                    softWrap: false,
+                                    maxLines: 1,
+                                    style: TextStyle(fontSize: 16, color: Colors.black),
                                   );
                                 }).toList();
                               },
-                              items: vacunas.map((vacuna) {
+                              items: tratamientofrecuente.map((tf) {
+                                String texto =
+                                    '${tf.nombre} ${tf.concentracion} \n${tf.principioActivo} ${tf.via_administracion}\n';
                                 return DropdownMenuItem<int>(
-                                  value: vacuna.id,
-                                  child: Text(vacuna.nombre), // se muestra completo en la lista
+                                  value: tf.id,
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                        maxWidth: MediaQuery.of(context).size.width - 100),
+                                    child: Text(
+                                      texto,
+                                      softWrap: true,
+                                      style: TextStyle(fontSize: 16, color: Colors.black),
+                                    ),
+                                  ),
                                 );
                               }).toList(),
-                            ),
-                          );
-                        }
-                      },
+                            );
+                          },
+                        ),
+                      ],
                     ),
 
 
                     SizedBox(height: 10),
 
-                    // Fecha
+                    // Fecha de inicio
                     TextField(
                       controller: _fechaController,
                       readOnly: true,
                       decoration: InputDecoration(
-                        labelText: 'Fecha de aplicación',
+                        labelText: 'Fecha de inicio',
                         border: OutlineInputBorder(),
                         suffixIcon: Icon(Icons.calendar_today),
                       ),
@@ -224,37 +243,43 @@ class _VistaVacuna extends State<VistaVacuna> {
                       },
                     ),
                     SizedBox(height: 10),
-
-                    // Dosis (siempre visible)
-                    DropdownButtonFormField<int>(
+                    TextField(
+                      controller: _fechafinController,
+                      readOnly: true,
                       decoration: InputDecoration(
-                        labelText: 'Selecciona la dosis',
+                        labelText: 'Fecha de Finalizacion',
+                        border: OutlineInputBorder(),
+                        suffixIcon: Icon(Icons.calendar_today),
+                      ),
+                      onTap: () async {
+                        final pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            _fechafinController.text = '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
+                          });
+                        }
+                      },
+                    ),
+                    SizedBox(height: 10),
+                    // Frecuencia
+                    TextField(
+                      controller: _frecuenciaController,
+                      decoration: InputDecoration(
+                        labelText: 'Frecuencia',
                         border: OutlineInputBorder(),
                       ),
-                      value: selectedDosis,
-                      onChanged: (int? newValue) {
-                        setState(() {
-                          selectedDosis = newValue;
-                        });
-                      },
-                      items: (siguienteDosis != null)
-                          ? [
-                        DropdownMenuItem<int>(
-                          value: siguienteDosis,
-                          child: Text('Dosis $siguienteDosis'),
-                        )
-                      ]
-                          : [],
                     ),
-
-
                     SizedBox(height: 10),
-
-                    // Descripción
+                    // Observaciones
                     TextField(
-                      controller: _descripcionVacunaController,
+                      controller: _observacionesController,
                       decoration: InputDecoration(
-                        labelText: "Descripción",
+                        labelText: 'Observaciones',
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 3,
@@ -269,17 +294,19 @@ class _VistaVacuna extends State<VistaVacuna> {
                 ),
                 TextButton(
                   onPressed: () async {
-                    if (selectedVacunaId != null &&
+                    if (selectedTratamientofrecuenteid != null &&
                         _fechaController.text.isNotEmpty &&
-                        selectedDosis != null) {
-                      final url = Uri.parse('$baseUrl/usuarios/api/vacunas-pacientes/');
+                        _frecuenciaController.text.isNotEmpty) {
+
+                      final url = Uri.parse('$baseUrl/usuarios/api/tratamiento/nuevo/');
                       final Map<String, dynamic> data = {
                         'paciente': idPaciente,
-                        'vacuna': selectedVacunaId,
-                        'fecha_aplicacion': _fechaController.text,
-                        'dosis': selectedDosis,
-                        'observacion': _descripcionVacunaController.text,
-
+                        'medicamento': selectedTratamientofrecuenteid,
+                        'fecha_inicio': _fechaController.text,
+                        'fecha_fin': _fechafinController.text,
+                        'frecuencia': _frecuenciaController.text,
+                        'descripcion': _observacionesController.text,
+                        'doctor': null,
                       };
 
                       try {
@@ -292,14 +319,26 @@ class _VistaVacuna extends State<VistaVacuna> {
                         if (response.statusCode == 201) {
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Vacuna registrada correctamente")),
+                            const SnackBar(content: Text("Tratamiento registrado correctamente")),
                           );
-                          await _fetchVacunas(); // <--- Esta línea actualiza la lista
+                          await _fetchTratamientofrecuente();
                         } else {
+                          String errorMsg = "Error al guardar";
+
+                          try {
+                            final body = json.decode(response.body);
+                            if (body is Map && body.containsKey('error')) {
+                              errorMsg = body['error'];
+                            }
+                          } catch (e) {
+                            print("Error al leer la respuesta del servidor: $e");
+                          }
+
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Error al guardar: ${response.statusCode}")),
+                            SnackBar(content: Text(errorMsg)),
                           );
                         }
+
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text("Error al conectar con el servidor")),
@@ -308,7 +347,7 @@ class _VistaVacuna extends State<VistaVacuna> {
                       }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Completa todos los campos")),
+                        SnackBar(content: Text("Completa todos los campos obligatorios")),
                       );
                     }
                   },
@@ -321,50 +360,83 @@ class _VistaVacuna extends State<VistaVacuna> {
       },
     );
   }
-  //mostrar Vacuna
-  Future<void> _fetchVacunas() async {
-    final endpoint = verUltimasDosis
-        ? '/usuarios/api/paciente/$idPaciente/ultimas-vacunas/'
-        : '/usuarios/api/pacientes/$idPaciente/vacunas/';
-
-    final response = await http.get(Uri.parse('$baseUrl$endpoint'));
 
 
 
-
+  //mostrar Tratamiento
+  Future<void> _fetchTratamientofrecuente() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/usuarios/api/paciente/$idPaciente/tratamientos/'),
+    );
     if (response.statusCode == 200) {
       setState(() {
-        vacunas = jsonDecode(utf8.decode(response.bodyBytes));
+        Tratamientofrecuente = jsonDecode(utf8.decode(response.bodyBytes));
       });
     } else {
       throw Exception('Error al cargar vacunas');
     }
   }
 
-  Future<void> eliminarVacuna(int idvacunaPaciente) async {
-    final url = Uri.parse('$baseUrl/usuarios/api/vacunas-pacientes/$idvacunaPaciente/');
+  Future<void> finalizarTratamiento(int idTratamiento) async {
+    final url = Uri.parse('$baseUrl/usuarios/api/tratamiento/$idTratamiento/finalizar/');
 
     try {
-      final response = await http.delete(url);
+      final response = await http.patch(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          // Si deseas enviar fecha_fin explícita, descomenta esto:
+          // 'fecha_fin': DateTime.now().toIso8601String(),
+        }),
+      );
 
-      if (response.statusCode == 204) {
+      if (response.statusCode == 200 || response.statusCode == 204) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Alergia eliminada correctamente")),
+          const SnackBar(content: Text("Tratamiento finalizado correctamente ✅")),
         );
-        await _fetchVacunas(); // Actualizar la lista después de eliminar
+        await _fetchTratamientofrecuente(); // Recarga la lista
       } else {
+        print('Error en la respuesta: ${response.statusCode}');
+        print('Body: ${response.body}');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error al eliminar: ${response.statusCode}")),
+          SnackBar(content: Text("No se pudo finalizar. Código: ${response.statusCode}")),
         );
       }
     } catch (e) {
+      print('Excepción atrapada: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al conectar con el servidor")),
+        const SnackBar(content: Text("Error de conexión con el servidor ❌")),
       );
-      print('Error: $e');
     }
   }
 
+  Future<void> editarTratamientofrecuente({required int id, required String dosis, required String frecuencia, required String observacion,}) async {
+
+    final url = Uri.parse('$baseUrl//usuarios/api/paciente_medicamento_cronico/$id/');
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'dosis':dosis,
+          'frecuencia': frecuencia,
+          'observacion': observacion,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('Alergia actualizada exitosamente');
+      } else {
+        print('Error al editar alergia: ${response.statusCode}');
+        print(response.body);
+      }
+    } catch (e) {
+      print('Excepción al editar alergia: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -375,7 +447,7 @@ class _VistaVacuna extends State<VistaVacuna> {
   Future<void> _inicializarDatos() async {
     await obtenerDatos(); // no es necesario await si no depende de datos
     await obtenerDatosPacienteSangre(widget.idusuario);
-    await _fetchVacunas(); // Llamar después de que idPaciente esté disponible
+    await _fetchTratamientofrecuente(); // Llamar después de que idPaciente esté disponible
   }
 
 
@@ -435,10 +507,10 @@ class _VistaVacuna extends State<VistaVacuna> {
                           children: [
                             SizedBox(height: 12),
                             Text(
-                              "GESTOR DE VACUNA",
+                              "GESTOR DE TRATAMIENTO ACTUAL",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize:30,
+                                fontSize:16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -470,11 +542,11 @@ class _VistaVacuna extends State<VistaVacuna> {
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      // Botón "Añadir vacuna"
+                      // Botón "Añadir Tratamiento"
                       Align(
                         alignment: Alignment.center,
                         child: GestureDetector(
-                          onTap: _mostrarDialogoVacuna, // Define tu función aquí
+                          onTap: _mostrarDialogoTratamientoFrecuente, // Define tu función aquí
                           child: Container(
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
@@ -498,7 +570,7 @@ class _VistaVacuna extends State<VistaVacuna> {
                                 ),
                                 SizedBox(width: 8),
                                 Text(
-                                  "Añadir vacuna",
+                                  "Añadir Tratamiento ",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -510,34 +582,15 @@ class _VistaVacuna extends State<VistaVacuna> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text('Ver todas'),
-                          Switch(
-                            value: !verUltimasDosis,
-                            onChanged: (value) {
-                              setState(() {
-                                verUltimasDosis = !value;
-                                _fetchVacunas(); // recargar con nueva URL
-                              });
-                            },
-                          ),
-                        ],
-                      ),
 
-
-                      // Lista de vacunas
+                      // Lista de Tratamiento
                       Expanded(
-                        child: vacunas.isEmpty
+                        child: Tratamientofrecuente.isEmpty
                             ? const Center(child: CircularProgressIndicator())
                             : ListView.builder(
-                          itemCount: vacunas.length,
+                          itemCount: Tratamientofrecuente.length,
                           itemBuilder: (context, index) {
-                            final item = vacunas[index];
-                            final aprobado = item['aprobado'] == true;
-                            final doctor = item['doctor_aprobador'];
-
+                            final item = Tratamientofrecuente[index];
                             return Card(
                               margin: const EdgeInsets.only(bottom: 10),
                               shape: RoundedRectangleBorder(
@@ -550,14 +603,15 @@ class _VistaVacuna extends State<VistaVacuna> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Título + check de aprobado
+
+                                    // Título + Check
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        const SizedBox(width: 75),
+                                        SizedBox(width: 75,),
                                         Expanded(
                                           child: Text(
-                                            item['nombre_vacuna'],
+                                            item['nombre_medicamento'],
                                             style: const TextStyle(
                                               fontSize: 20,
                                               fontWeight: FontWeight.bold,
@@ -565,8 +619,11 @@ class _VistaVacuna extends State<VistaVacuna> {
                                             ),
                                           ),
                                         ),
-                                        if (aprobado)
+                                        if (item['finalizado'] == true)
+                                          const Icon(Icons.verified, color: Colors.green, size: 26),
+                                        if (item['doctor'] != null)
                                           const Icon(Icons.verified, color: Colors.blue, size: 26),
+
                                       ],
                                     ),
                                     const SizedBox(height: 10),
@@ -574,7 +631,7 @@ class _VistaVacuna extends State<VistaVacuna> {
                                     Row(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        // Ícono vacuna
+                                        // Ícono de jeringa más abajo
                                         Padding(
                                           padding: const EdgeInsets.only(top: 10),
                                           child: Container(
@@ -591,47 +648,68 @@ class _VistaVacuna extends State<VistaVacuna> {
                                         ),
                                         const SizedBox(width: 15),
 
-                                        // Información
+                                        // Información del tratamiento
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text('Dosis: ${item['dosis']} / ${item['max_dosis']}', style: const TextStyle(color: Colors.black54)),
-                                              Text('Fecha: ${item['fecha_aplicacion']}', style: const TextStyle(color: Colors.black54)),
-
-                                              if (item['observacion'] != null && item['observacion'].toString().isNotEmpty)
-                                                Text('Observación: ${item['observacion']}', style: const TextStyle(color: Colors.black54)),
-
-                                              if (aprobado && doctor != null && doctor.toString().isNotEmpty)
+                                              Text('Inicio: ${item['fecha_inicio']}',
+                                                  style: const TextStyle(color: Colors.black54)),
+                                              Text('Finaliza: ${item['fecha_fin']}',
+                                                  style: const TextStyle(color: Colors.black54)),
+                                              Text('Dosis: ${item['dosis']} - ${item['via']}',
+                                                  style: const TextStyle(color: Colors.black54)),
+                                              if (item['frecuencia'] != null && item['frecuencia'].toString().isNotEmpty)
+                                                Text('Frecuencia: ${item['frecuencia']}',
+                                                  style: const TextStyle(color: Colors.black54)),
+                                              if (item['observaciones'] != null && item['observaciones'].toString().isNotEmpty)
+                                                Text('Observaciones: ${item['observaciones']}',
+                                                    style: const TextStyle(color: Colors.black54)),
+                                              if (item['doctor'] != null &&
+                                                  item['doctor'].toString().isNotEmpty)
                                                 Padding(
                                                   padding: const EdgeInsets.only(top: 4),
-                                                  child: Text('Doctor: $doctor', style: const TextStyle(color: Colors.black87)),
+                                                  child: Text('Doctor: ${item['nombre_doctor']}',
+                                                      style: const TextStyle(color: Colors.black87)),
                                                 ),
                                             ],
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 10),
 
-                                    // Botones si NO está aprobado
-                                    if (!aprobado)
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: [
+
+
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        if (item['doctor'] == null && item['finalizado'] == false ) // Solo mostrar si NO está aprobado
                                           IconButton(
                                             icon: const Icon(Icons.edit, color: Colors.black54),
+                                            tooltip: 'Editar',
                                             onPressed: () {
+                                              final dosisController = TextEditingController(text: item['dosis']);
+                                              final frecuenciaController = TextEditingController(text: item['frecuencia']);
                                               final observacionController = TextEditingController(text: item['observacion']);
-                                              String dosisSeleccionada = item['dosis'].toString();
 
                                               showDialog(
                                                 context: context,
                                                 builder: (context) => AlertDialog(
-                                                  title: const Text('Editar vacuna'),
+                                                  title: const Text('Editar Tratamiento Frecuente'),
                                                   content: Column(
                                                     mainAxisSize: MainAxisSize.min,
                                                     children: [
+                                                      const SizedBox(height: 10),
+                                                      TextField(
+                                                        controller: dosisController,
+                                                        decoration: const InputDecoration(labelText: 'Dosis'),
+                                                        maxLines: 2,
+                                                      ),
+                                                      TextField(
+                                                        controller: frecuenciaController,
+                                                        decoration: const InputDecoration(labelText: 'Frecuencia'),
+                                                        maxLines: 2,
+                                                      ),
                                                       TextField(
                                                         controller: observacionController,
                                                         decoration: const InputDecoration(labelText: 'Observación'),
@@ -646,7 +724,18 @@ class _VistaVacuna extends State<VistaVacuna> {
                                                     ),
                                                     TextButton(
                                                       onPressed: () async {
-
+                                                        Navigator.of(context).pop();
+                                                        await editarTratamientofrecuente(
+                                                          id: item['id'],
+                                                          dosis: dosisController.text,
+                                                          frecuencia: frecuenciaController.text,
+                                                          observacion: observacionController.text,
+                                                        );
+                                                        setState(() {
+                                                          item['dosis'] = dosisController.text;
+                                                          item['frecuencia'] = frecuenciaController.text;
+                                                          item['observacion'] = observacionController.text;
+                                                        });
                                                       },
                                                       child: const Text('Guardar'),
                                                     ),
@@ -655,14 +744,35 @@ class _VistaVacuna extends State<VistaVacuna> {
                                               );
                                             },
                                           ),
+                                        IconButton(
+                                          icon: const Icon(Icons.visibility, color: Colors.blueGrey),
+                                          tooltip: 'Ver seguimientos',
+                                          onPressed: () {
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.add_circle, color: Colors.blueGrey),
+                                          tooltip: 'Añadir seguimiento',
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => SeguimientoPage(idPaciente: idPaciente,idtratamiento: item['id'],),
+                                              ),
+                                            );
+                                          },
+                                        ),
+
+                                        if (item['finalizado'] == false ) // Solo mostrar si NO está aprobado
                                           IconButton(
-                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            icon: const Icon(Icons.check_circle, color: Colors.grey),
+                                            tooltip: 'Finalizar tratamiento',
                                             onPressed: () {
                                               showDialog(
                                                 context: context,
                                                 builder: (context) => AlertDialog(
-                                                  title: const Text('Confirmar eliminación'),
-                                                  content: const Text('¿Estás seguro de que deseas eliminar esta vacuna?'),
+                                                  title: const Text('Confirmar finalización'),
+                                                  content: const Text('¿Estás seguro de que deseas finalizar este tratamiento actual?'),
                                                   actions: [
                                                     TextButton(
                                                       onPressed: () => Navigator.of(context).pop(),
@@ -671,24 +781,28 @@ class _VistaVacuna extends State<VistaVacuna> {
                                                     TextButton(
                                                       onPressed: () async {
                                                         Navigator.of(context).pop();
-                                                        await eliminarVacuna(item['id']);
+                                                        await finalizarTratamiento(item['id']);
                                                       },
-                                                      child: const Text('Eliminar'),
+                                                      child: const Text('Finalizar'),
                                                     ),
                                                   ],
                                                 ),
                                               );
                                             },
                                           ),
-                                        ],
-                                      ),
+
+
+
+                                      ],
+                                    )
+
                                   ],
                                 ),
                               ),
                             );
                           },
                         ),
-                      ),
+                      )
 
 
 
@@ -714,19 +828,16 @@ class _VistaVacuna extends State<VistaVacuna> {
   }
 }
 
-Future<List<Vacuna>> fetchVacunas() async {
-  final url = Uri.parse('$baseUrl/usuarios/api/vacunas/');
+Future<List<TratamientoFrecuente1>> fetchTratamientofrecuente(String tipo) async {
+  final url = Uri.parse('$baseUrl/usuarios/api/medicamentosfrecuente/?tipo=$tipo');
   final response = await http.get(url);
 
   if (response.statusCode == 200) {
     final utf8DecodedBody = utf8.decode(response.bodyBytes);
     List<dynamic> data = json.decode(utf8DecodedBody);
-    return data.map((json) => Vacuna.fromJson(json)).toList();
+    return data.map((json) => TratamientoFrecuente1.fromJson(json)).toList();
   } else {
     throw Exception('Error al cargar las vacunas');
   }
 }
-
-
-
 

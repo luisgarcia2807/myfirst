@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:mifirst/screens/Escaner.dart';
+import 'package:mifirst/screens/Escanerimagenologia.dart';
 import 'package:mifirst/screens/subir_archivo_pdf.dart';
+import 'package:mifirst/screens/subir_archivo_pdr_imagenologia.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
@@ -10,16 +12,16 @@ import '../models/examenlaboratorio.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import '../constans.dart';
-class ExamenesPage extends StatefulWidget {
+class ImagenPage extends StatefulWidget {
   final int idusuario;
 
-  const ExamenesPage({super.key, required this.idusuario});
+  const ImagenPage({super.key, required this.idusuario});
 
   @override
-  State<ExamenesPage> createState() => _ExamenesPageState();
+  State<ImagenPage> createState() => _ImagenPageState();
 }
 
-class _ExamenesPageState extends State<ExamenesPage> {
+class _ImagenPageState extends State<ImagenPage> {
 
   String nombreUsuario = '';
   String apellidoUsuario = '';
@@ -104,7 +106,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
   }
   IconData _getIconExamen(String nombre) {
     switch (nombre) {
-      case 'Hemograma completo':
+      case 'rayos_x':
       case 'Hematológica':
         return Icons.bloodtype;
 
@@ -155,7 +157,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
   }
   Color _getColorExamen(String nombre) {
     switch (nombre) {
-      case 'Hemograma completo':
+      case 'rayos_x':
         return Colors.red;
 
       case 'Química sanguínea':
@@ -215,7 +217,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
     await obtenerDatos(); // no es necesario await si no depende de datos
     await obtenerDatosPacienteSangre(widget.idusuario);
     _examenes = obtenerExamenes(idPaciente);
-     //// Llamar después de que idPaciente esté disponible
+    //// Llamar después de que idPaciente esté disponible
   }
 
   @override
@@ -281,10 +283,10 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                 children: [
                                   SizedBox(height: 12),
                                   Text(
-                                    "Vista de examen",
+                                    "GESTOR DE IMAGENOLOGIA",
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize:30,
+                                      fontSize:23,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -326,7 +328,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => ScanView(idPaciente: idPaciente),
+                                          builder: (context) => ScanViewImagen(idPaciente: idPaciente),
                                         ),
                                       );
                                     },
@@ -352,7 +354,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                           SizedBox(width: 6),
                                           Flexible(
                                             child: Text(
-                                              "Scanear Examen",
+                                              "Scanear Imagen",
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 color: Colors.white,
@@ -372,7 +374,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => SubirPDFPage (idPaciente: idPaciente),
+                                          builder: (context) => SubirPDFPageImagen (idPaciente: idPaciente),
                                         ),
                                       );
                                     },
@@ -399,7 +401,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                           SizedBox(width: 6),
                                           Flexible(
                                             child: Text(
-                                              "Subir Examen",
+                                              "Subir Archivo",
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 color: Colors.white,
@@ -447,8 +449,8 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                               ),
                                               padding: const EdgeInsets.all(10),
                                               child: Icon(
-                                                _getIconExamen(examen.nombreExamen),
-                                                color: _getColorExamen(examen.nombreExamen),
+                                                _getIconExamen(examen.tipo),
+                                                color: _getColorExamen(examen.tipo),
                                                 size: 30,
                                               ),
                                             ),
@@ -466,7 +468,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                                       child: Text(
                                                         examen.nombreExamen,
                                                         style: const TextStyle(
-                                                          fontSize: 20,
+                                                          fontSize: 16,
                                                           fontWeight: FontWeight.bold,
                                                           color: Colors.black,
                                                         ),
@@ -482,6 +484,16 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                                 ),
                                                 Text(
                                                   'Fecha: ${examen.fechaRealizacion}',
+                                                  style: const TextStyle(color: Colors.black54),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'Tipo: ${examen.tipo}',
+                                                  style: const TextStyle(color: Colors.black54),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'Categoria: ${examen.categoria}',
                                                   style: const TextStyle(color: Colors.black54),
                                                 ),
                                                 const SizedBox(height: 4),
@@ -541,7 +553,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
 }
 
 Future<List<Examen>> obtenerExamenes(int pacienteId) async {
-  final response = await http.get(Uri.parse('$baseUrl/usuarios/api/examenes/$pacienteId/'));
+  final response = await http.get(Uri.parse('$baseUrl/usuarios/api/imagenologia/$pacienteId/'));
 
   if (response.statusCode == 200) {
     List jsonData = json.decode(utf8.decode(response.bodyBytes));

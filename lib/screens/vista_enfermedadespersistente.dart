@@ -162,10 +162,11 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                             return Text('No hay Enfermedad Persistente disponibles');
                           } else {
-                            List<EnfermedadPersistente> EnfermedadesPersistente = snapshot.data!;
+                            List<EnfermedadPersistente> enfermedades = snapshot.data!;
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8.0),
                               child: DropdownButtonFormField<int>(
+                                isExpanded: true, // ← necesario para permitir texto largo
                                 decoration: InputDecoration(
                                   labelText: 'Enfermedad Persistente',
                                   border: OutlineInputBorder(
@@ -178,10 +179,19 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                                     selectedEnfermedadesPersistenteId = newValue;
                                   });
                                 },
-                                items: EnfermedadesPersistente.map((EnfermedadPersistente EnfermedadesPersistente) {
+                                selectedItemBuilder: (BuildContext context) {
+                                  return enfermedades.map((e) {
+                                    return Text(
+                                      e.nombre,
+                                      overflow: TextOverflow.ellipsis, // ← recorta si es muy largo
+                                      softWrap: false,
+                                    );
+                                  }).toList();
+                                },
+                                items: enfermedades.map((e) {
                                   return DropdownMenuItem<int>(
-                                    value: EnfermedadesPersistente.id,
-                                    child: Text(EnfermedadesPersistente.nombre),
+                                    value: e.id,
+                                    child: Text(e.nombre), // ← aquí se muestra completo en el menú
                                   );
                                 }).toList(),
                               ),

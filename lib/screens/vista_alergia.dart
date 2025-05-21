@@ -159,30 +159,44 @@ class _VistaAlergia extends State<VistaAlergia> {
                             List<Alergia> alergias = snapshot.data!;
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8.0),
-                              child: DropdownButtonFormField<int>(
-                                decoration: InputDecoration(
-                                  labelText: 'Alergia',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
+                              child: SizedBox(
+                                width: 300, // O usa MediaQuery para adaptarlo a pantalla
+                                child: DropdownButtonFormField<int>(
+                                  isExpanded: true,
+                                  decoration: InputDecoration(
+                                    labelText: 'Alergia',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
                                   ),
+                                  value: selectedAlergiaId,
+                                  onChanged: (int? newValue) {
+                                    setState(() {
+                                      selectedAlergiaId = newValue;
+                                    });
+                                  },
+                                  selectedItemBuilder: (BuildContext context) {
+                                    return alergias.map((alergia) {
+                                      return Text(
+                                        alergia.nombre,
+                                        overflow: TextOverflow.ellipsis,
+                                        softWrap: false,
+                                      );
+                                    }).toList();
+                                  },
+                                  items: alergias.map((alergia) {
+                                    return DropdownMenuItem<int>(
+                                      value: alergia.id,
+                                      child: Text(alergia.nombre), // se muestra completo en el menú
+                                    );
+                                  }).toList(),
                                 ),
-                                value: selectedAlergiaId,
-                                onChanged: (int? newValue) {
-                                  setState(() {
-                                    selectedAlergiaId = newValue;
-                                  });
-                                },
-                                items: alergias.map((Alergia alergia) {
-                                  return DropdownMenuItem<int>(
-                                    value: alergia.id,
-                                    child: Text(alergia.nombre),
-                                  );
-                                }).toList(),
                               ),
                             );
                           }
                         },
                       ),
+
 
                       // Nivel de alergia
                       Padding(
