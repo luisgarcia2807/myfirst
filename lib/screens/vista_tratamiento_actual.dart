@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mifirst/screens/Vista_Ver_seguimiento.dart';
 import 'package:mifirst/screens/vista_seguimiento.dart';
 import '../models/tratamientoActual.dart';
 import '../models/tratamientoFrecuente.dart';
@@ -695,16 +696,12 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                                               showDialog(
                                                 context: context,
                                                 builder: (context) => AlertDialog(
-                                                  title: const Text('Editar Tratamiento Frecuente'),
+                                                  title: const Text('Editar Tratamiento Actual'),
                                                   content: Column(
                                                     mainAxisSize: MainAxisSize.min,
                                                     children: [
                                                       const SizedBox(height: 10),
-                                                      TextField(
-                                                        controller: dosisController,
-                                                        decoration: const InputDecoration(labelText: 'Dosis'),
-                                                        maxLines: 2,
-                                                      ),
+
                                                       TextField(
                                                         controller: frecuenciaController,
                                                         decoration: const InputDecoration(labelText: 'Frecuencia'),
@@ -748,6 +745,12 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                                           icon: const Icon(Icons.visibility, color: Colors.blueGrey),
                                           tooltip: 'Ver seguimientos',
                                           onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => SeguimientoListPage(tratamientoId: item['id'],)
+                                              ),
+                                            );
                                           },
                                         ),
                                         IconButton(

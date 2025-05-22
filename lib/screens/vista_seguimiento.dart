@@ -124,7 +124,7 @@ class _SeguimientoPageState extends State<SeguimientoPage> {
     return Scaffold(
       appBar: AppBar(
           backgroundColor: colores[0],
-          title: Text("Seguimiento",style: TextStyle(color:Colors.white),)),
+          title: Text("Agregar Seguimiento",style: TextStyle(color:Colors.white),)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Card(
