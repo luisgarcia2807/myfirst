@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mifirst/models/alergias.dart';
 import '../constans.dart';
+import '../models/solicitudes.dart';
 
 class buscarPaciente extends StatefulWidget {
   final int idusuario;
@@ -27,12 +28,12 @@ class _buscarPaciente extends State<buscarPaciente> {
   int idPaciente = 0;
   int idSangre = 0;
   String tipoSangre = '';
-  String? nivelSeleccionado;
-  String? tipoSeleccionado= 'medicamento';
-  int? selectedAlergiaId;
-  List<dynamic> alergias = [];  // Lista para almacenar las alergias
   final TextEditingController _descripcionAlergiaController = TextEditingController();
-
+  final TextEditingController _cedulaController = TextEditingController();
+  String? _nombrePaciente;
+  final _formKey = GlobalKey<FormState>();
+  Map<String, dynamic>? _datosPaciente; // para guardar todos los datos
+  bool _pacienteSeleccionado = false;
 
   Future<void> obtenerDatos() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
@@ -97,199 +98,186 @@ class _buscarPaciente extends State<buscarPaciente> {
       print('Error: $e');
     }
   }
-  void _mostrarDialogoAlergia() {
-    Future<List<Alergia>> futureAlergias = fetchAlergias(tipoSeleccionado!);
 
+
+
+
+  TextEditingController _comentarioController = TextEditingController();
+
+  void _mostrarDialogoAlergia() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (context, setStateDialog) {
             return AlertDialog(
-              scrollable: true, // Para evitar overflow vertical
-              title: Text("Añadir Alergia"),
-              content: SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.85, // Ajustar el ancho máximo
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Tipo de alergia
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: DropdownButtonFormField<String>(
-                          value: tipoSeleccionado,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              tipoSeleccionado = newValue;
-                              futureAlergias = fetchAlergias(newValue!);
-                              selectedAlergiaId = null;
-                            });
-                          },
-                          decoration: InputDecoration(
-                            labelText: "Tipo de alergia",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
-                            ),
-                          ),
-                          items: ['medicamento', 'alimento', 'ambiental', 'otro']
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
+              scrollable: true,
+              title: Text("Buscar Paciente"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Campo de cédula con lupa integrada
+                  TextFormField(
+                    controller: _cedulaController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 8,
+                    decoration: InputDecoration(
+                      labelText: "Cédula",
+                      counterText: "",
+                      border: OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        icon: Icon(Icons.search),
+                        onPressed: () async {
+                          final cedula = _cedulaController.text.trim();
+                          if (cedula.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Por favor ingresa una cédula')),
                             );
-                          }).toList(),
-                        ),
-                      ),
+                            return;
+                          }
 
-                      // Lista de alergias según tipo
-                      FutureBuilder<List<Alergia>>(
-                        future: futureAlergias,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          } else if (snapshot.hasError) {
-                            return Text('Error: ${snapshot.error}');
-                          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                            return Text('No hay alergias disponibles');
-                          } else {
-                            List<Alergia> alergias = snapshot.data!;
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0),
-                              child: SizedBox(
-                                width: 300, // O usa MediaQuery para adaptarlo a pantalla
-                                child: DropdownButtonFormField<int>(
-                                  isExpanded: true,
-                                  decoration: InputDecoration(
-                                    labelText: 'Alergia',
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                    ),
-                                  ),
-                                  value: selectedAlergiaId,
-                                  onChanged: (int? newValue) {
-                                    setState(() {
-                                      selectedAlergiaId = newValue;
-                                    });
-                                  },
-                                  selectedItemBuilder: (BuildContext context) {
-                                    return alergias.map((alergia) {
-                                      return Text(
-                                        alergia.nombre,
-                                        overflow: TextOverflow.ellipsis,
-                                        softWrap: false,
-                                      );
-                                    }).toList();
-                                  },
-                                  items: alergias.map((alergia) {
-                                    return DropdownMenuItem<int>(
-                                      value: alergia.id,
-                                      child: Text(alergia.nombre), // se muestra completo en el menú
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
+                          try {
+                            final url = Uri.parse('$baseUrl/usuarios/api/paciente/por-cedula/?cedula=$cedula');
+                            final response = await http.get(url);
+                            final data = jsonDecode(utf8.decode(response.bodyBytes));
+
+                            if (response.statusCode == 200 && data['nombre'] != null) {
+                              setStateDialog(() {
+                                _datosPaciente = data;
+                                _pacienteSeleccionado = false;
+                              });
+                            } else {
+                              setStateDialog(() {
+                                _datosPaciente = null;
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(data['error'] ?? 'Paciente no encontrado')),
+                              );
+                            }
+                          } catch (e) {
+                            print('Error: $e');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error al buscar el paciente')),
                             );
                           }
                         },
                       ),
-
-
-                      // Nivel de alergia
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: DropdownButtonFormField<String>(
-                          value: nivelSeleccionado,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              nivelSeleccionado = newValue;
-                            });
-                          },
-                          decoration: InputDecoration(
-                            labelText: 'Nivel de alergia',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                          ),
-                          items: ['leve', 'moderada', 'severo'].map((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-
-                      // Descripción
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: TextField(
-                          controller: _descripcionAlergiaController,
-                          decoration: InputDecoration(
-                            labelText: "Descripción",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                          ),
-                          maxLines: 3,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+
+                  SizedBox(height: 16),
+
+                  if (_datosPaciente != null)
+                    Card(
+                      elevation: 3,
+                      color: Colors.grey.shade50,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "${_datosPaciente!['nombre']} ${_datosPaciente!['apellido']}",
+                                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(" V-${_datosPaciente!['cedula']}"),
+                                    ],
+                                  ),
+                                ),
+                                Switch(
+                                  value: _pacienteSeleccionado,
+                                  onChanged: (value) {
+                                    setStateDialog(() {
+                                      _pacienteSeleccionado = value;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                            if (_pacienteSeleccionado)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  'Paciente seleccionado',
+                                  style: TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  SizedBox(height: 12),
+
+                  // Campo de comentario
+                  TextFormField(
+                    controller: _comentarioController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: 'Comentario',
+                      border: OutlineInputBorder(),
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                ],
               ),
               actions: [
                 TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
+                  onPressed: () => Navigator.of(context).pop(),
                   child: Text("Cancelar"),
                 ),
                 TextButton(
-                  onPressed: () async {
-                    if (selectedAlergiaId != null && nivelSeleccionado != null) {
-                      final url = Uri.parse('$baseUrl/usuarios/api/pacientes-alergias/');
-                      final Map<String, dynamic> data = {
-                        'paciente': idPaciente,
-                        'alergia': selectedAlergiaId,
-                        'gravedad': nivelSeleccionado,
-                        'observacion': _descripcionAlergiaController.text,
-                      };
+                  onPressed: _pacienteSeleccionado
+                      ? () async {
+                    final comentario = _comentarioController.text.trim();
+                    final pacienteId = _datosPaciente!['id_paciente'];
+                    final doctorId = 1; // Define esto como corresponda
 
-                      try {
-                        final response = await http.post(
-                          url,
-                          headers: {"Content-Type": "application/json"},
-                          body: json.encode(data),
-                        );
+                    final url = Uri.parse('http://192.168.0.106:8000/usuarios/api/doctor-paciente/');
+                    final Map<String, dynamic> data = {
+                      'doctor': doctorId,
+                      'paciente': pacienteId,
+                      'comentario': comentario,
+                    };
 
-                        if (response.statusCode == 201) {
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Alergia guardada correctamente")),
-                          );
-                          await _fetchAlergias();
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Error al guardar: ${response.statusCode}")),
-                          );
-                        }
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Error al conectar con el servidor")),
-                        );
-                        print('Error: $e');
-                      }
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Completa todos los campos")),
+                    try {
+                      final response = await http.post(
+                        url,
+                        headers: {"Content-Type": "application/json"},
+                        body: json.encode(data),
                       );
+
+                      if (response.statusCode == 201) {
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Solicitud enviada correctamente")),
+                        );
+                        // Aquí puedes recargar la lista si deseas
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Error al guardar: ${response.statusCode}")),
+                        );
+                        print('Respuesta del servidor: ${response.body}');
+                      }
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error al conectar con el servidor")),
+                      );
+                      print('Error: $e');
                     }
-                  },
+                  }
+                      : null,
                   child: Text("Guardar"),
                 ),
+
               ],
             );
           },
@@ -298,21 +286,23 @@ class _buscarPaciente extends State<buscarPaciente> {
     );
   }
 
-  Future<void> _fetchAlergias() async {
+  List<SolicitudDoctorPaciente> solicitudes = [];
+
+  Future<void> _fetchSolicitudes() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/usuarios/api/pacientes/$idPaciente/alergias/'),
+      Uri.parse('http://192.168.0.103:8000/usuarios/api/solicitudes/doctor/1/'),
     );
 
     if (response.statusCode == 200) {
-      // Si la petición fue exitosa, procesamos la respuesta
+      final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
       setState(() {
-        alergias = jsonDecode(utf8.decode(response.bodyBytes));  // Decodificar la respuesta JSON
+        solicitudes = data.map((json) => SolicitudDoctorPaciente.fromJson(json)).toList();
       });
     } else {
-      // Si hubo un error en la petición
-      throw Exception('Error al cargar alergias');
+      throw Exception('Error al cargar las solicitudes');
     }
   }
+
   IconData _getIcon(String tipo) {
     switch (tipo) {
       case 'Medicamento':
@@ -339,56 +329,7 @@ class _buscarPaciente extends State<buscarPaciente> {
     }
   }
 
-  Future<void> eliminarAlergia(int idAlergiaPaciente) async {
-    final url = Uri.parse('$baseUrl/usuarios/api/pacientes-alergias/$idAlergiaPaciente/');
 
-    try {
-      final response = await http.delete(url);
-
-      if (response.statusCode == 204) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Alergia eliminada correctamente")),
-        );
-        await _fetchAlergias(); // Actualizar la lista después de eliminar
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error al eliminar: ${response.statusCode}")),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al conectar con el servidor")),
-      );
-      print('Error: $e');
-    }
-  }
-
-  Future<void> editarAlergia({required int id, required String gravedad, required String observacion,}) async {
-
-    final url = Uri.parse('$baseUrl//usuarios/api/pacientes-alergias/$id/');
-
-    try {
-      final response = await http.patch(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'gravedad': gravedad,
-          'observacion': observacion,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        print('Alergia actualizada exitosamente');
-      } else {
-        print('Error al editar alergia: ${response.statusCode}');
-        print(response.body);
-      }
-    } catch (e) {
-      print('Excepción al editar alergia: $e');
-    }
-  }
 
   @override
   void initState() {
@@ -398,7 +339,7 @@ class _buscarPaciente extends State<buscarPaciente> {
   Future<void> _inicializarDatos() async {
     await obtenerDatos(); // no es necesario await si no depende de datos
     await obtenerDatosPacienteSangre(widget.idusuario);
-    await _fetchAlergias(); // Llamar después de que idPaciente esté disponible
+    await _fetchSolicitudes(); // Llamar después de que idPaciente esté disponible
   }
 
 
@@ -460,18 +401,22 @@ class _buscarPaciente extends State<buscarPaciente> {
                           children: [
                             SizedBox(height: 12),
                             Text(
-                              "GESTOR DE ALERGIA",
+                              "GESTOR DE PACIENTE",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize:30,
+                                fontSize:28,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             SizedBox(height: 8),
                             Text(
-                              nombreUsuario,
-                              style: TextStyle(color: Colors.white.withOpacity(0.7),fontSize: 30),
+                              'Dr ${nombreUsuario ?? ''}',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 30,
+                              ),
                             ),
+
                           ],
                         ),
                         SizedBox(height: 12.0),
@@ -493,7 +438,7 @@ class _buscarPaciente extends State<buscarPaciente> {
                       topRight: Radius.circular(30),
                     ),
                   ),
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(15),
                   child: Column(
                     children: [
                       // Botón de "Añadir alergias" en la parte superior derecha
@@ -538,192 +483,124 @@ class _buscarPaciente extends State<buscarPaciente> {
                         ),
                       ),
                       SizedBox(height: 12,),
-                      // Lista de alergias
                       Expanded(
-                        child: alergias.isEmpty
-                            ? const Center(child: CircularProgressIndicator())
-                            : ListView.builder(
-                          itemCount: alergias.length,
-                          itemBuilder: (context, index) {
-                            final item = alergias[index];
-                            final tipo = item['tipo_alergia'];
-                            final aprobado = item['aprobado'] == true;
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(30),
+                              topRight: Radius.circular(30),
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(5),
+                          child: solicitudes.isEmpty
+                              ? const Center(child: CircularProgressIndicator())
+                              : ListView.builder(
+                            itemCount: solicitudes.length,
+                            itemBuilder: (context, index) {
+                              final item = solicitudes[index];
 
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              color: Colors.white,
-                              elevation: 3,
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Título + check de aprobado
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const SizedBox(width: 75),
-                                        Expanded(
-                                          child: Text(
-                                            item['nombre_alergia'],
-                                            style: const TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                        ),
-                                        if (aprobado)
-                                          const Icon(Icons.verified, color: Colors.blue, size: 26),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 10),
-
-                                    Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        // Ícono tipo alergia
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 10),
-                                          child: Container(
-                                            width: 60,
-                                            height: 60,
-                                            decoration: BoxDecoration(
-                                              color: _getColor(tipo),
-                                              borderRadius: BorderRadius.circular(10),
-                                            ),
-                                            child: Center(
-                                              child: Icon(_getIcon(tipo), size: 30, color: Colors.white),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 15),
-
-                                        // Información
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text('Tipo: ${item['tipo_alergia']}', style: const TextStyle(color: Colors.black54)),
-                                              Text('Gravedad: ${item['gravedad']}', style: const TextStyle(color: Colors.black54)),
-
-                                              if (item['observacion'] != null && item['observacion'].toString().isNotEmpty)
-                                                Text('Observación: ${item['observacion']}', style: const TextStyle(color: Colors.black54)),
-
-                                              if (item['doctor_aprobador'] != null && item['doctor_aprobador'].toString().isNotEmpty)
-                                                Padding(
-                                                  padding: const EdgeInsets.only(top: 4),
-                                                  child: Text('Doctor: ${item['doctor_aprobador']}', style: const TextStyle(color: Colors.black87)),
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-
-                                      ],
-                                    ),
-                                    const SizedBox(height: 10),
-
-                                    // Botones si no está aprobado
-                                    if (!aprobado)
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.edit, color: Colors.black54),
-                                            onPressed: () {
-                                              final observacionController = TextEditingController(text: item['observacion']);
-                                              String gravedadSeleccionada = item['gravedad'].toString().toLowerCase();
-
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) => AlertDialog(
-                                                  title: const Text('Editar alergia'),
-                                                  content: Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      DropdownButtonFormField<String>(
-                                                        value: gravedadSeleccionada,
-                                                        decoration: const InputDecoration(labelText: 'Gravedad'),
-                                                        items: ['leve', 'moderada', 'grave'].map((valor) {
-                                                          return DropdownMenuItem(
-                                                            value: valor,
-                                                            child: Text(valor),
-                                                          );
-                                                        }).toList(),
-                                                        onChanged: (valor) {
-                                                          if (valor != null) gravedadSeleccionada = valor;
-                                                        },
-                                                      ),
-                                                      const SizedBox(height: 10),
-                                                      TextField(
-                                                        controller: observacionController,
-                                                        decoration: const InputDecoration(labelText: 'Observación'),
-                                                        maxLines: 2,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () => Navigator.of(context).pop(),
-                                                      child: const Text('Cancelar'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () async {
-                                                        Navigator.of(context).pop();
-                                                        await editarAlergia(
-                                                          id: item['id'],
-                                                          gravedad: gravedadSeleccionada,
-                                                          observacion: observacionController.text,
-                                                        );
-                                                        setState(() {
-                                                          item['gravedad'] = gravedadSeleccionada;
-                                                          item['observacion'] = observacionController.text;
-                                                        });
-                                                      },
-                                                      child: const Text('Guardar'),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete, color: Colors.red),
-                                            onPressed: () {
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) => AlertDialog(
-                                                  title: const Text('Confirmar eliminación'),
-                                                  content: const Text('¿Estás seguro de que deseas eliminar esta alergia?'),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () => Navigator.of(context).pop(),
-                                                      child: const Text('Cancelar'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () async {
-                                                        Navigator.of(context).pop();
-                                                        await eliminarAlergia(item['id']);
-                                                      },
-                                                      child: const Text('Eliminar'),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                  ],
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              ),
-                            );
-                          },
+                                color: Colors.white,
+                                elevation: 2,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      // Ícono alineado
+                                      Container(
+                                        width: 50,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: const Center(
+                                          child: Icon(Icons.person, size: 28, color: Colors.black),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+
+                                      // Información del paciente
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '${item.pacienteNombre.toString().toUpperCase()} ${item.pacienteApellido.toString().toUpperCase()}',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text('Cédula: ${item.pacienteCedula}',
+                                                style: const TextStyle(color: Colors.black54)),
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Text(
+                                                  'Estado: ${item.estado}',
+                                                  style: TextStyle(
+                                                    color: item.estado == 'pendiente'
+                                                        ? Colors.orange[700]
+                                                        : item.estado == 'aceptado'
+                                                        ? Colors.green[700]
+                                                        : item.estado == 'rechazado'
+                                                        ? Colors.red[700]
+                                                        : Colors.black54,
+                                                  ),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: item.estado == 'aceptado'
+                                                      ? () {
+                                                    // Acción cuando el estado es aceptado
+                                                    print('Ver detalles de ${item.pacienteNombre}');
+                                                  }
+                                                      : null, // Deshabilitado si no está aceptado
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: item.estado == 'aceptado'
+                                                        ? Colors.blue
+                                                        : Colors.grey[300],
+                                                    foregroundColor: item.estado == 'aceptado'
+                                                        ? Colors.white
+                                                        : Colors.black45,
+                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                                    minimumSize: const Size(40, 30),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    elevation: 0,
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.visibility,
+                                                    size: 20,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+
+
+
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       )
+
 
                     ],
                   ),
@@ -759,4 +636,6 @@ Future<List<Alergia>> fetchAlergias(String tipo) async {
     throw Exception('Error al cargar las alergias');
   }
 }
+
+
 

@@ -417,13 +417,16 @@ class _ExamenesPageState extends State<ExamenesPage> {
 
 
                             const SizedBox(height: 12),
+
                             Expanded(
+
                               child: examenes.isEmpty
                                   ? const Center(child: CircularProgressIndicator())
                                   : ListView.builder(
                                 itemCount: examenes.length,
                                 itemBuilder: (context, index) {
                                   final examen = examenes[index];
+                                  print(examenes);
 
                                   return Card(
                                     margin: const EdgeInsets.only(bottom: 10),

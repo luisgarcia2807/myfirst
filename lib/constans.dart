@@ -1,3 +1,3 @@
 // lib/constants.dart
 
-const String baseUrl = "http://192.168.0.100:8000"; // Cambia esta solo una vez
+const String baseUrl = "https://salud-backend-1.onrender.com"; // Cambia esta solo una vez

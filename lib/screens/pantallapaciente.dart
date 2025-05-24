@@ -58,13 +58,14 @@ class _PacienteScreen extends State<PacienteScreen> {
           foto =datos['foto_perfil'];
 
           if (foto != null && foto!.isNotEmpty) {
-            // Reemplazamos 'localhost' por tu baseUrl
             String nuevaFotoUrl = foto!.replaceFirst('http://localhost:8000', baseUrl);
-            print(nuevaFotoUrl); // Esto imprimirá la URL con tu baseUrl
+            print('URL final de la imagen: $nuevaFotoUrl');
+
           } else {
-            // Si la foto es nula o vacía, puedes manejar el caso como desees
             print('La foto no está disponible');
+
           }
+
 
 
         });
@@ -394,7 +395,7 @@ class _PacienteScreen extends State<PacienteScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ExamenesPage(idusuario: widget.idusuario),
+                                  builder: (context) => ExamenesPage(idusuario: 16),
                                 ),
                               );
                             },
