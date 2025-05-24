@@ -303,33 +303,6 @@ class _buscarPaciente extends State<buscarPaciente> {
     }
   }
 
-  IconData _getIcon(String tipo) {
-    switch (tipo) {
-      case 'Medicamento':
-        return Icons.local_hospital;  // Ícono para medicamentos
-      case 'Ambiental':
-        return Icons.ac_unit;  // Ícono para alergias ambientales
-      case 'Alimento':
-        return Icons.restaurant_menu;  // Ícono más sano que simboliza comida 🍏
-      default:
-        return Icons.precision_manufacturing
-        ;  // Ícono genérico para otros tipos
-    }
-  }
-  Color _getColor(String tipo) {
-    switch (tipo) {
-      case 'Medicamento':
-        return Colors.blue;  // Color azul para alergias a medicamentos
-      case 'Ambiental':
-        return Colors.green;  // Color verde para alergias ambientales
-      case 'Alimento':
-        return Colors.red;  // Ícono más sano que simboliza comida 🍏
-      default:
-        return Colors.grey;  // Color gris para otros tipos
-    }
-  }
-
-
 
   @override
   void initState() {
@@ -620,20 +593,6 @@ class _buscarPaciente extends State<buscarPaciente> {
         ),
       ),
     );
-  }
-}
-
-Future<List<Alergia>> fetchAlergias(String tipo) async {
-  final url = Uri.parse('$baseUrl/usuarios/api/alergias/?tipo=$tipo');
-  final response = await http.get(url);
-
-  if (response.statusCode == 200) {
-    final utf8DecodedBody = utf8.decode(response.bodyBytes);
-    // Si la solicitud es exitosa, parsea los datos
-    List<dynamic> data = json.decode(utf8DecodedBody);
-    return data.map((json) => Alergia.fromJson(json)).toList();
-  } else {
-    throw Exception('Error al cargar las alergias');
   }
 }
 
