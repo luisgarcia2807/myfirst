@@ -50,6 +50,7 @@ dependencies:
   dio: ^5.4.0
   camera: ^0.10.5+9
   http_parser: ^4.0.2
+  font_awesome_flutter: ^10.7.0
 
 
 

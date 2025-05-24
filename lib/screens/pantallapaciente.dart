@@ -132,6 +132,7 @@ class _PacienteScreen extends State<PacienteScreen> {
               icon: Icon(Icons.qr_code_outlined),
               selectedIcon: Icon(Icons.qr_code),
               label: 'QR',
+
             ),
             NavigationDestination(
               icon: Icon(Icons.medical_services_outlined),

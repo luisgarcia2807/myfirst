@@ -14,6 +14,7 @@ import 'package:mifirst/screens/vista_doctor_buscarPaciente.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
 import 'package:mifirst/screens/vista_examenlaboratorio.dart';
 import 'package:mifirst/screens/vista_imagenologia.dart';
+import 'package:mifirst/screens/vista_paciente_pacientedoctor.dart';
 import 'package:mifirst/screens/vista_tramientofrecuente.dart';
 import 'package:mifirst/screens/vista_tratamiento_actual.dart';
 import 'package:mifirst/screens/vista_vacuna.dart';
@@ -135,7 +136,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => buscarPaciente(idusuario: 16,),
+                              builder: (context) => SolititudPaciente(idusuario: 16,),
                             ),
                           );
                         },

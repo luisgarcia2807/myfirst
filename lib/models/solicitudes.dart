@@ -9,6 +9,9 @@ class SolicitudDoctorPaciente {
   final String pacienteNombre;
   final String pacienteApellido;
   final String pacienteCedula;
+  final String doctorNombre;
+  final String doctorApellido;
+  final String doctorCedula;
 
   SolicitudDoctorPaciente({
     required this.id,
@@ -21,6 +24,10 @@ class SolicitudDoctorPaciente {
     required this.pacienteNombre,
     required this.pacienteApellido,
     required this.pacienteCedula,
+    required this.doctorNombre,
+    required this.doctorApellido,
+    required this.doctorCedula,
+
   });
 
   factory SolicitudDoctorPaciente.fromJson(Map<String, dynamic> json) {
@@ -35,6 +42,9 @@ class SolicitudDoctorPaciente {
       pacienteNombre: json['paciente_nombre'],
       pacienteApellido: json['paciente_apellido'],
       pacienteCedula: json['paciente_cedula'],
+      doctorNombre: json['doctor_nombre'],
+      doctorApellido: json['doctor_apellido'],
+      doctorCedula: json['doctor_cedula'],
     );
   }
 }
