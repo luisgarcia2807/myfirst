@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:mifirst/models/alergias.dart';
+import 'package:intl/intl.dart';
+import 'package:mifirst/screens/fotoPerfil.dart';
+import 'package:mifirst/screens/pantallapaciente.dart';
+import 'package:mifirst/util/emoticon_face.dart';
 import '../constans.dart';
 import '../models/solicitudes.dart';
 
@@ -29,12 +31,8 @@ class _SolititudPaciente extends State<SolititudPaciente> {
   int idPaciente = 0;
   int idSangre = 0;
   String tipoSangre = '';
-  final TextEditingController _descripcionAlergiaController = TextEditingController();
-  final TextEditingController _cedulaController = TextEditingController();
-  String? _nombrePaciente;
   final _formKey = GlobalKey<FormState>();
-  Map<String, dynamic>? _datosPaciente; // para guardar todos los datos
-  bool _pacienteSeleccionado = false;
+
 
   Future<void> obtenerDatos() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
@@ -101,197 +99,10 @@ class _SolititudPaciente extends State<SolititudPaciente> {
   }
 
 
-
-
-  TextEditingController _comentarioController = TextEditingController();
-
-  void _mostrarDialogoAlergia() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              scrollable: true,
-              title: Text("Buscar Paciente"),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Campo de cédula con lupa integrada
-                  TextFormField(
-                    controller: _cedulaController,
-                    keyboardType: TextInputType.number,
-                    maxLength: 8,
-                    decoration: InputDecoration(
-                      labelText: "Cédula",
-                      counterText: "",
-                      border: OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        icon: Icon(Icons.search),
-                        onPressed: () async {
-                          final cedula = _cedulaController.text.trim();
-                          if (cedula.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Por favor ingresa una cédula')),
-                            );
-                            return;
-                          }
-
-                          try {
-                            final url = Uri.parse('$baseUrl/usuarios/api/paciente/por-cedula/?cedula=$cedula');
-                            final response = await http.get(url);
-                            final data = jsonDecode(utf8.decode(response.bodyBytes));
-
-                            if (response.statusCode == 200 && data['nombre'] != null) {
-                              setStateDialog(() {
-                                _datosPaciente = data;
-                                _pacienteSeleccionado = false;
-                              });
-                            } else {
-                              setStateDialog(() {
-                                _datosPaciente = null;
-                              });
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(data['error'] ?? 'Paciente no encontrado')),
-                              );
-                            }
-                          } catch (e) {
-                            print('Error: $e');
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error al buscar el paciente')),
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 16),
-
-                  if (_datosPaciente != null)
-                    Card(
-                      elevation: 3,
-                      color: Colors.grey.shade50,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "${_datosPaciente!['nombre']} ${_datosPaciente!['apellido']}",
-                                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                                      ),
-                                      SizedBox(height: 4),
-                                      Text(" V-${_datosPaciente!['cedula']}"),
-                                    ],
-                                  ),
-                                ),
-                                Switch(
-                                  value: _pacienteSeleccionado,
-                                  onChanged: (value) {
-                                    setStateDialog(() {
-                                      _pacienteSeleccionado = value;
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                            if (_pacienteSeleccionado)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: Text(
-                                  'Paciente seleccionado',
-                                  style: TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                  SizedBox(height: 12),
-
-                  // Campo de comentario
-                  TextFormField(
-                    controller: _comentarioController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      labelText: 'Comentario',
-                      border: OutlineInputBorder(),
-                      alignLabelWithHint: true,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text("Cancelar"),
-                ),
-                TextButton(
-                  onPressed: _pacienteSeleccionado
-                      ? () async {
-                    final comentario = _comentarioController.text.trim();
-                    final pacienteId = _datosPaciente!['id_paciente'];
-                    final doctorId = 1; // Define esto como corresponda
-
-                    final url = Uri.parse('http://192.168.0.106:8000/usuarios/api/doctor-paciente/');
-                    final Map<String, dynamic> data = {
-                      'doctor': doctorId,
-                      'paciente': pacienteId,
-                      'comentario': comentario,
-                    };
-
-                    try {
-                      final response = await http.post(
-                        url,
-                        headers: {"Content-Type": "application/json"},
-                        body: json.encode(data),
-                      );
-
-                      if (response.statusCode == 201) {
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Solicitud enviada correctamente")),
-                        );
-                        // Aquí puedes recargar la lista si deseas
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Error al guardar: ${response.statusCode}")),
-                        );
-                        print('Respuesta del servidor: ${response.body}');
-                      }
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Error al conectar con el servidor")),
-                      );
-                      print('Error: $e');
-                    }
-                  }
-                      : null,
-                  child: Text("Guardar"),
-                ),
-
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   List<SolicitudDoctorPaciente> solicitudes = [];
-
   Future<void> _fetchSolicitudes() async {
     final response = await http.get(
-      Uri.parse('http://192.168.0.103:8000/usuarios/api/solicitudes/paciente/1/'),
+      Uri.parse('$baseUrl/usuarios/api/solicitudes/paciente/$idPaciente/'),
     );
 
     if (response.statusCode == 200) {
@@ -305,7 +116,7 @@ class _SolititudPaciente extends State<SolititudPaciente> {
   }
 
   Future<void> aceptarSolicitud(int id) async {
-    final url = Uri.parse('http://192.168.0.103:8000/usuarios/api/doctor-paciente/$id/aceptar/');
+    final url = Uri.parse('$baseUrl/usuarios/api/doctor-paciente/$id/aceptar/');
 
     final response = await http.post(
       url,
@@ -314,16 +125,13 @@ class _SolititudPaciente extends State<SolititudPaciente> {
 
     if (response.statusCode == 200) {
       print('Solicitud aceptada correctamente');
-      // Aquí podrías actualizar el estado de tu UI si usas setState o algún gestor de estado
+      await _fetchSolicitudes(); // Aquí podrías actualizar el estado de tu UI si usas setState o algún gestor de estado
     } else {
       print('Error al aceptar la solicitud: ${response.statusCode}');
     }
   }
-
-
-
   Future<void> rechazarSolicitud(int id) async {
-    final url = Uri.parse('http://192.168.0.103:8000/usuarios/api/doctor-paciente/$id/rechazar/');
+    final url = Uri.parse('$baseUrl/usuarios/api/doctor-paciente/$id/rechazar/');
 
     final response = await http.post(
       url,
@@ -331,14 +139,31 @@ class _SolititudPaciente extends State<SolititudPaciente> {
 
     if (response.statusCode == 200) {
       print('Solicitud rechazada correctamente');
-      // Aquí también puedes actualizar la UI si es necesario
+      await _fetchSolicitudes();// Aquí también puedes actualizar la UI si es necesario
     } else {
       print('Error al rechazar la solicitud: ${response.statusCode}');
     }
   }
 
 
+  int _selectedIndex = 1; // Ya estamos en la pestaña de doctores
 
+  void _onDestinationSelected(int index) {
+    if (_selectedIndex == index) return; // Ya está en Doctores, no hace nada
+
+    if (index == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PacienteScreen(idusuario: widget.idusuario),
+        ),
+      );
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -354,93 +179,151 @@ class _SolititudPaciente extends State<SolititudPaciente> {
 
   @override
   Widget build(BuildContext context) {
-
+    String fechaHoy = DateFormat('dd/MM/yyyy').format(DateTime.now());
     return Scaffold(
+      bottomNavigationBar: Theme(
+          data: Theme.of(context).copyWith(
+            navigationBarTheme: NavigationBarThemeData(
+              backgroundColor: Colors.white,
+              indicatorColor: Colors.indigo.withOpacity(0.2),
+              labelTextStyle: MaterialStateProperty.resolveWith<TextStyle>((states) {
+                if (states.contains(MaterialState.selected)) {
+                  return TextStyle(color: Colors.indigo, fontWeight: FontWeight.w600);
+                }
+                return TextStyle(color: Colors.grey);
+              }),
+              iconTheme: MaterialStateProperty.resolveWith<IconThemeData>((states) {
+                if (states.contains(MaterialState.selected)) {
+                  return IconThemeData(color: Colors.indigo);
+                }
+                return IconThemeData(color: Colors.grey);
+              }),
+            ),
+          ),
+          child: NavigationBar(
+            height: 70,
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: _onDestinationSelected,
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home),
+                label: 'Inicio',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.verified_user_outlined),
+                selectedIcon: Icon(Icons.verified_user),
+                label: 'Doctores',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.qr_code_outlined),
+                selectedIcon: Icon(Icons.qr_code),
+                label: 'QR',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.settings_outlined),
+                selectedIcon: Icon(Icons.settings),
+                label: 'Ajustes',
+              ),
+            ],
+          )
+
+
+      ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0D47A1), // Azul oscuro
-              Color(0xFF1976D2), // Azul medio
-              Color(0xFF42A5F5), // Azul claro
-              Color(0xFF7E57C2), // Morado
-              Color(0xFF26C6DA), // más oscuro que 0xFF26C6DA
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
+
+             child: SafeArea(
+               child: Column(
+                 children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Column(
                   children: [
                     SizedBox(height: 25),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Row(
                       children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white60,
-                            borderRadius: BorderRadius.circular(100),
-                          ),
-                          padding: EdgeInsets.all(3), // Reducido
-                          child: foto == null || foto!.isEmpty
-                              ? Icon(
-                            Icons.person_pin,
-                            color: Colors.white,
-                            size: 100, // Reducido
-                          )
-                              : ClipOval(
-                            child: Image.network(
-                              '$baseUrl$foto',
-                              width: 100, // Reducido
-                              height: 100,
-                              fit: BoxFit.cover,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => CambiarFotoScreen(idusuario: widget.idusuario,)), // Reemplaza con tu widget de destino
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.blueAccent,
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                            padding: EdgeInsets.all(3),
+                            child: foto == null || foto!.isEmpty
+                                ? Icon(
+                              Icons.person_pin,
+                              color: Colors.white,
+                              size: 70,
+                            )
+                                : ClipOval(
+                              child: Image.network(
+                                '$baseUrl$foto',
+                                width: 70,
+                                height: 70,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(height: 12),
-                            Text(
-                              "DOCTORES TRATANTES",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize:26,
-                                fontWeight: FontWeight.bold,
+                        SizedBox(width: 8.0),
+                        Expanded( // <- ¡Esta línea soluciona el overflow!
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(height: 4.0),
+                              Text(
+                                "Pc. $nombreUsuario $apellidoUsuario",
+                                style: TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis, // <-- por si aún se desborda
                               ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              ' ${nombreUsuario ?? ''}',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
-                                fontSize: 30,
+                              SizedBox(height: 1.0),
+                              Text(
+                                fechaHoy,
+                                style: TextStyle(color: Colors.grey[600]),
+                                overflow: TextOverflow.ellipsis, // opcional
                               ),
-                            ),
-
-                          ],
+                            ],
+                          ),
                         ),
-                        SizedBox(height: 12.0),
-
-
                       ],
                     ),
+                    SizedBox(height: 25),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Doctores Tratantes',
+                          style: TextStyle(
+                            color: Colors.indigo,
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Icon(Icons.more_horiz, color: Colors.indigo),
+                      ],
+                    ),
+                    SizedBox(height: 25),
+
                   ],
                 ),
               ),
-
               Expanded(
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.grey[200], // Fondo gris claro
+                    color: Colors.indigo, // Fondo gris claro
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(30),
                       topRight: Radius.circular(30),
@@ -449,14 +332,11 @@ class _SolititudPaciente extends State<SolititudPaciente> {
                   padding: const EdgeInsets.all(15),
                   child: Column(
                     children: [
-                      // Botón de "Añadir alergias" en la parte superior derecha
-
-
                       Expanded(
                         child: Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
+                            color: Colors.indigo,
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(30),
                               topRight: Radius.circular(30),
@@ -578,17 +458,7 @@ class _SolititudPaciente extends State<SolititudPaciente> {
                                                     ),
                                                   ],
                                                 )
-                                              else if (item.estado == 'aceptado')
-                                                Align(
-                                                  alignment: Alignment.centerLeft,
-                                                  child: IconButton(
-                                                    onPressed: () {
-                                                      print('Ver detalles de ${item.doctorNombre}');
-                                                    },
-                                                    icon: const Icon(Icons.visibility, size: 22, color: Colors.blue),
-                                                    tooltip: 'Ver detalles',
-                                                  ),
-                                                ),
+
 
 
                                           ],

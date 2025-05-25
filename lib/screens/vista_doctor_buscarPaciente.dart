@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mifirst/models/alergias.dart';
+import 'package:mifirst/screens/fotoPerfil.dart';
+import 'package:mifirst/screens/pantalla_doctor_mobile.dart';
+import 'package:mifirst/screens/vista_doctor_informacionpaciente.dart';
 import '../constans.dart';
 import '../models/solicitudes.dart';
 
@@ -98,10 +101,6 @@ class _buscarPaciente extends State<buscarPaciente> {
       print('Error: $e');
     }
   }
-
-
-
-
   TextEditingController _comentarioController = TextEditingController();
 
   void _mostrarDialogoAlergia() {
@@ -112,7 +111,7 @@ class _buscarPaciente extends State<buscarPaciente> {
           builder: (context, setStateDialog) {
             return AlertDialog(
               scrollable: true,
-              title: Text("Buscar Paciente"),
+              title: Text("Registrar Paciente"),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -241,7 +240,7 @@ class _buscarPaciente extends State<buscarPaciente> {
                     final pacienteId = _datosPaciente!['id_paciente'];
                     final doctorId = 1; // Define esto como corresponda
 
-                    final url = Uri.parse('http://192.168.0.106:8000/usuarios/api/doctor-paciente/');
+                    final url = Uri.parse('$baseUrl/usuarios/api/doctor-paciente/');
                     final Map<String, dynamic> data = {
                       'doctor': doctorId,
                       'paciente': pacienteId,
@@ -290,7 +289,7 @@ class _buscarPaciente extends State<buscarPaciente> {
 
   Future<void> _fetchSolicitudes() async {
     final response = await http.get(
-      Uri.parse('http://192.168.0.103:8000/usuarios/api/solicitudes/doctor/1/'),
+      Uri.parse('$baseUrl/usuarios/api/solicitudes/doctor/1/'),
     );
 
     if (response.statusCode == 200) {
@@ -303,7 +302,24 @@ class _buscarPaciente extends State<buscarPaciente> {
     }
   }
 
+  int _selectedIndex = 1; // Ya estamos en la pestaña de doctores
 
+  void _onDestinationSelected(int index) {
+    if (_selectedIndex == index) return; // Ya está en Doctores, no hace nada
+
+    if (index == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DoctorMobileScreen(idusuario: widget.idusuario),
+        ),
+      );
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -319,24 +335,61 @@ class _buscarPaciente extends State<buscarPaciente> {
 
   @override
   Widget build(BuildContext context) {
+    String fechaHoy = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
     return Scaffold(
+      backgroundColor: Colors.blue.shade900,
+      bottomNavigationBar: Theme(
+        data: Theme.of(context).copyWith(
+          navigationBarTheme: NavigationBarThemeData(
+            backgroundColor:Colors.white,
+            indicatorColor: Colors.blue.shade900,
+            labelTextStyle: MaterialStateProperty.resolveWith<TextStyle>((states) {
+              if (states.contains(MaterialState.selected)) {
+                return TextStyle(color: Colors.indigo, fontWeight: FontWeight.w600);
+              }
+              return TextStyle(color: Colors.grey);
+            }),
+            iconTheme: MaterialStateProperty.resolveWith<IconThemeData>((states) {
+              if (states.contains(MaterialState.selected)) {
+                return IconThemeData(color: Colors.white);
+              }
+              return IconThemeData(color: Colors.grey);
+            }),
+          ),
+        ),
+        child: NavigationBar(
+          height: 70,
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: _onDestinationSelected,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'Inicio',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_pin),
+              selectedIcon: Icon(Icons.person_pin),
+              label: 'Paciente',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.qr_code_outlined),
+              selectedIcon: Icon(Icons.qr_code),
+              label: 'QR',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.settings_outlined),
+              selectedIcon: Icon(Icons.settings),
+              label: 'Ajustes',
+            ),
+          ],
+        ),
+      ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0B3C91), // más oscuro que 0xFF0D47A1
-              Color(0xFF155A9C), // más oscuro que 0xFF1976D2
-              Color(0xFF2E7AC7), // más oscuro que 0xFF42A5F5
-              Color(0xFF5E35B1), // más oscuro que 0xFF7E57C2
-              Color(0xFF0097A7), // más oscuro que 0xFF26C6DA
-            ],
-          ),
-        ),
+
         child: SafeArea(
           child: Column(
             children: [
@@ -345,58 +398,72 @@ class _buscarPaciente extends State<buscarPaciente> {
                 child: Column(
                   children: [
                     SizedBox(height: 25),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Row(
                       children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white60,
-                            borderRadius: BorderRadius.circular(100),
-                          ),
-                          padding: EdgeInsets.all(3), // Reducido
-                          child: foto == null || foto!.isEmpty
-                              ? Icon(
-                            Icons.person_pin,
-                            color: Colors.white,
-                            size: 100, // Reducido
-                          )
-                              : ClipOval(
-                            child: Image.network(
-                              '$baseUrl$foto',
-                              width: 100, // Reducido
-                              height: 100,
-                              fit: BoxFit.cover,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => CambiarFotoScreen(idusuario: widget.idusuario,)), // Reemplaza con tu widget de destino
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.blueAccent,
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                            padding: EdgeInsets.all(3),
+                            child: foto == null || foto!.isEmpty
+                                ? Icon(
+                              Icons.person_pin,
+                              color: Colors.white,
+                              size: 70,
+                            )
+                                : ClipOval(
+                              child: Image.network(
+                                '$baseUrl$foto',
+                                width: 70,
+                                height: 70,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(height: 12),
-                            Text(
-                              "GESTOR DE PACIENTE",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize:28,
-                                fontWeight: FontWeight.bold,
+                        SizedBox(width: 8.0),
+                        Expanded( // <- ¡Esta línea soluciona el overflow!
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(height: 4.0),
+                              Text(
+                                "Dr.$nombreUsuario $apellidoUsuario",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis, // <-- por si aún se desborda
                               ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Dr ${nombreUsuario ?? ''}',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
-                                fontSize: 30,
+                              SizedBox(height: 1.0),
+                              Text(
+                                fechaHoy,
+                                style: TextStyle(color: Colors.grey[300],fontSize: 12),
+                                overflow: TextOverflow.ellipsis, // opcional
                               ),
-                            ),
 
-                          ],
+                            ],
+                          ),
                         ),
-                        SizedBox(height: 12.0),
-
-
                       ],
                     ),
+                    SizedBox(height: 15),
+                    Text(
+                      'Pacientes Registrados',
+                      style: TextStyle(color: Colors.white,fontSize: 25),
+                      overflow: TextOverflow.ellipsis, // opcional
+                    ),
+                    SizedBox(height: 25),
+
                   ],
                 ),
               ),
@@ -534,8 +601,12 @@ class _buscarPaciente extends State<buscarPaciente> {
                                                 ElevatedButton(
                                                   onPressed: item.estado == 'aceptado'
                                                       ? () {
-                                                    // Acción cuando el estado es aceptado
-                                                    print('Ver detalles de ${item.pacienteNombre}');
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) => DetallePacienteScreen(idusuario: item.paciente,nombre: nombreUsuario, apellido: apellidoUsuario,),
+                                                      ),
+                                                    );
                                                   }
                                                       : null, // Deshabilitado si no está aceptado
                                                   style: ElevatedButton.styleFrom(
@@ -557,6 +628,7 @@ class _buscarPaciente extends State<buscarPaciente> {
                                                     size: 20,
                                                   ),
                                                 ),
+
                                               ],
                                             ),
 

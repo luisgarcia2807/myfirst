@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mifirst/screens/fotoPerfil.dart';
 import 'package:mifirst/screens/registrarCredencial.dart';
 import 'package:mifirst/screens/vista_alergia.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
 import 'package:mifirst/screens/vista_examenlaboratorio.dart';
 import 'package:mifirst/screens/vista_imagenologia.dart';
+import 'package:mifirst/screens/vista_paciente_pacientedoctor.dart';
 import 'package:mifirst/screens/vista_tramientofrecuente.dart';
 import 'package:mifirst/screens/vista_tratamiento_actual.dart';
 import 'package:mifirst/screens/vista_vacuna.dart';
@@ -23,7 +25,6 @@ class PacienteScreen extends StatefulWidget {
 }
 
 class _PacienteScreen extends State<PacienteScreen> {
-  final TextEditingController _credencialController = TextEditingController();
 
   String nombreUsuario = '';
   String apellidoUsuario = '';
@@ -79,7 +80,24 @@ class _PacienteScreen extends State<PacienteScreen> {
       print('Error: $e');
     }
   }
+  int _selectedIndex = 0;
 
+  void _onDestinationSelected(int index) {
+    if (_selectedIndex == index) return; // No hacer nada si ya está seleccionado
+
+    if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SolititudPaciente(idusuario: widget.idusuario),
+        ),
+      );
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -113,15 +131,8 @@ class _PacienteScreen extends State<PacienteScreen> {
         ),
         child: NavigationBar(
           height: 70,
-          selectedIndex: 0, // cambia esto si necesitas manejar el estado
-          onDestinationSelected: (int index) {
-            if (index == 2) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => RegistrarCredencialScreen()),
-              );
-            }
-          },
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: _onDestinationSelected,
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.home_outlined),
@@ -129,23 +140,24 @@ class _PacienteScreen extends State<PacienteScreen> {
               label: 'Inicio',
             ),
             NavigationDestination(
+              icon: Icon(Icons.verified_user_outlined), // Nuevo ícono
+              selectedIcon: Icon(Icons.verified_user), // Ícono cuando está seleccionado
+              label: 'Doctores',
+            ),
+            NavigationDestination(
               icon: Icon(Icons.qr_code_outlined),
               selectedIcon: Icon(Icons.qr_code),
               label: 'QR',
+            ),
 
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.medical_services_outlined),
-              selectedIcon: Icon(Icons.medical_services),
-              label: 'Doctor',
-            ),
             NavigationDestination(
               icon: Icon(Icons.settings_outlined),
               selectedIcon: Icon(Icons.settings),
               label: 'Ajustes',
             ),
           ],
-        ),
+        )
+
       ),
       body: SafeArea(
         child: Column(
@@ -157,28 +169,35 @@ class _PacienteScreen extends State<PacienteScreen> {
                   SizedBox(height: 25),
                   Row(
                     children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.blueAccent,
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                        padding: EdgeInsets.all(3), // Reducido
-                        child: foto == null || foto!.isEmpty
-                            ? Icon(
-                          Icons.person_pin,
-                          color: Colors.white,
-                          size: 70, // Reducido
-                        )
-                            : ClipOval(
-                          child: Image.network(
-                            '$baseUrl$foto',
-                            width: 70, // Reducido
-                            height: 70,
-                            fit: BoxFit.cover,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => CambiarFotoScreen(idusuario: widget.idusuario,)), // Reemplaza con tu widget de destino
+                          );
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.blueAccent,
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          padding: EdgeInsets.all(3),
+                          child: foto == null || foto!.isEmpty
+                              ? Icon(
+                            Icons.person_pin,
+                            color: Colors.white,
+                            size: 70,
+                          )
+                              : ClipOval(
+                            child: Image.network(
+                              '$baseUrl$foto',
+                              width: 70,
+                              height: 70,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       ),
-
                       SizedBox(width: 8.0),
                       Expanded( // <- ¡Esta línea soluciona el overflow!
                         child: Column(

@@ -14,6 +14,7 @@ import 'package:mifirst/screens/vista_doctor_buscarPaciente.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
 import 'package:mifirst/screens/vista_examenlaboratorio.dart';
 import 'package:mifirst/screens/vista_imagenologia.dart';
+import 'package:mifirst/screens/vista_paciente_doctor_escritorio.dart';
 import 'package:mifirst/screens/vista_paciente_pacientedoctor.dart';
 import 'package:mifirst/screens/vista_tramientofrecuente.dart';
 import 'package:mifirst/screens/vista_tratamiento_actual.dart';
@@ -123,7 +124,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ScanView(idPaciente: 2,),
+                              builder: (context) => PacientesPorDoctorScreen(),
                             ),
                           );
                         },
@@ -136,7 +137,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => SolititudPaciente(idusuario: 16,),
+                              builder: (context) => DoctorMobileScreen(idusuario:40,),
                             ),
                           );
                         },
