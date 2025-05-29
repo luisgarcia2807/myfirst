@@ -311,8 +311,8 @@ class _VistaAlergia extends State<VistaAlergia> {
 
     try {
       final url = (tipo == null || tipo.isEmpty)
-          ? 'http://192.168.0.106:8000/usuarios/api/pacientes/$idPaciente/alergias/'
-          : 'http://192.168.0.106:8000/usuarios/api/pacientes/$idPaciente/alergias/?tipo=$tipo';
+          ? '$baseUrl/usuarios/api/pacientes/$idPaciente/alergias/'
+          : '$baseUrl/usuarios/api/pacientes/$idPaciente/alergias/?tipo=$tipo';
 
       final response = await http.get(Uri.parse(url));
 

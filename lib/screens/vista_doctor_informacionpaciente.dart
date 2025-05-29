@@ -40,7 +40,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
   List<dynamic> EnfermedadesPersistente = [];
 
   Future<void> obtenerIdUsuarioDesdePaciente() async {
-    final url = Uri.parse('http://192.168.0.106:8000/usuarios/api/usuario-desde-paciente/${widget.idusuariopac}/');
+    final url = Uri.parse('$baseUrl/usuarios/api/usuario-desde-paciente/${widget.idusuariopac}/');
 
     try {
       final response = await http.get(url);

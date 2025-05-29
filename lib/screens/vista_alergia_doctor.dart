@@ -314,8 +314,8 @@ class _VistaAlergiadoctor extends State<VistaAlergiadoctor> {
 
     try {
       final url = (tipo == null || tipo.isEmpty)
-          ? 'http://192.168.0.106:8000/usuarios/api/pacientes/$idPaciente/alergias/'
-          : 'http://192.168.0.106:8000/usuarios/api/pacientes/$idPaciente/alergias/?tipo=$tipo';
+          ? '$baseUrl/usuarios/api/pacientes/$idPaciente/alergias/'
+          : '$baseUrl/usuarios/api/pacientes/$idPaciente/alergias/?tipo=$tipo';
 
       final response = await http.get(Uri.parse(url));
 
@@ -418,7 +418,7 @@ class _VistaAlergiadoctor extends State<VistaAlergiadoctor> {
   }
 
   Future<void> aprobarAlergia(int idAlergia, bool aprobado) async {
-    final url = Uri.parse('http://192.168.0.106:8000/usuarios/api/pacientes-alergias/$idAlergia/');
+    final url = Uri.parse('$baseUrl/usuarios/api/pacientes-alergias/$idAlergia/');
     print(widget.idusuariodoc);
     try {
       final response = await http.patch(

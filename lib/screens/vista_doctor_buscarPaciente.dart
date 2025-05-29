@@ -103,9 +103,8 @@ class _buscarPaciente extends State<buscarPaciente> {
       print('Error: $e');
     }
   }
-
   Future<void> obtenerDatosDoctor(int idUsuario) async {
-    final url = Uri.parse('http://192.168.0.106:8000/usuarios/api/doctores/por-usuario/$idUsuario/');
+    final url = Uri.parse('$baseUrl/usuarios/api/doctores/por-usuario/$idUsuario/');
 
     try {
       final response = await http.get(url);
