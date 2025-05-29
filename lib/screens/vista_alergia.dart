@@ -658,9 +658,7 @@ class _VistaAlergia extends State<VistaAlergia> {
                         ],
                       ),
 
-
-
-                      SizedBox(height: 12,),
+                      SizedBox(height: 12),
                       // Lista de alergias
                       Expanded(
                         child: isLoading
@@ -705,6 +703,7 @@ class _VistaAlergia extends State<VistaAlergia> {
                             final aprobado = item['aprobado'] == true;
 
                             return Card(
+                              color: Colors.white,
                               margin: const EdgeInsets.only(bottom: 16),
                               elevation: 4,
                               shape: RoundedRectangleBorder(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mifirst/screens/fotoPerfil.dart';
 import '../models/vacuna.dart';
 import '../constans.dart';
 
@@ -37,6 +38,7 @@ class _VistaVacuna extends State<VistaVacuna> {
   int? selectedDosis;
   int? siguienteDosis;// Lista para almacenar las alergias
   bool verUltimasDosis = true;
+  bool hasError = false;
 
   final TextEditingController _descripcionAlergiaController = TextEditingController();
 
@@ -103,19 +105,19 @@ class _VistaVacuna extends State<VistaVacuna> {
       print('Error: $e');
     }
   }
-  Future<void> cargarSiguienteDosis(int vacunaId) async {
+  Future<void> cargarSiguienteDosis(int vacunaId, void Function(void Function()) localSetState) async {
     final response = await http.get(Uri.parse(
       '$baseUrl/usuarios/api/proxima-dosis/$idPaciente/$vacunaId/',
     ));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      setState(() {
+      localSetState(() {
         siguienteDosis = data['proxima_dosis'];
         selectedDosis = siguienteDosis;
       });
     } else {
-      setState(() {
+      localSetState(() {
         siguienteDosis = null;
         selectedDosis = null;
       });
@@ -124,9 +126,8 @@ class _VistaVacuna extends State<VistaVacuna> {
       );
     }
   }
+
   void _mostrarDialogoVacuna() {
-
-
 
     final TextEditingController _fechaController = TextEditingController();
     final TextEditingController _descripcionVacunaController = TextEditingController();
@@ -172,9 +173,10 @@ class _VistaVacuna extends State<VistaVacuna> {
                                   selectedDosis = null;
                                 });
                                 if (newValue != null) {
-                                  cargarSiguienteDosis(newValue);
+                                  cargarSiguienteDosis(newValue, setState); // pasa el setState local del StatefulBuilder
                                 }
                               },
+
 
                               selectedItemBuilder: (BuildContext context) {
                                 return vacunas.map((vacuna) {
@@ -340,7 +342,6 @@ class _VistaVacuna extends State<VistaVacuna> {
       throw Exception('Error al cargar vacunas');
     }
   }
-
   Future<void> eliminarVacuna(int idvacunaPaciente) async {
     final url = Uri.parse('$baseUrl/usuarios/api/vacunas-pacientes/$idvacunaPaciente/');
 
@@ -381,7 +382,7 @@ class _VistaVacuna extends State<VistaVacuna> {
 
   @override
   Widget build(BuildContext context) {
-
+    String fechaHoy = DateFormat('dd/MM/yyyy').format(DateTime.now());
     return Scaffold(
       body: isLoading
           ? Center(child: CircularProgressIndicator())
@@ -406,57 +407,77 @@ class _VistaVacuna extends State<VistaVacuna> {
                 child: Column(
                   children: [
                     SizedBox(height: 25),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                    Row(
                       children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white60,
-                            borderRadius: BorderRadius.circular(100),
-                          ),
-                          padding: EdgeInsets.all(3), // Reducido
-                          child: foto == null || foto!.isEmpty
-                              ? Icon(
-                            Icons.person_pin,
-                            color: Colors.white,
-                            size: 100, // Reducido
-                          )
-                              : ClipOval(
-                            child: Image.network(
-                              '$baseUrl$foto',
-                              width: 100, // Reducido
-                              height: 100,
-                              fit: BoxFit.cover,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => CambiarFotoScreen(idusuario: widget.idusuario,)), // Reemplaza con tu widget de destino
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.blueAccent,
+                              borderRadius: BorderRadius.circular(100),
                             ),
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(height: 12),
-                            Text(
-                              "GESTOR DE VACUNA",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize:30,
-                                fontWeight: FontWeight.bold,
+                            padding: EdgeInsets.all(3),
+                            child: foto == null || foto!.isEmpty
+                                ? Icon(
+                              Icons.person_pin,
+                              color: Colors.white,
+                              size: 70,
+                            )
+                                : ClipOval(
+                              child: Image.network(
+                                '$baseUrl$foto',
+                                width: 70,
+                                height: 70,
+                                fit: BoxFit.cover,
                               ),
                             ),
-                            SizedBox(height: 6),
-                            Text(
-                              nombreUsuario,
-                              style: TextStyle(color: Colors.white.withOpacity(0.7),fontSize: 30),
-                            ),
-                          ],
+                          ),
                         ),
-                        SizedBox(height: 12.0),
+                        SizedBox(width: 8.0),
+                        Expanded( // <- ¡Esta línea soluciona el overflow!
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(height: 4.0),
+                              Text(
+                                "Pc.$nombreUsuario $apellidoUsuario",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis, // <-- por si aún se desborda
+                              ),
+                              SizedBox(height: 1.0),
+                              Text(
+                                fechaHoy,
+                                style: TextStyle(color: Colors.grey[300],fontSize: 12),
+                                overflow: TextOverflow.ellipsis, // opcional
+                              ),
 
+                            ],
+                          ),
+                        ),
                       ],
                     ),
+                    SizedBox(height: 15),
+                    Text(
+                      'Vacunas Registradas',
+                      style: TextStyle(color: Colors.white,fontSize: 25),
+                      overflow: TextOverflow.ellipsis, // opcional
+                    ),
+                    SizedBox(height: 25),
+
                   ],
                 ),
               ),
-              SizedBox(height: 25),
+
               Expanded(
                 child: Container(
                   width: double.infinity,
@@ -471,11 +492,49 @@ class _VistaVacuna extends State<VistaVacuna> {
                   child: Column(
                     children: [
                       // Botón "Añadir vacuna"
-                      Align(
-                        alignment: Alignment.center,
-                        child: GestureDetector(
-                          onTap: _mostrarDialogoVacuna, // Define tu función aquí
-                          child: Container(
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Botón Añadir vacuna
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.center,
+                              child: GestureDetector(
+                                onTap: _mostrarDialogoVacuna,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFF0D47A1),
+                                        Color(0xFF1976D2),
+                                        Color(0xFF42A5F5),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(Icons.add_circle, color: Colors.white),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        "Añadir Vacuna",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Switch "Ver todas"
+                          Container(
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 begin: Alignment.topLeft,
@@ -487,64 +546,53 @@ class _VistaVacuna extends State<VistaVacuna> {
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.blue.shade800, width:0.1),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Icon(
-                                  Icons.add_circle_outline_sharp,
-                                  color: Colors.white,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  "Añadir vacuna",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                            padding: const EdgeInsets.all(0.5),
+                            child: Transform.scale(
+                              scale: 0.8, // Reduce el tamaño del switch
+                              child: Switch(
+                                activeColor: Colors.white,
+                                activeTrackColor: Colors.blue.shade800,
+                                inactiveThumbColor: Colors.blue.shade800,
+                                inactiveTrackColor: Colors.white,
+                                value: !verUltimasDosis,
+                                onChanged: (value) {
+                                  setState(() {
+                                    verUltimasDosis = !value;
+                                    _fetchVacunas();
+                                  });
+                                },
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text('Ver todas'),
-                          Switch(
-                            value: !verUltimasDosis,
-                            onChanged: (value) {
-                              setState(() {
-                                verUltimasDosis = !value;
-                                _fetchVacunas(); // recargar con nueva URL
-                              });
-                            },
-                          ),
+
+
                         ],
                       ),
-
-
+                      const SizedBox(height: 12),
                       // Lista de vacunas
                       Expanded(
-                        child: vacunas.isEmpty
+                        child: isLoading
+                            ? const Center(
+                          child: CircularProgressIndicator(),
+                        )
+                            : vacunas.isEmpty
                             ? const Center(child: CircularProgressIndicator())
                             : ListView.builder(
                           itemCount: vacunas.length,
                           itemBuilder: (context, index) {
                             final item = vacunas[index];
                             final aprobado = item['aprobado'] == true;
-                            final doctor = item['doctor_aprobador'];
+
 
                             return Card(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
                               color: Colors.white,
-                              elevation: 3,
+                              margin: const EdgeInsets.only(bottom: 16),
+                              elevation: 4,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                               child: Padding(
                                 padding: const EdgeInsets.all(12),
                                 child: Column(
@@ -554,41 +602,60 @@ class _VistaVacuna extends State<VistaVacuna> {
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        const SizedBox(width: 75),
                                         Expanded(
                                           child: Text(
                                             item['nombre_vacuna'],
                                             style: const TextStyle(
                                               fontSize: 20,
                                               fontWeight: FontWeight.bold,
-                                              color: Colors.black,
+                                              color: Colors.black87,
                                             ),
                                           ),
                                         ),
                                         if (aprobado)
-                                          const Icon(Icons.verified, color: Colors.blue, size: 26),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.shade50,
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                            child: Row(
+                                              children: const [
+                                                Icon(Icons.verified, color: Colors.green, size: 18),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  "Aprobado",
+                                                  style: TextStyle(
+                                                    color: Colors.green,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                       ],
                                     ),
-                                    const SizedBox(height: 10),
+                                    const SizedBox(height: 16),
 
                                     Row(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         // Ícono vacuna
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 10),
-                                          child: Container(
+                                        Container(
                                             width: 60,
                                             height: 60,
                                             decoration: BoxDecoration(
                                               color: Colors.blue,
-                                              borderRadius: BorderRadius.circular(10),
+                                              borderRadius: BorderRadius.circular(12),
                                             ),
-                                            child: const Center(
-                                              child: Text('💉', style: TextStyle(fontSize: 30)),
+                                            child: Icon(
+                                              Icons.vaccines
+                                              ,
+                                              color: Colors.white,
+                                              size: 40,
                                             ),
-                                          ),
-                                        ),
+                                            ),
+
                                         const SizedBox(width: 15),
 
                                         // Información
@@ -596,65 +663,76 @@ class _VistaVacuna extends State<VistaVacuna> {
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text('Dosis: ${item['dosis']} / ${item['max_dosis']}', style: const TextStyle(color: Colors.black54)),
-                                              Text('Fecha: ${item['fecha_aplicacion']}', style: const TextStyle(color: Colors.black54)),
-
+                                              Row(
+                                                children: [
+                                                  const Icon(Icons.stacked_bar_chart, color: Colors.black54, size: 20),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'Dosis: ${item['dosis']} / ${item['max_dosis']}',
+                                                    style: const TextStyle(color: Colors.black54, fontSize: 12),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Row(
+                                                children: [
+                                                  const Icon(Icons.event_available, size: 18, color: Colors.black54),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'Fecha: ${item['fecha_aplicacion']}',
+                                                    style: const TextStyle(color: Colors.black54, fontSize: 12),
+                                                  ),
+                                                ],
+                                              ),
                                               if (item['observacion'] != null && item['observacion'].toString().isNotEmpty)
-                                                Text('Observación: ${item['observacion']}', style: const TextStyle(color: Colors.black54)),
+                                Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                            const Icon(Icons.note_alt, size: 18, color: Colors.black45),
+                            const SizedBox(width: 4),
+                            Expanded(
+                            child: Text(
+                            'Observación: ${item['observacion']}',
+                            style: const TextStyle(color: Colors.black54,fontSize: 12),
+                            ),
+                            ),
+                            ],
+                            ),
+                            ),
+                            if (item['doctor_aprobador'] != null && item['doctor_aprobador'].toString().isNotEmpty)
+                            Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Row(
+                            children: [
+                            const Icon(Icons.medical_services, size: 18, color: Colors.black54),
+                            const SizedBox(width: 4),
+                            Text(
+                            'Doctor: ${item['doctor_aprobador']}',
+                            style: const TextStyle(color: Colors.black87,fontSize: 12),
+                            ),
+                            ],
+                            ),
+                            ),
 
-                                              if (aprobado && doctor != null && doctor.toString().isNotEmpty)
-                                                Padding(
-                                                  padding: const EdgeInsets.only(top: 4),
-                                                  child: Text('Doctor: $doctor', style: const TextStyle(color: Colors.black87)),
-                                                ),
+
+
+
+
+
                                             ],
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 10),
+                                    const SizedBox(height: 16),
 
                                     // Botones si NO está aprobado
                                     if (!aprobado)
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.edit, color: Colors.black54),
-                                            onPressed: () {
-                                              final observacionController = TextEditingController(text: item['observacion']);
-                                              String dosisSeleccionada = item['dosis'].toString();
-
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) => AlertDialog(
-                                                  title: const Text('Editar vacuna'),
-                                                  content: Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      TextField(
-                                                        controller: observacionController,
-                                                        decoration: const InputDecoration(labelText: 'Observación'),
-                                                        maxLines: 2,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () => Navigator.of(context).pop(),
-                                                      child: const Text('Cancelar'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () async {
-
-                                                      },
-                                                      child: const Text('Guardar'),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          ),
                                           IconButton(
                                             icon: const Icon(Icons.delete, color: Colors.red),
                                             onPressed: () {
