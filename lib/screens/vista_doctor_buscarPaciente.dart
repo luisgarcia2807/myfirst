@@ -29,11 +29,13 @@ class _buscarPaciente extends State<buscarPaciente> {
   String? foto='';
   bool isLoading = true;
   int idPaciente = 0;
+  int idDoctor = 0;
   int idSangre = 0;
   String tipoSangre = '';
   final TextEditingController _descripcionAlergiaController = TextEditingController();
   final TextEditingController _cedulaController = TextEditingController();
   String? _nombrePaciente;
+
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic>? _datosPaciente; // para guardar todos los datos
   bool _pacienteSeleccionado = false;
@@ -101,6 +103,32 @@ class _buscarPaciente extends State<buscarPaciente> {
       print('Error: $e');
     }
   }
+
+  Future<void> obtenerDatosDoctor(int idUsuario) async {
+    final url = Uri.parse('http://192.168.0.106:8000/usuarios/api/doctores/por-usuario/$idUsuario/');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final datos = jsonDecode(utf8.decode(response.bodyBytes));
+
+        // Ejemplo: acceso a los campos
+        idDoctor = datos['id_doctor'];
+
+
+        print('ID Doctor: $idDoctor');
+
+
+        // Aquí podrías actualizar el estado con setState o similar
+      } else {
+        print('Error al obtener doctor: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Excepción al obtener doctor: $e');
+    }
+  }
+
   TextEditingController _comentarioController = TextEditingController();
 
   void _mostrarDialogoAlergia() {
@@ -328,6 +356,7 @@ class _buscarPaciente extends State<buscarPaciente> {
   Future<void> _inicializarDatos() async {
     await obtenerDatos(); // no es necesario await si no depende de datos
     await obtenerDatosPacienteSangre(widget.idusuario);
+    await obtenerDatosDoctor(widget.idusuario);
     await _fetchSolicitudes(); // Llamar después de que idPaciente esté disponible
   }
 
@@ -604,7 +633,7 @@ class _buscarPaciente extends State<buscarPaciente> {
                                                     Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
-                                                        builder: (context) => DetallePacienteScreen(idusuario: item.paciente,nombre: nombreUsuario, apellido: apellidoUsuario,),
+                                                        builder: (context) => DetallePacienteScreen(idusuariopac: item.paciente,nombre: nombreUsuario, apellido: apellidoUsuario,idusuariodoc:idDoctor ,),
                                                       ),
                                                     );
                                                   }

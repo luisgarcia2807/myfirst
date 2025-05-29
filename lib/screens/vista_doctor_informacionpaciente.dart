@@ -3,15 +3,18 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/vista_alergia.dart';
+import 'package:mifirst/screens/vista_alergia_doctor.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
 import '../constans.dart';
 import 'fotoPerfil.dart';
 
 class DetallePacienteScreen extends StatefulWidget {
-  final int idusuario;
+  final int idusuariopac;
+  final int idusuariodoc;
   final String nombre;
   final String apellido;
-  const DetallePacienteScreen({super.key, required this.idusuario, required this.nombre, required this.apellido});
+
+  const DetallePacienteScreen({super.key, required this.idusuariopac,required this.idusuariodoc, required this.nombre, required this.apellido});
 
   @override
   State<DetallePacienteScreen> createState() => _DetallePacienteScreen();
@@ -32,12 +35,33 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
   int idSangre = 0;   // Para almacenar el id de sangre
   String tipoSangre = '';
   String? foto='';
-
+  int idUsuario=0;
   List<dynamic> alergias = [];
   List<dynamic> EnfermedadesPersistente = [];
 
+  Future<void> obtenerIdUsuarioDesdePaciente() async {
+    final url = Uri.parse('http://192.168.0.106:8000/usuarios/api/usuario-desde-paciente/${widget.idusuariopac}/');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        var datos = jsonDecode(utf8.decode(response.bodyBytes));
+        setState(() {
+          idUsuario = datos['id_usuario']; // Asignamos el id del usuario
+          print(idUsuario);
+          isLoading = false; // Terminamos la carga
+        });
+      } else {
+        print('Error al obtener el id del usuario: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
   Future<void> obtenerDatos() async {
-    final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
+    final url = Uri.parse('$baseUrl/usuarios/api/usuario/$idUsuario/');
 
     try {
       final response = await http.get(url);
@@ -131,15 +155,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
     }
   }
 
-  int calcularEdad(String fechaNacimiento) {
-    DateTime fecha = DateTime.parse(fechaNacimiento);
-    DateTime hoy = DateTime.now();
-    int edad = hoy.year - fecha.year;
-    if (hoy.month < fecha.month || (hoy.month == fecha.month && hoy.day < fecha.day)) {
-      edad--;
-    }
-    return edad;
-  }
+
 
   @override
   void initState() {
@@ -147,8 +163,9 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
     _inicializarDatos();
   }
   Future<void> _inicializarDatos() async {
+    await obtenerIdUsuarioDesdePaciente();
     await obtenerDatos(); // no es necesario await si no depende de datos
-    await obtenerDatosPacienteSangre(widget.idusuario);
+    await obtenerDatosPacienteSangre(idUsuario);
     await _fetchAlergias(); // Llamar después de que idPaciente esté disponible
     await _fetchEnfermedadesPersistente(); // Llamar después de que idPaciente esté disponible
 
@@ -205,7 +222,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => CambiarFotoScreen(idusuario: widget.idusuario),
+                                builder: (context) => CambiarFotoScreen(idusuario: idUsuario),
                               ),
                             );
                           },
@@ -301,7 +318,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                     SizedBox(height: 10),
                                     Text("$nombreUsuario $apellidoUsuario"),
                                     Text("Ci: $cedulaUsuario"),
-                                    Text("${calcularEdad(fechaNacimientoUsuario)} años"),
+                                   // Text("${calcularEdad(fechaNacimientoUsuario)} años"),
                                     Text("$telefonoUsuario"),
                                     Text("$emailUsuario"),
 
@@ -345,7 +362,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => VistaAlergia(idusuario: widget.idusuario)),
+                              MaterialPageRoute(builder: (context) => VistaAlergiadoctor(idusuario: idUsuario, nombre: widget.nombre, apellido: widget.apellido,idusuariodoc: widget.idusuariodoc,)),
                             );
                           },
                           child: Container(
@@ -394,7 +411,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => VistaEnfermedadPersistente(idusuario: widget.idusuario),
+                                builder: (context) => VistaEnfermedadPersistente(idusuario: idUsuario),
                               ),
                             );
                           },

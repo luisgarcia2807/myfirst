@@ -6,16 +6,19 @@ import 'package:mifirst/screens/fotoPerfil.dart';
 import '../models/alergias.dart';
 import '../constans.dart';
 
-class VistaAlergia extends StatefulWidget {
+class VistaAlergiadoctor extends StatefulWidget {
   final int idusuario;
+  final String nombre;
+  final String apellido;
+  final int idusuariodoc;
 
-  const VistaAlergia( {super.key, required this.idusuario});
+  const VistaAlergiadoctor( {super.key, required this.idusuario,required this.nombre, required this.apellido, required this.idusuariodoc});
 
   @override
-  State<VistaAlergia> createState() => _VistaAlergia();
+  State<VistaAlergiadoctor> createState() => _VistaAlergiadoctor();
 }
 
-class _VistaAlergia extends State<VistaAlergia> {
+class _VistaAlergiadoctor extends State<VistaAlergiadoctor> {
   String nombreUsuario = '';
   String apellidoUsuario = '';
   String cedulaUsuario = '';
@@ -346,7 +349,7 @@ class _VistaAlergia extends State<VistaAlergia> {
         return Icons.restaurant_menu;  // Ícono más sano que simboliza comida 🍏
       default:
         return Icons.precision_manufacturing
-    ;  // Ícono genérico para otros tipos
+        ;  // Ícono genérico para otros tipos
     }
   }
   Color _getColor(String tipo) {
@@ -361,6 +364,7 @@ class _VistaAlergia extends State<VistaAlergia> {
         return Colors.grey;  // Color gris para otros tipos
     }
   }
+
 
   Future<void> eliminarAlergia(int idAlergiaPaciente) async {
     final url = Uri.parse('$baseUrl/usuarios/api/pacientes-alergias/$idAlergiaPaciente/');
@@ -412,6 +416,34 @@ class _VistaAlergia extends State<VistaAlergia> {
       print('Excepción al editar alergia: $e');
     }
   }
+
+  Future<void> aprobarAlergia(int idAlergia, bool aprobado) async {
+    final url = Uri.parse('http://192.168.0.106:8000/usuarios/api/pacientes-alergias/$idAlergia/');
+    print(widget.idusuariodoc);
+    try {
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'aprobado': aprobado,
+          "doctor_aprobador":widget.idusuariodoc,
+
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('Alergia actualizada correctamente.');
+      } else {
+        print('Error al actualizar la alergia: ${response.statusCode}');
+        print('Cuerpo: ${response.body}');
+      }
+    } catch (e) {
+      print('Excepción al actualizar la alergia: $e');
+    }
+  }
+
   Color _colorSegunGravedad(String? gravedad) {
     switch (gravedad?.toLowerCase()) {
       case 'leve':
@@ -468,15 +500,12 @@ class _VistaAlergia extends State<VistaAlergia> {
           : Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0D47A1), // Azul oscuro
-          Color(0xFF1976D2), // Azul medio
-          Color(0xFF42A5F5), // Azul claro
-          Color(0xFF7E57C2), // Morado
-          Color(0xFF26C6DA), // Turquesa,
-          ]),
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF0D47A1),
+                Color(0xFF1976D2), // Turquesa,
+              ]),
         ),
         child: SafeArea(
           child: Column(
@@ -485,7 +514,20 @@ class _VistaAlergia extends State<VistaAlergia> {
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Column(
                   children: [
-                    SizedBox(height: 25),
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Dr. ${widget.nombre} ${widget.apellido}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
 
                     Row(
                       children: [
@@ -801,8 +843,8 @@ class _VistaAlergia extends State<VistaAlergia> {
                                                   Text(
                                                     '${item['gravedad']}',
                                                     style: TextStyle(
-                                                      color: _colorSuaveSegunGravedad(item['gravedad']),
-                                                      fontWeight: FontWeight.w600,fontSize: 12
+                                                        color: _colorSuaveSegunGravedad(item['gravedad']),
+                                                        fontWeight: FontWeight.w600,fontSize: 12
                                                     ),
                                                   ),
                                                 ],
@@ -852,6 +894,37 @@ class _VistaAlergia extends State<VistaAlergia> {
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.verified_rounded, color: Colors.green, size: 28),
+                                            tooltip: 'Aprobar',
+                                            onPressed: () async {
+                                              final confirm = await showDialog<bool>(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Aprobar alergia'),
+                                                  content: const Text('¿Estás seguro de que deseas aprobar esta alergia?'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(false),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(true),
+                                                      child: const Text('Aprobar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+
+                                              if (confirm == true) {
+                                                await aprobarAlergia(item['id'],true);
+                                                setState(() {
+                                                  item['aprobado'] = true;
+                                                });
+                                              }
+                                            },
+                                          ),
+
                                           IconButton(
                                             icon: const Icon(Icons.edit, color: Colors.blueGrey),
                                             onPressed: () {
@@ -941,6 +1014,7 @@ class _VistaAlergia extends State<VistaAlergia> {
                                           ),
                                         ],
                                       ),
+
                                   ],
                                 ),
                               ),

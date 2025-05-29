@@ -470,8 +470,12 @@ class _PacientesPorDoctorScreenState extends State<PacientesPorDoctorScreen> {
                                             ElevatedButton(
                                               onPressed: item.estado == 'aceptado'
                                                   ? () {
-                                                // Acción cuando el estado es aceptado
-                                                print('Ver detalles de ${item.pacienteNombre}');
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => PerfilPacienteScreen(),
+                                                  ),
+                                                );
                                               }
                                                   : null, // Deshabilitado si no está aceptado
                                               style: ElevatedButton.styleFrom(
