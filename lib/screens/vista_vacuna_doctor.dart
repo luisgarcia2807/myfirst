@@ -368,6 +368,32 @@ class _VistaVacunadoctor extends State<VistaVacunadoctor> {
       print('Error: $e');
     }
   }
+  Future<void> editarVacuna({required int id, required String observacion,}) async {
+
+    final url = Uri.parse('$baseUrl/usuarios/api/vacunas-pacientes/$id/');
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'observacion': observacion,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('vacuna actualizada exitosamente');
+      } else {
+        print('Error al editar vacuna: ${response.statusCode}');
+        print(response.body);
+      }
+    } catch (e) {
+      print('Excepción al editar vacuna: $e');
+    }
+  }
+
   Future<void> aprobarAlergia(int idvacuna, bool aprobado) async {
     final url = Uri.parse('$baseUrl/usuarios/api/vacunas-pacientes/$idvacuna/');
 
@@ -435,7 +461,20 @@ class _VistaVacunadoctor extends State<VistaVacunadoctor> {
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Column(
                   children: [
-                    SizedBox(height: 25),
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Dr. ${widget.nombre} ${widget.apellido}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
 
                     Row(
                       children: [
@@ -758,7 +797,7 @@ class _VistaVacunadoctor extends State<VistaVacunadoctor> {
                                     const SizedBox(height: 16),
 
                                     // Botones si NO está aprobado
-                                    if (!aprobado)
+                                    if (!aprobado && verUltimasDosis == false )
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
@@ -790,6 +829,50 @@ class _VistaVacunadoctor extends State<VistaVacunadoctor> {
                                                   item['aprobado'] = true;
                                                 });
                                               }
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                                            onPressed: () {
+                                              final observacionController = TextEditingController(text: item['observacion']);
+
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Editar vacuna'),
+                                                  content: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+
+                                                      const SizedBox(height: 10),
+                                                      TextField(
+                                                        controller: observacionController,
+                                                        decoration: const InputDecoration(labelText: 'Observación'),
+                                                        maxLines: 2,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        Navigator.of(context).pop();
+                                                        await editarVacuna(
+                                                          id: item['id'],
+                                                          observacion: observacionController.text,
+                                                        );
+                                                        setState(() {
+                                                          item['observacion'] = observacionController.text;
+                                                        });
+                                                      },
+                                                      child: const Text('Guardar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
                                             },
                                           ),
                                           IconButton(

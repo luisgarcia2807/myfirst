@@ -6,20 +6,20 @@ import 'package:mifirst/screens/Vista_Ver_seguimiento.dart';
 import 'package:mifirst/screens/fotoPerfil.dart';
 import 'package:mifirst/screens/vista_seguimiento.dart';
 import '../models/tratamientoActual.dart';
-import '../models/tratamientoFrecuente.dart';
-import '../models/tratamientoFrecuente.dart';
-import '../models/vacuna.dart';
 import '../constans.dart';
 
-class VistaTratamientoActualmente extends StatefulWidget {
+class VistaTratamientoActualmenteDoctor extends StatefulWidget {
   final int idusuario;
-  const VistaTratamientoActualmente({super.key, required this.idusuario});
+  final String nombre;
+  final String apellido;
+  final int idusuariodoc;
+  const VistaTratamientoActualmenteDoctor({super.key, required this.idusuario,required this.nombre, required this.apellido, required this.idusuariodoc});
 
   @override
-  State<VistaTratamientoActualmente> createState() => _VistaTratamientoActualmente();
+  State<VistaTratamientoActualmenteDoctor> createState() => _VistaTratamientoActualmenteDoctor();
 }
 
-class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
+class _VistaTratamientoActualmenteDoctor extends State<VistaTratamientoActualmenteDoctor> {
   String nombreUsuario = '';
   String apellidoUsuario = '';
   String cedulaUsuario = '';
@@ -309,7 +309,7 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                         'fecha_fin': _fechafinController.text,
                         'frecuencia': _frecuenciaController.text,
                         'descripcion': _observacionesController.text,
-                        'doctor': null,
+                        'doctor': widget.idusuariodoc,
                       };
 
                       try {
@@ -388,7 +388,7 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           // Si deseas enviar fecha_fin explícita, descomenta esto:
-          // 'fecha_fin': DateTime.now().toIso8601String(),
+          'fecha_fin': DateTime.now().toIso8601String(),
         }),
       );
 
@@ -412,9 +412,13 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
     }
   }
 
-  Future<void> editarTratamientofrecuente({required int id, required String dosis, required String frecuencia, required String observacion,}) async {
-
-    final url = Uri.parse('$baseUrl//usuarios/api/paciente_medicamento_cronico/$id/');
+  Future<void> editarTratamientofrecuente({
+    required int id,
+    required String frecuencia,
+    required String observacion,
+    required DateTime fecha,
+  }) async {
+    final url = Uri.parse('$baseUrl/usuarios/api/tratamientos/$id/actualizar/');
 
     try {
       final response = await http.patch(
@@ -423,23 +427,51 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
           'Content-Type': 'application/json',
         },
         body: json.encode({
-          'dosis':dosis,
           'frecuencia': frecuencia,
-          'observacion': observacion,
+          'descripcion': observacion,
+          'fecha_fin': fecha.toIso8601String().split('T')[0], // formato 'YYYY-MM-DD'
         }),
       );
 
       if (response.statusCode == 200) {
-        print('Alergia actualizada exitosamente');
+        print('Tratamiento actualizado exitosamente');
       } else {
-        print('Error al editar alergia: ${response.statusCode}');
+        print('Error al editar tratamiento: ${response.statusCode}');
         print(response.body);
       }
     } catch (e) {
-      print('Excepción al editar alergia: $e');
+      print('Excepción al editar tratamiento: $e');
     }
   }
 
+
+  Future<void> aprobarTratamiento(int idAlergia ) async {
+    final url = Uri.parse('$baseUrl/usuarios/api/tratamientos/$idAlergia/actualizar/');
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+
+          "doctor":widget.idusuariodoc,
+
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('Alergia actualizada correctamente.');
+
+      } else {
+        print('Error al actualizar la alergia: ${response.statusCode}');
+        print('Cuerpo: ${response.body}');
+      }
+    } catch (e) {
+      print('Excepción al actualizar la alergia: $e');
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -465,11 +497,8 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0xFF0D47A1), // Azul oscuro
-                Color(0xFF1976D2), // Azul medio
-                Color(0xFF42A5F5), // Azul claro
-                Color(0xFF7E57C2), // Morado
-                Color(0xFF26C6DA), // Turquesa,
+                Color(0xFF0D47A1),
+                Color(0xFF1976D2),// Turquesa,
               ]),
         ),
         child: SafeArea(
@@ -479,7 +508,20 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Column(
                   children: [
-                    SizedBox(height: 25),
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Dr. ${widget.nombre} ${widget.apellido}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
 
                     Row(
                       children: [
@@ -617,7 +659,6 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                           itemCount: Tratamientofrecuente.length,
                           itemBuilder: (context, index) {
                             final item = Tratamientofrecuente[index];
-                            final doctor = item['doctor'] == null;
 
                             return Card(
                               margin: const EdgeInsets.only(bottom: 16),
@@ -648,51 +689,51 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                                           ),
                                         ),
                                         Column(
-                                          children: [
-                                        if (item['finalizado'] == true)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: Colors.green.shade50,
-                                              borderRadius: BorderRadius.circular(20),
-                                            ),
-                                            child: Row(
-                                              children: const [
-                                                Icon(Icons.verified, color: Colors.blue, size: 18),
-                                                SizedBox(width: 4),
-                                                Text(
-                                                  "Finalizado",
-                                                  style: TextStyle(
-                                                    color: Colors.blue,
-                                                    fontWeight: FontWeight.w600,
+                                            children: [
+                                              if (item['finalizado'] == true)
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.green.shade50,
+                                                    borderRadius: BorderRadius.circular(20),
+                                                  ),
+                                                  child: Row(
+                                                    children: const [
+                                                      Icon(Icons.verified, color: Colors.blue, size: 18),
+                                                      SizedBox(width: 4),
+                                                      Text(
+                                                        "Finalizado",
+                                                        style: TextStyle(
+                                                          color: Colors.blue,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
-                                              ],
-                                            ),
-                                          ),
-                                            SizedBox(height: 4),
-                                        if (item['doctor'] != null)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: Colors.green.shade50,
-                                              borderRadius: BorderRadius.circular(20),
-                                            ),
-                                            child: Row(
-                                              children: const [
-                                                Icon(Icons.verified, color: Colors.green, size: 18),
-                                                SizedBox(width: 4),
-                                                Text(
-                                                  "Aprobado",
-                                                  style: TextStyle(
-                                                    color: Colors.green,
-                                                    fontWeight: FontWeight.w600,
+                                              SizedBox(height: 4),
+                                              if (item['doctor'] != null)
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.green.shade50,
+                                                    borderRadius: BorderRadius.circular(20),
+                                                  ),
+                                                  child: Row(
+                                                    children: const [
+                                                      Icon(Icons.verified, color: Colors.green, size: 18),
+                                                      SizedBox(width: 4),
+                                                      Text(
+                                                        "Aprobado",
+                                                        style: TextStyle(
+                                                          color: Colors.green,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
-                                              ],
-                                            ),
-                                          ),
-    ]),
+                                            ]),
                                       ],
                                     ),
                                     const SizedBox(height: 10),
@@ -760,7 +801,7 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                                                   ],
                                                 ),
                                               ],
-                                              if (item['observaciones'] != null && item['observaciones'].toString().isNotEmpty) ...[
+                                              if (item['descripcion'] != null && item['descripcion'].toString().isNotEmpty) ...[
                                                 const SizedBox(height: 4),
                                                 Row(
                                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -768,7 +809,7 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                                                     const Icon(Icons.note_alt, size: 18, color: Colors.black54),
                                                     const SizedBox(width: 4),
                                                     Expanded(
-                                                      child: Text('Observaciones: ${item['observaciones']}', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                                                      child: Text('Descripcion: ${item['descripcion']}', style: const TextStyle(color: Colors.black54, fontSize: 12)),
                                                     ),
                                                   ],
                                                 ),
@@ -797,22 +838,56 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                                       children: [
                                         if (item['doctor'] == null && item['finalizado'] == false ) // Solo mostrar si NO está aprobado
                                           IconButton(
-                                            icon: const Icon(Icons.edit, color: Colors.black54),
-                                            tooltip: 'Editar',
-                                            onPressed: () {
-                                              final dosisController = TextEditingController(text: item['dosis']);
-                                              final frecuenciaController = TextEditingController(text: item['frecuencia']);
-                                              final observacionController = TextEditingController(text: item['observacion']);
-
-                                              showDialog(
+                                            icon: const Icon(Icons.verified_rounded, color: Colors.green, size: 28),
+                                            tooltip: 'Aprobar',
+                                            onPressed: () async {
+                                              final confirm = await showDialog<bool>(
                                                 context: context,
                                                 builder: (context) => AlertDialog(
+                                                  title: const Text('Aprobar alergia'),
+                                                  content: const Text('¿Estás seguro de que deseas aprobar esta alergia?'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(false),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(true),
+                                                      child: const Text('Aprobar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+
+                                              if (confirm == true) {
+                                                await aprobarTratamiento(item['id'],);
+                                                setState(() {
+
+                                                });
+                                              }
+                                            },
+                                          ),
+                                        IconButton(
+                                          icon: const Icon(Icons.edit, color: Colors.black54),
+                                          tooltip: 'Editar',
+                                          onPressed: () {
+                                            final frecuenciaController = TextEditingController(text: item['frecuencia']);
+                                            final observacionController = TextEditingController(text: item['descripcion']);
+
+                                            // Fecha inicial, si ya tiene, úsala, si no, usa la de hoy
+                                            DateTime? selectedDate = item['fecha_fin'] != null
+                                                ? DateTime.tryParse(item['fecha_fin'])
+                                                : DateTime.now();
+
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => StatefulBuilder(
+                                                builder: (context, setState) => AlertDialog(
                                                   title: const Text('Editar Tratamiento Actual'),
                                                   content: Column(
                                                     mainAxisSize: MainAxisSize.min,
                                                     children: [
                                                       const SizedBox(height: 10),
-
                                                       TextField(
                                                         controller: frecuenciaController,
                                                         decoration: const InputDecoration(labelText: 'Frecuencia'),
@@ -823,6 +898,25 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                                                         decoration: const InputDecoration(labelText: 'Observación'),
                                                         maxLines: 2,
                                                       ),
+                                                      const SizedBox(height: 10),
+                                                      TextButton.icon(
+                                                        icon: const Icon(Icons.calendar_today),
+                                                        label: const Text('Seleccionar fecha fin'),
+                                                        onPressed: () async {
+                                                          final DateTime? picked = await showDatePicker(
+                                                            context: context,
+                                                            initialDate: DateTime.now(),
+                                                            firstDate: DateTime.now(),  // solo fechas futuras desde hoy
+                                                            lastDate: DateTime(2100),
+                                                          );
+                                                          if (picked != null) {
+                                                            setState(() {
+                                                              selectedDate = picked;
+                                                            });
+                                                          }
+                                                        },
+                                                      ),
+
                                                     ],
                                                   ),
                                                   actions: [
@@ -832,26 +926,35 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                                                     ),
                                                     TextButton(
                                                       onPressed: () async {
+                                                        if (selectedDate == null) {
+                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                            const SnackBar(content: Text('Por favor selecciona una fecha')),
+                                                          );
+                                                          return;
+                                                        }
                                                         Navigator.of(context).pop();
                                                         await editarTratamientofrecuente(
                                                           id: item['id'],
-                                                          dosis: dosisController.text,
                                                           frecuencia: frecuenciaController.text,
                                                           observacion: observacionController.text,
+                                                          fecha: selectedDate!,
                                                         );
                                                         setState(() {
-                                                          item['dosis'] = dosisController.text;
                                                           item['frecuencia'] = frecuenciaController.text;
-                                                          item['observacion'] = observacionController.text;
+                                                          item['descripcion'] = observacionController.text;
+                                                          item['fecha'] = selectedDate!.toIso8601String().split('T')[0];
                                                         });
+                                                        await _fetchTratamientofrecuente();
                                                       },
                                                       child: const Text('Guardar'),
                                                     ),
                                                   ],
                                                 ),
-                                              );
-                                            },
-                                          ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+
                                         IconButton(
                                           icon: const Icon(Icons.visibility, color: Colors.blueGrey),
                                           tooltip: 'Ver seguimientos',
@@ -859,7 +962,7 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) => SeguimientoListPage(tratamientoId: item['id'],)
+                                                  builder: (context) => SeguimientoListPage(tratamientoId: item['id'],)
                                               ),
                                             );
                                           },

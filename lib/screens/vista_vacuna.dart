@@ -331,9 +331,6 @@ class _VistaVacuna extends State<VistaVacuna> {
 
     final response = await http.get(Uri.parse('$baseUrl$endpoint'));
 
-
-
-
     if (response.statusCode == 200) {
       setState(() {
         vacunas = jsonDecode(utf8.decode(response.bodyBytes));
@@ -365,6 +362,32 @@ class _VistaVacuna extends State<VistaVacuna> {
       print('Error: $e');
     }
   }
+  Future<void> editarVacuna({required int id, required String observacion,}) async {
+
+    final url = Uri.parse('$baseUrl/usuarios/api/vacunas-pacientes/$id/');
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'observacion': observacion,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('vacuna actualizada exitosamente');
+      } else {
+        print('Error al editar vacuna: ${response.statusCode}');
+        print(response.body);
+      }
+    } catch (e) {
+      print('Excepción al editar vacuna: $e');
+    }
+  }
+
 
 
   @override
@@ -729,10 +752,54 @@ class _VistaVacuna extends State<VistaVacuna> {
                                     const SizedBox(height: 16),
 
                                     // Botones si NO está aprobado
-                                    if (!aprobado)
+                                    if (!aprobado && verUltimasDosis == false)
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                                            onPressed: () {
+                                              final observacionController = TextEditingController(text: item['observacion']);
+
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Editar vacuna'),
+                                                  content: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+
+                                                      const SizedBox(height: 10),
+                                                      TextField(
+                                                        controller: observacionController,
+                                                        decoration: const InputDecoration(labelText: 'Observación'),
+                                                        maxLines: 2,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        Navigator.of(context).pop();
+                                                        await editarVacuna(
+                                                          id: item['id'],
+                                                          observacion: observacionController.text,
+                                                        );
+                                                        setState(() {
+                                                          item['observacion'] = observacionController.text;
+                                                        });
+                                                      },
+                                                      child: const Text('Guardar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
                                           IconButton(
                                             icon: const Icon(Icons.delete, color: Colors.red),
                                             onPressed: () {

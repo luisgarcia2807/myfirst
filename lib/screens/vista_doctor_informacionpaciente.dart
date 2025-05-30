@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/vista_alergia.dart';
 import 'package:mifirst/screens/vista_alergia_doctor.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
+import 'package:mifirst/screens/vista_tratamiento_actual_doctor.dart';
 import 'package:mifirst/screens/vista_vacuna_doctor.dart';
 import '../constans.dart';
 import 'fotoPerfil.dart';
@@ -40,6 +41,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
   List<dynamic> alergias = [];
   List<dynamic> EnfermedadesPersistente = [];
   List<dynamic> vacunas = [];
+  List<dynamic> tratamientos = [];
 
   Future<void> obtenerIdUsuarioDesdePaciente() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario-desde-paciente/${widget.idusuariopac}/');
@@ -173,7 +175,18 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
       throw Exception('Error al cargar Enfermedades');
     }
   }
-
+  Future<void> _fetchTratamientofrecuente() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/usuarios/api/paciente/$idPaciente/tratamientos/'),
+    );
+    if (response.statusCode == 200) {
+      setState(() {
+        tratamientos = jsonDecode(utf8.decode(response.bodyBytes));
+      });
+    } else {
+      throw Exception('Error al cargar vacunas');
+    }
+  }
 
 
   @override
@@ -188,6 +201,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
     await _fetchAlergias(); // Llamar después de que idPaciente esté disponible
     await _fetchEnfermedadesPersistente(); // Llamar después de que idPaciente esté disponible
     await _fetchVacunas();
+    await _fetchTratamientofrecuente();
 
   }
 
@@ -425,57 +439,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             ),
                           ),
                         ),
-                        // Enfermedades
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => VistaEnfermedadPersistente(idusuario: idUsuario),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            width: double.infinity,
-                            margin: EdgeInsets.only(bottom: 20),
-                            padding: EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.blue[50],
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
-                            ),
-                            child: Row(
-                              children: [
-                                Text("🏥", style: TextStyle(fontSize: 40)),
-                                SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Enfermedades persistentes",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18,
-                                          color: Colors.blue[800],
-                                        ),
-                                      ),
-                                      SizedBox(height: 10),
-                                      EnfermedadesPersistente.isEmpty
-                                          ? Text("No se registran Enfermedades")
-                                          : Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: EnfermedadesPersistente.map<Widget>((enfermedad) {
-                                          return Text("• ${enfermedad['nombre_enfermedad']}");
-                                        }).toList(),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        // Vacuna
                         GestureDetector(
                           onTap: () {
                             Navigator.push(
@@ -527,6 +491,114 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                             "• ${vacuna['nombre_vacuna']} (${vacuna['dosis']}/${vacuna['max_dosis']})",
                                             style: TextStyle(fontSize: 14),
                                           );
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        //enfermedades
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VistaEnfermedadPersistente(idusuario: idUsuario),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            margin: EdgeInsets.only(bottom: 20),
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.purple[50],
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                            ),
+                            child: Row(
+                              children: [
+                                Text("🏥", style: TextStyle(fontSize: 40)),
+                                SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Enfermedades persistentes",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.purple[800],
+                                        ),
+                                      ),
+                                      SizedBox(height: 10),
+                                      EnfermedadesPersistente.isEmpty
+                                          ? Text("No se registran Enfermedades")
+                                          : Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: EnfermedadesPersistente.map<Widget>((enfermedad) {
+                                          return Text("• ${enfermedad['nombre_enfermedad']}");
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        //tratamiento actual
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VistaTratamientoActualmenteDoctor(
+                                  idusuario: idUsuario,
+                                  nombre: widget.nombre,
+                                  apellido: widget.apellido,
+                                  idusuariodoc: widget.idusuariodoc,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            margin: EdgeInsets.only(bottom: 20),
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Text("💊", style: TextStyle(fontSize: 40)),
+                                SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text("Tratamientos actuales",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                              color: Colors.blue[800])),
+                                      SizedBox(height: 10),
+                                      tratamientos.where((item) => item['finalizado'] == false).isEmpty
+                                          ? Text("No hay tratamientos activos")
+                                          : Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: tratamientos
+                                            .where((item) => item['finalizado'] == false)
+                                            .map<Widget>((item) {
+                                          return Text("• ${item['nombre_medicamento']}");
                                         }).toList(),
                                       ),
                                     ],
