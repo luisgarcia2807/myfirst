@@ -437,13 +437,13 @@ class _VistaEnfermedadPersistentedoctor extends State<VistaEnfermedadPersistente
       );
 
       if (response.statusCode == 200) {
-        print('Alergia actualizada exitosamente');
+        print('Enfermedad actualizada exitosamente');
       } else {
-        print('Error al editar alergia: ${response.statusCode}');
+        print('Error al editar Enfermedad: ${response.statusCode}');
         print(response.body);
       }
     } catch (e) {
-      print('Excepción al editar alergia: $e');
+      print('Excepción al editar Enfermedad: $e');
     }
   }
   Future<void> aprobarEnfermedad(int idAlergia, bool aprobado) async {

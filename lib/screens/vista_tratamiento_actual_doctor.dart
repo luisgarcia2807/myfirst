@@ -881,9 +881,9 @@ class _VistaTratamientoActualmenteDoctor extends State<VistaTratamientoActualmen
                                             showDialog(
                                               context: context,
                                               builder: (context) => StatefulBuilder(
-                                                builder: (context, setState) => AlertDialog(
+                                                builder: (context, setModalState) => AlertDialog(
                                                   title: const Text('Editar Tratamiento Actual'),
-                                                  content: SingleChildScrollView( // 👈 Esto evita el overflow
+                                                  content: SingleChildScrollView(
                                                     child: Column(
                                                       mainAxisSize: MainAxisSize.min,
                                                       children: [
@@ -905,12 +905,12 @@ class _VistaTratamientoActualmenteDoctor extends State<VistaTratamientoActualmen
                                                           onPressed: () async {
                                                             final DateTime? picked = await showDatePicker(
                                                               context: context,
-                                                              initialDate: DateTime.now(),
+                                                              initialDate: selectedDate ?? DateTime.now(),
                                                               firstDate: DateTime.now(),
                                                               lastDate: DateTime(2100),
                                                             );
                                                             if (picked != null) {
-                                                              setState(() {
+                                                              setModalState(() {
                                                                 selectedDate = picked;
                                                               });
                                                             }
@@ -932,18 +932,26 @@ class _VistaTratamientoActualmenteDoctor extends State<VistaTratamientoActualmen
                                                           );
                                                           return;
                                                         }
+
+                                                        // Cierra el diálogo primero
                                                         Navigator.of(context).pop();
+
+                                                        // Espera a que termine la operación
                                                         await editarTratamientofrecuente(
                                                           id: item['id'],
                                                           frecuencia: frecuenciaController.text,
                                                           observacion: observacionController.text,
                                                           fecha: selectedDate!,
                                                         );
+
+                                                        // Aquí actualizas el estado del widget principal
                                                         setState(() {
                                                           item['frecuencia'] = frecuenciaController.text;
                                                           item['descripcion'] = observacionController.text;
                                                           item['fecha'] = selectedDate!.toIso8601String().split('T')[0];
                                                         });
+
+                                                        // Luego puedes refrescar la lista si es necesario
                                                         await _fetchTratamientofrecuente();
                                                       },
                                                       child: const Text('Guardar'),
@@ -954,6 +962,7 @@ class _VistaTratamientoActualmenteDoctor extends State<VistaTratamientoActualmen
                                             );
                                           },
                                         ),
+
 
 
                                         IconButton(
