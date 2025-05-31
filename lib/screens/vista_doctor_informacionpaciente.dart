@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/vista_alergia.dart';
 import 'package:mifirst/screens/vista_alergia_doctor.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
+import 'package:mifirst/screens/vista_enfermedadespersistente_doctor.dart';
 import 'package:mifirst/screens/vista_tratamiento_actual_doctor.dart';
 import 'package:mifirst/screens/vista_vacuna_doctor.dart';
 import '../constans.dart';
@@ -188,7 +189,15 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
     }
   }
 
-
+  int calcularEdad(String fechaNacimiento) {
+    DateTime fecha = DateTime.parse(fechaNacimiento);
+    DateTime hoy = DateTime.now();
+    int edad = hoy.year - fecha.year;
+    if (hoy.month < fecha.month || (hoy.month == fecha.month && hoy.day < fecha.day)) {
+      edad--;
+    }
+    return edad;
+  }
   @override
   void initState() {
     super.initState();
@@ -352,7 +361,9 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                     SizedBox(height: 10),
                                     Text("$nombreUsuario $apellidoUsuario"),
                                     Text("Ci: $cedulaUsuario"),
-                                   // Text("${calcularEdad(fechaNacimientoUsuario)} años"),
+                                    fechaNacimientoUsuario != null && fechaNacimientoUsuario.isNotEmpty
+                                        ? Text("${calcularEdad(fechaNacimientoUsuario)} años")
+                                        : Text(""),
                                     Text("$telefonoUsuario"),
                                     Text("$emailUsuario"),
 
@@ -506,7 +517,10 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => VistaEnfermedadPersistente(idusuario: idUsuario),
+                                builder: (context) => VistaEnfermedadPersistentedoctor(idusuario: idUsuario,
+                                  nombre: widget.nombre,
+                                  apellido: widget.apellido,
+                                  idusuariodoc: widget.idusuariodoc,),
                               ),
                             );
                           },

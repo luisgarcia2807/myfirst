@@ -461,7 +461,6 @@ class _VistaAlergia extends State<VistaAlergia> {
   Widget build(BuildContext context) {
     String fechaHoy = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
-
     return Scaffold(
       body: isLoading
           ? Center(child: CircularProgressIndicator())

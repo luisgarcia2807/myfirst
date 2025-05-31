@@ -3,20 +3,22 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/fotoPerfil.dart';
-import '../models/alergias.dart';
 import '../constans.dart';
 import '../models/enfermedadespersistente.dart';
 
-class VistaEnfermedadPersistente extends StatefulWidget {
+class VistaEnfermedadPersistentedoctor extends StatefulWidget {
   final int idusuario;
+  final String nombre;
+  final String apellido;
+  final int idusuariodoc;
 
-  const VistaEnfermedadPersistente({super.key, required this.idusuario});
+  const VistaEnfermedadPersistentedoctor({super.key, required this.idusuario,required this.nombre, required this.apellido, required this.idusuariodoc});
 
   @override
-  State<VistaEnfermedadPersistente> createState() => _VistaEnfermedadPersistente();
+  State<VistaEnfermedadPersistentedoctor> createState() => _VistaEnfermedadPersistentedoctor();
 }
 
-class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
+class _VistaEnfermedadPersistentedoctor extends State<VistaEnfermedadPersistentedoctor> {
   String nombreUsuario = '';
   String apellidoUsuario = '';
   String cedulaUsuario = '';
@@ -37,7 +39,6 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
   List<dynamic> EnfermedadesPersistente = [];  // Lista para almacenar las alergias
   bool isLoadingEnfermedades = false;
   bool hasError = false;
-
 
   final TextEditingController _descripcionEnfermdadController = TextEditingController();
 
@@ -146,7 +147,7 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                           items: ['Endocrina', 'Cardiovascular', 'Respiratoria', 'Neurologica','Psiquiatrica','Gastrointestinal','Reumatologica','Renal','Hematologica','Infectologia']
 
 
-                        .map<DropdownMenuItem<String>>((String value) {
+                              .map<DropdownMenuItem<String>>((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
                               child: Text(value),
@@ -264,6 +265,8 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                         'enfermedad': selectedEnfermedadesPersistenteId,
                         'fecha_diagnostico': _fechaController.text,
                         'observacion': _descripcionEnfermdadController.text,
+                        'aprobado': true,
+                        "doctor_aprobador": widget.idusuariodoc,
                       };
 
                       try {
@@ -443,6 +446,32 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
       print('Excepción al editar alergia: $e');
     }
   }
+  Future<void> aprobarEnfermedad(int idAlergia, bool aprobado) async {
+    final url = Uri.parse('$baseUrl/usuarios/api/pacientes_enfermedades/$idAlergia/');
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'aprobado': aprobado,
+          "doctor_aprobador":widget.idusuariodoc,
+
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('Enfermedad actualizada correctamente.');
+      } else {
+        print('Error al actualizar la Enfermedad: ${response.statusCode}');
+        print('Cuerpo: ${response.body}');
+      }
+    } catch (e) {
+      print('Excepción al actualizar la Enfermedad: $e');
+    }
+  }
 
 
 
@@ -472,11 +501,8 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0xFF0D47A1), // Azul oscuro
-                Color(0xFF1976D2), // Azul medio
-                Color(0xFF42A5F5), // Azul claro
-                Color(0xFF7E57C2), // Morado
-                Color(0xFF26C6DA), // Turquesa,
+                Color(0xFF0D47A1),
+                Color(0xFF1976D2), // Turquesa,
               ]),
         ),
         child: SafeArea(
@@ -486,7 +512,20 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Column(
                   children: [
-                    SizedBox(height: 25),
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Dr. ${widget.nombre} ${widget.apellido}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
 
                     Row(
                       children: [
@@ -701,229 +740,260 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                           style: const TextStyle(color: Colors.grey, fontSize: 16),
                         ),
                       )
-                            : ListView.builder(
-                          itemCount: EnfermedadesPersistente.length,
-                          itemBuilder: (context, index) {
-                            String tipo = EnfermedadesPersistente[index]['Tipo_enfermedad'];
-                            final aprobado = EnfermedadesPersistente[index]['aprobado'] == true;
-                            final doctor = EnfermedadesPersistente[index]['doctor_aprobador'];
+                          : ListView.builder(
+                        itemCount: EnfermedadesPersistente.length,
+                        itemBuilder: (context, index) {
+                          final item = EnfermedadesPersistente[index];
+                          String tipo = EnfermedadesPersistente[index]['Tipo_enfermedad'];
+                          final aprobado = EnfermedadesPersistente[index]['aprobado'] == true;
+                          final doctor = EnfermedadesPersistente[index]['doctor_aprobador'];
 
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              color: Colors.white,
-                              elevation: 3,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            EnfermedadesPersistente[index]['nombre_enfermedad'] ?? '',
-                                            style: const TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black87,
-                                            ),
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            color: Colors.white,
+                            elevation: 3,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          EnfermedadesPersistente[index]['nombre_enfermedad'] ?? '',
+                                          style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black87,
                                           ),
                                         ),
-                                        if (aprobado)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: Colors.green.shade50,
-                                              borderRadius: BorderRadius.circular(20),
-                                            ),
-                                            child: Row(
-                                              children: const [
-                                                Icon(Icons.verified, color: Colors.green, size: 18),
-                                                SizedBox(width: 4),
+                                      ),
+                                      if (aprobado)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.green.shade50,
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          child: Row(
+                                            children: const [
+                                              Icon(Icons.verified, color: Colors.green, size: 18),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                "Aprobado",
+                                                style: TextStyle(
+                                                  color: Colors.green,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+
+                                  /// Contenido principal con ícono e información
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          color: _getColor(tipo),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Icon(
+                                          _getIcon(tipo),
+                                          color: Colors.white,
+                                          size: 40,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            /// Tipo de enfermedad
+                                            Row(
+                                              children: [
+                                                const Icon(Icons.category, size: 18, color: Colors.black54),
+                                                const SizedBox(width: 4),
                                                 Text(
-                                                  "Aprobado",
-                                                  style: TextStyle(
-                                                    color: Colors.green,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
+                                                  'Tipo: ${EnfermedadesPersistente[index]['Tipo_enfermedad'] ?? 'N/A'}',
+                                                  style: const TextStyle(color: Colors.black87, fontSize: 12),
                                                 ),
                                               ],
                                             ),
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 16),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                const Icon(Icons.calendar_today, size: 18, color: Colors.black54),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  'Diagnóstico: ${EnfermedadesPersistente[index]['fecha_diagnostico'] ?? 'N/A'}',
+                                                  style: const TextStyle(color: Colors.black45, fontSize: 12),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 4),
 
-                                    /// Contenido principal con ícono e información
-                                    Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          width: 60,
-                                          height: 60,
-                                          decoration: BoxDecoration(
-                                            color: _getColor(tipo),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Icon(
-                                            _getIcon(tipo),
-                                            color: Colors.white,
-                                            size: 40,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              /// Tipo de enfermedad
+
+
+                                            /// Observación (si hay)
+                                            if (EnfermedadesPersistente[index]['observacion'] != null &&
+                                                EnfermedadesPersistente[index]['observacion'].toString().isNotEmpty)
+                                              Row(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  const Icon(Icons.note_alt, size: 18, color: Colors.black45),
+                                                  const SizedBox(width: 4),
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Observación: ${EnfermedadesPersistente[index]['observacion']}',
+                                                      style: const TextStyle(color: Colors.black54, fontSize: 12),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            const SizedBox(height: 4),
+
+                                            /// Doctor aprobador (si hay)
+                                            if (aprobado && doctor != null && doctor.toString().isNotEmpty)
                                               Row(
                                                 children: [
-                                                  const Icon(Icons.category, size: 18, color: Colors.black54),
+                                                  const Icon(Icons.medical_services, size: 18, color: Colors.black54),
                                                   const SizedBox(width: 4),
                                                   Text(
-                                                    'Tipo: ${EnfermedadesPersistente[index]['Tipo_enfermedad'] ?? 'N/A'}',
+                                                    'Doctor: $doctor',
                                                     style: const TextStyle(color: Colors.black87, fontSize: 12),
                                                   ),
                                                 ],
                                               ),
-                                              const SizedBox(height: 4),
-                                              Row(
-                                                children: [
-                                                  const Icon(Icons.calendar_today, size: 18, color: Colors.black54),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    'Diagnóstico: ${EnfermedadesPersistente[index]['fecha_diagnostico'] ?? 'N/A'}',
-                                                    style: const TextStyle(color: Colors.black45, fontSize: 12),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 4),
-
-
-
-                                              /// Observación (si hay)
-                                              if (EnfermedadesPersistente[index]['observacion'] != null &&
-                                                  EnfermedadesPersistente[index]['observacion'].toString().isNotEmpty)
-                                                Row(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    const Icon(Icons.note_alt, size: 18, color: Colors.black45),
-                                                    const SizedBox(width: 4),
-                                                    Expanded(
-                                                      child: Text(
-                                                        'Observación: ${EnfermedadesPersistente[index]['observacion']}',
-                                                        style: const TextStyle(color: Colors.black54, fontSize: 12),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              const SizedBox(height: 4),
-
-                                              /// Doctor aprobador (si hay)
-                                              if (aprobado && doctor != null && doctor.toString().isNotEmpty)
-                                                Row(
-                                                  children: [
-                                                    const Icon(Icons.medical_services, size: 18, color: Colors.black54),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Doctor: $doctor',
-                                                      style: const TextStyle(color: Colors.black87, fontSize: 12),
-                                                    ),
-                                                  ],
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-
-                                    // Botones abajo si NO está aprobado
-                                    if (!aprobado)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 8.0),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.end,
-                                          children: [
-                                            TextButton.icon(
-                                              icon: const Icon(Icons.edit, color: Colors.black54),
-                                              label: const Text(''),
-                                              onPressed: () {
-                                                final TextEditingController observacionController = TextEditingController(
-                                                  text: EnfermedadesPersistente[index]['observacion'],
-                                                );
-
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) => AlertDialog(
-                                                    title: const Text('Editar enfermedad'),
-                                                    content: TextField(
-                                                      controller: observacionController,
-                                                      decoration: const InputDecoration(labelText: 'Observación'),
-                                                      maxLines: 2,
-                                                    ),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () => Navigator.of(context).pop(),
-                                                        child: const Text('Cancelar'),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed: () async {
-                                                          Navigator.of(context).pop();
-                                                          await editarEnfermedadesPersistente(
-                                                            id: EnfermedadesPersistente[index]['id'],
-                                                            observacion: observacionController.text,
-                                                          );
-                                                          setState(() {
-                                                            EnfermedadesPersistente[index]['observacion'] = observacionController.text;
-                                                          });
-                                                        },
-                                                        child: const Text('Guardar'),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                            TextButton.icon(
-                                              icon: const Icon(Icons.delete, color: Colors.red),
-                                              label: const Text(''),
-                                              onPressed: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) => AlertDialog(
-                                                    title: const Text('Confirmar eliminación'),
-                                                    content: const Text('¿Estás seguro de que deseas eliminar esta enfermedad?'),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () => Navigator.of(context).pop(),
-                                                        child: const Text('Cancelar'),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed: () async {
-                                                          Navigator.of(context).pop();
-                                                          await eliminarEnfermedadesPersistente(
-                                                            EnfermedadesPersistente[index]['id'],
-                                                          );
-                                                        },
-                                                        child: const Text('Eliminar'),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                            ),
                                           ],
                                         ),
                                       ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
+
+                                  // Botones abajo si NO está aprobado
+                                  if (!aprobado)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.verified_rounded, color: Colors.green, size: 28),
+                                            tooltip: 'Aprobar',
+                                            onPressed: () async {
+                                              final confirm = await showDialog<bool>(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Aprobar alergia'),
+                                                  content: const Text('¿Estás seguro de que deseas aprobar esta Enfermedad?'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(false),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(true),
+                                                      child: const Text('Aprobar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+
+                                              if (confirm == true) {
+                                                await aprobarEnfermedad(item['id'],true);
+                                                setState(() {
+                                                  item['aprobado'] = true;
+                                                });
+                                              }
+                                            },
+                                          ),
+                                          TextButton.icon(
+                                            icon: const Icon(Icons.edit, color: Colors.black54),
+                                            label: const Text(''),
+                                            onPressed: () {
+                                              final TextEditingController observacionController = TextEditingController(
+                                                text: EnfermedadesPersistente[index]['observacion'],
+                                              );
+
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Editar enfermedad'),
+                                                  content: TextField(
+                                                    controller: observacionController,
+                                                    decoration: const InputDecoration(labelText: 'Observación'),
+                                                    maxLines: 2,
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        Navigator.of(context).pop();
+                                                        await editarEnfermedadesPersistente(
+                                                          id: EnfermedadesPersistente[index]['id'],
+                                                          observacion: observacionController.text,
+                                                        );
+                                                        setState(() {
+                                                          EnfermedadesPersistente[index]['observacion'] = observacionController.text;
+                                                        });
+                                                      },
+                                                      child: const Text('Guardar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          TextButton.icon(
+                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            label: const Text(''),
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Confirmar eliminación'),
+                                                  content: const Text('¿Estás seguro de que deseas eliminar esta enfermedad?'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () async {
+                                                        Navigator.of(context).pop();
+                                                        await eliminarEnfermedadesPersistente(
+                                                          EnfermedadesPersistente[index]['id'],
+                                                        );
+                                                      },
+                                                      child: const Text('Eliminar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          );
+                        },
+                      ),
                       ),
 
 

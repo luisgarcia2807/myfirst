@@ -236,7 +236,7 @@ class _VistaTratamientoActualmenteDoctor extends State<VistaTratamientoActualmen
                           context: context,
                           initialDate: DateTime.now(),
                           firstDate: DateTime(2000),
-                          lastDate: DateTime.now(),
+                          lastDate: DateTime(2100),
                         );
                         if (pickedDate != null) {
                           setState(() {
@@ -258,8 +258,8 @@ class _VistaTratamientoActualmenteDoctor extends State<VistaTratamientoActualmen
                         final pickedDate = await showDatePicker(
                           context: context,
                           initialDate: DateTime.now(),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2100),
                         );
                         if (pickedDate != null) {
                           setState(() {
@@ -874,7 +874,6 @@ class _VistaTratamientoActualmenteDoctor extends State<VistaTratamientoActualmen
                                             final frecuenciaController = TextEditingController(text: item['frecuencia']);
                                             final observacionController = TextEditingController(text: item['descripcion']);
 
-                                            // Fecha inicial, si ya tiene, úsala, si no, usa la de hoy
                                             DateTime? selectedDate = item['fecha_fin'] != null
                                                 ? DateTime.tryParse(item['fecha_fin'])
                                                 : DateTime.now();
@@ -884,40 +883,41 @@ class _VistaTratamientoActualmenteDoctor extends State<VistaTratamientoActualmen
                                               builder: (context) => StatefulBuilder(
                                                 builder: (context, setState) => AlertDialog(
                                                   title: const Text('Editar Tratamiento Actual'),
-                                                  content: Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      const SizedBox(height: 10),
-                                                      TextField(
-                                                        controller: frecuenciaController,
-                                                        decoration: const InputDecoration(labelText: 'Frecuencia'),
-                                                        maxLines: 2,
-                                                      ),
-                                                      TextField(
-                                                        controller: observacionController,
-                                                        decoration: const InputDecoration(labelText: 'Observación'),
-                                                        maxLines: 2,
-                                                      ),
-                                                      const SizedBox(height: 10),
-                                                      TextButton.icon(
-                                                        icon: const Icon(Icons.calendar_today),
-                                                        label: const Text('Seleccionar fecha fin'),
-                                                        onPressed: () async {
-                                                          final DateTime? picked = await showDatePicker(
-                                                            context: context,
-                                                            initialDate: DateTime.now(),
-                                                            firstDate: DateTime.now(),  // solo fechas futuras desde hoy
-                                                            lastDate: DateTime(2100),
-                                                          );
-                                                          if (picked != null) {
-                                                            setState(() {
-                                                              selectedDate = picked;
-                                                            });
-                                                          }
-                                                        },
-                                                      ),
-
-                                                    ],
+                                                  content: SingleChildScrollView( // 👈 Esto evita el overflow
+                                                    child: Column(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        const SizedBox(height: 10),
+                                                        TextField(
+                                                          controller: frecuenciaController,
+                                                          decoration: const InputDecoration(labelText: 'Frecuencia'),
+                                                          maxLines: 2,
+                                                        ),
+                                                        TextField(
+                                                          controller: observacionController,
+                                                          decoration: const InputDecoration(labelText: 'Observación'),
+                                                          maxLines: 2,
+                                                        ),
+                                                        const SizedBox(height: 10),
+                                                        TextButton.icon(
+                                                          icon: const Icon(Icons.calendar_today),
+                                                          label: const Text('Editar fecha final'),
+                                                          onPressed: () async {
+                                                            final DateTime? picked = await showDatePicker(
+                                                              context: context,
+                                                              initialDate: DateTime.now(),
+                                                              firstDate: DateTime.now(),
+                                                              lastDate: DateTime(2100),
+                                                            );
+                                                            if (picked != null) {
+                                                              setState(() {
+                                                                selectedDate = picked;
+                                                              });
+                                                            }
+                                                          },
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
                                                   actions: [
                                                     TextButton(
@@ -954,6 +954,7 @@ class _VistaTratamientoActualmenteDoctor extends State<VistaTratamientoActualmen
                                             );
                                           },
                                         ),
+
 
                                         IconButton(
                                           icon: const Icon(Icons.visibility, color: Colors.blueGrey),
@@ -1054,7 +1055,7 @@ Future<List<TratamientoFrecuente1>> fetchTratamientofrecuente(String tipo) async
     List<dynamic> data = json.decode(utf8DecodedBody);
     return data.map((json) => TratamientoFrecuente1.fromJson(json)).toList();
   } else {
-    throw Exception('Error al cargar las vacunas');
+    throw Exception('Error al cargar las tratamiento');
   }
 }
 

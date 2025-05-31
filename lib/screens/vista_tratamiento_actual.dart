@@ -131,7 +131,7 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text("Registrar Tratamiento Frecuente"),
+              title: Text("Registrar Tratamiento Actual"),
               content: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,7 +236,7 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                           context: context,
                           initialDate: DateTime.now(),
                           firstDate: DateTime(2000),
-                          lastDate: DateTime.now(),
+                          lastDate: DateTime(2100),
                         );
                         if (pickedDate != null) {
                           setState(() {
@@ -258,8 +258,8 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                         final pickedDate = await showDatePicker(
                           context: context,
                           initialDate: DateTime.now(),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2100),
                         );
                         if (pickedDate != null) {
                           setState(() {
@@ -412,9 +412,13 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
     }
   }
 
-  Future<void> editarTratamientofrecuente({required int id, required String dosis, required String frecuencia, required String observacion,}) async {
-
-    final url = Uri.parse('$baseUrl//usuarios/api/paciente_medicamento_cronico/$id/');
+  Future<void> editarTratamientofrecuente({
+    required int id,
+    required String frecuencia,
+    required String observacion,
+    required DateTime fecha,
+  }) async {
+    final url = Uri.parse('$baseUrl/usuarios/api/tratamientos/$id/actualizar/');
 
     try {
       final response = await http.patch(
@@ -423,23 +427,22 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
           'Content-Type': 'application/json',
         },
         body: json.encode({
-          'dosis':dosis,
           'frecuencia': frecuencia,
-          'observacion': observacion,
+          'descripcion': observacion,
+          'fecha_fin': fecha.toIso8601String().split('T')[0], // formato 'YYYY-MM-DD'
         }),
       );
 
       if (response.statusCode == 200) {
-        print('Alergia actualizada exitosamente');
+        print('Tratamiento actualizado exitosamente');
       } else {
-        print('Error al editar alergia: ${response.statusCode}');
+        print('Error al editar tratamiento: ${response.statusCode}');
         print(response.body);
       }
     } catch (e) {
-      print('Excepción al editar alergia: $e');
+      print('Excepción al editar tratamiento: $e');
     }
   }
-
   @override
   void initState() {
     super.initState();
@@ -800,54 +803,85 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                                             icon: const Icon(Icons.edit, color: Colors.black54),
                                             tooltip: 'Editar',
                                             onPressed: () {
-                                              final dosisController = TextEditingController(text: item['dosis']);
                                               final frecuenciaController = TextEditingController(text: item['frecuencia']);
-                                              final observacionController = TextEditingController(text: item['observacion']);
+                                              final observacionController = TextEditingController(text: item['descripcion']);
+
+                                              DateTime? selectedDate = item['fecha_fin'] != null
+                                                  ? DateTime.tryParse(item['fecha_fin'])
+                                                  : DateTime.now();
 
                                               showDialog(
                                                 context: context,
-                                                builder: (context) => AlertDialog(
-                                                  title: const Text('Editar Tratamiento Actual'),
-                                                  content: Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      const SizedBox(height: 10),
-
-                                                      TextField(
-                                                        controller: frecuenciaController,
-                                                        decoration: const InputDecoration(labelText: 'Frecuencia'),
-                                                        maxLines: 2,
+                                                builder: (context) => StatefulBuilder(
+                                                  builder: (context, setState) => AlertDialog(
+                                                    title: const Text('Editar Tratamiento Actual'),
+                                                    content: SingleChildScrollView( // 👈 Esto evita el overflow
+                                                      child: Column(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          const SizedBox(height: 10),
+                                                          TextField(
+                                                            controller: frecuenciaController,
+                                                            decoration: const InputDecoration(labelText: 'Frecuencia'),
+                                                            maxLines: 2,
+                                                          ),
+                                                          TextField(
+                                                            controller: observacionController,
+                                                            decoration: const InputDecoration(labelText: 'Observación'),
+                                                            maxLines: 2,
+                                                          ),
+                                                          const SizedBox(height: 10),
+                                                          TextButton.icon(
+                                                            icon: const Icon(Icons.calendar_today),
+                                                            label: const Text('Editar fecha final'),
+                                                            onPressed: () async {
+                                                              final DateTime? picked = await showDatePicker(
+                                                                context: context,
+                                                                initialDate: DateTime.now(),
+                                                                firstDate: DateTime.now(),
+                                                                lastDate: DateTime(2100),
+                                                              );
+                                                              if (picked != null) {
+                                                                setState(() {
+                                                                  selectedDate = picked;
+                                                                });
+                                                              }
+                                                            },
+                                                          ),
+                                                        ],
                                                       ),
-                                                      TextField(
-                                                        controller: observacionController,
-                                                        decoration: const InputDecoration(labelText: 'Observación'),
-                                                        maxLines: 2,
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () => Navigator.of(context).pop(),
+                                                        child: const Text('Cancelar'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () async {
+                                                          if (selectedDate == null) {
+                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                              const SnackBar(content: Text('Por favor selecciona una fecha')),
+                                                            );
+                                                            return;
+                                                          }
+                                                          Navigator.of(context).pop();
+                                                          await editarTratamientofrecuente(
+                                                            id: item['id'],
+                                                            frecuencia: frecuenciaController.text,
+                                                            observacion: observacionController.text,
+                                                            fecha: selectedDate!,
+                                                          );
+                                                          setState(() {
+                                                            item['frecuencia'] = frecuenciaController.text;
+                                                            item['descripcion'] = observacionController.text;
+                                                            item['fecha'] = selectedDate!.toIso8601String().split('T')[0];
+                                                          });
+                                                          await _fetchTratamientofrecuente();
+                                                        },
+                                                        child: const Text('Guardar'),
                                                       ),
                                                     ],
                                                   ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () => Navigator.of(context).pop(),
-                                                      child: const Text('Cancelar'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () async {
-                                                        Navigator.of(context).pop();
-                                                        await editarTratamientofrecuente(
-                                                          id: item['id'],
-                                                          dosis: dosisController.text,
-                                                          frecuencia: frecuenciaController.text,
-                                                          observacion: observacionController.text,
-                                                        );
-                                                        setState(() {
-                                                          item['dosis'] = dosisController.text;
-                                                          item['frecuencia'] = frecuenciaController.text;
-                                                          item['observacion'] = observacionController.text;
-                                                        });
-                                                      },
-                                                      child: const Text('Guardar'),
-                                                    ),
-                                                  ],
                                                 ),
                                               );
                                             },
