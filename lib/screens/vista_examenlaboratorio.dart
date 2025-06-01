@@ -475,10 +475,13 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                                         ),
                                                       ),
                                                     ),
+
                                                     IconButton(
                                                       icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+
                                                       onPressed: () {
                                                         _abrirPDF(examen.archivo);
+
                                                       },
                                                     ),
                                                   ],
@@ -537,15 +540,22 @@ class _ExamenesPageState extends State<ExamenesPage> {
   Future<void> _abrirPDF(String url) async {
     final dio = Dio();
     final tempDir = await getTemporaryDirectory();
-    final filePath = '${tempDir.path}/${url.split('/').last}';
-    await dio.download('$baseUrl$url', filePath);
+    final fileName = url.split('/').last.split('?').first; // quita el "?" final
+    final filePath = '${tempDir.path}/$fileName';
+
+    // Limpia URL si tiene "?" vacío
+    final cleanedUrl = url.replaceAll(RegExp(r'\?$'), '');
+
+    print('⬇️ Descargando desde: $cleanedUrl');
+    await dio.download(cleanedUrl, filePath);
     await OpenFilex.open(filePath);
   }
+
+
 }
 
 Future<List<Examen>> obtenerExamenes(int pacienteId) async {
   final response = await http.get(Uri.parse('$baseUrl/usuarios/api/examenes/$pacienteId/'));
-
   if (response.statusCode == 200) {
     List jsonData = json.decode(utf8.decode(response.bodyBytes));
     return jsonData.map((e) => Examen.fromJson(e)).toList();

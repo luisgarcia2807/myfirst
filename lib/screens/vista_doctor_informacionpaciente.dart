@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -6,6 +7,7 @@ import 'package:mifirst/screens/vista_alergia.dart';
 import 'package:mifirst/screens/vista_alergia_doctor.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente_doctor.dart';
+import 'package:mifirst/screens/vista_tramientofrecuente_doctor.dart';
 import 'package:mifirst/screens/vista_tratamiento_actual_doctor.dart';
 import 'package:mifirst/screens/vista_vacuna_doctor.dart';
 import '../constans.dart';
@@ -43,6 +45,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
   List<dynamic> EnfermedadesPersistente = [];
   List<dynamic> vacunas = [];
   List<dynamic> tratamientos = [];
+  List<dynamic> Tratamientofrecuente = [];
 
   Future<void> obtenerIdUsuarioDesdePaciente() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario-desde-paciente/${widget.idusuariopac}/');
@@ -176,13 +179,26 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
       throw Exception('Error al cargar Enfermedades');
     }
   }
-  Future<void> _fetchTratamientofrecuente() async {
+  Future<void> _fetchTratamientoActual() async {
     final response = await http.get(
       Uri.parse('$baseUrl/usuarios/api/paciente/$idPaciente/tratamientos/'),
     );
     if (response.statusCode == 200) {
       setState(() {
         tratamientos = jsonDecode(utf8.decode(response.bodyBytes));
+      });
+    } else {
+      throw Exception('Error al cargar vacunas');
+    }
+  }
+  Future<void> _fetchTratamientofrecuente() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/usuarios/api/tratamientos-cronicos/$idPaciente/'),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        Tratamientofrecuente = jsonDecode(utf8.decode(response.bodyBytes));
       });
     } else {
       throw Exception('Error al cargar vacunas');
@@ -210,6 +226,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
     await _fetchAlergias(); // Llamar después de que idPaciente esté disponible
     await _fetchEnfermedadesPersistente(); // Llamar después de que idPaciente esté disponible
     await _fetchVacunas();
+    await _fetchTratamientoActual();
     await _fetchTratamientofrecuente();
 
   }
@@ -613,6 +630,64 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                             .where((item) => item['finalizado'] == false)
                                             .map<Widget>((item) {
                                           return Text("• ${item['nombre_medicamento']}");
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // tratamiento frecuente
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VistaTratamientofrecuentedoctor(
+                                  idusuario: idUsuario,
+                                  nombre: widget.nombre,
+                                  apellido: widget.apellido,
+                                  idusuariodoc: widget.idusuariodoc,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            margin: EdgeInsets.only(bottom: 20),
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                FaIcon(FontAwesomeIcons.pills, size: 36, color: Colors.blue[800]),
+                                SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Tratamiento frecuente",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.blue[800],
+                                        ),
+                                      ),
+                                      SizedBox(height: 10),
+                                      Tratamientofrecuente.isEmpty
+                                          ? Text("No hay tratamientos registrados")
+                                          : Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: Tratamientofrecuente.map<Widget>((tratamiento) {
+                                          return Text("• ${tratamiento['nombre_medicamento']}");
                                         }).toList(),
                                       ),
                                     ],

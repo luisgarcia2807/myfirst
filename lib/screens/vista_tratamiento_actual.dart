@@ -639,7 +639,6 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-
                                         Expanded(
                                           child: Text(
                                             item['nombre_medicamento'],
@@ -703,8 +702,6 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                                     Row(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        // Ícono de jeringa más abajo
-
                                         Container(
                                           width: 60,
                                           height: 60,
@@ -792,8 +789,6 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
 
                                       ],
                                     ),
-
-
 
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.end,

@@ -191,7 +191,14 @@ class _SubirPDFPageState extends State<SubirPDFPage> {
       request.fields['nombre_examen'] = _nombreExamenSeleccionado ?? 'Sin especificar';
       request.fields['descripcion'] = _descripcionController.text;
       request.fields['fecha_realizacion'] = _fechaRealizacion.toIso8601String().split('T').first;
-
+      print('archivoPDF: ${archivoPDF?.path}');
+      print('paciente: ${widget.idPaciente}');
+      print('tipo: $_tipoSeleccionado');
+      print('categoria: $_categoriaSeleccionada');
+      print('nombre_examen: $_nombreExamenSeleccionado');
+      print('descripcion: ${_descripcionController.text}');
+      print('fecha_realizacion: ${_fechaRealizacion.toIso8601String().split('T').first}');
+      print( archivoPDF!.path);
       // Archivo adjunto
       request.files.add(
         await http.MultipartFile.fromPath('archivo', archivoPDF!.path),
