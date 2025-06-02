@@ -6,9 +6,6 @@ import 'package:mifirst/screens/Vista_Ver_seguimiento.dart';
 import 'package:mifirst/screens/fotoPerfil.dart';
 import 'package:mifirst/screens/vista_seguimiento.dart';
 import '../models/tratamientoActual.dart';
-import '../models/tratamientoFrecuente.dart';
-import '../models/tratamientoFrecuente.dart';
-import '../models/vacuna.dart';
 import '../constans.dart';
 
 class VistaTratamientoActualmente extends StatefulWidget {
@@ -620,8 +617,6 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                           itemCount: Tratamientofrecuente.length,
                           itemBuilder: (context, index) {
                             final item = Tratamientofrecuente[index];
-                            final doctor = item['doctor'] == null;
-
                             return Card(
                               margin: const EdgeInsets.only(bottom: 16),
                               shape: RoundedRectangleBorder(

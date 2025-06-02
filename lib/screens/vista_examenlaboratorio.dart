@@ -38,6 +38,115 @@ class _ExamenesPageState extends State<ExamenesPage> {
   String? tipoSeleccionado= 'medicamento';
   int? selectedAlergiaId;
   late Future<List<Examen>> _examenes;
+  final Map<String, Map<String, List<Map<String, String>>>> tiposCategoriasExamenes = {
+    'laboratorio': {
+      'hematologia': [
+        {'value': 'hemograma_completo', 'label': 'Hemograma Completo'},
+        {'value': 'recuento_plaquetas', 'label': 'Recuento de Plaquetas'},
+        {'value': 'velocidad_sedimentacion', 'label': 'Velocidad de Sedimentación'},
+        {'value': 'grupo_sanguineo', 'label': 'Grupo Sanguíneo y Rh'},
+      ],
+      'bioquimica': [
+        {'value': 'glucosa', 'label': 'Glucosa'},
+        {'value': 'urea', 'label': 'Urea'},
+        {'value': 'creatinina', 'label': 'Creatinina'},
+        {'value': 'colesterol_total', 'label': 'Colesterol Total'},
+        {'value': 'hdl', 'label': 'HDL'},
+        {'value': 'ldl', 'label': 'LDL'},
+        {'value': 'trigliceridos', 'label': 'Triglicéridos'},
+        {'value': 'acido_urico', 'label': 'Ácido Úrico'},
+        {'value': 'tgo', 'label': 'TGO (AST)'},
+        {'value': 'tgp', 'label': 'TGP (ALT)'},
+        {'value': 'bilirrubina_total', 'label': 'Bilirrubina Total'},
+        {'value': 'bilirrubina_directa', 'label': 'Bilirrubina Directa'},
+        {'value': 'bilirrubina_indirecta', 'label': 'Bilirrubina Indirecta'},
+        {'value': 'fosfatasa_alcalina', 'label': 'Fosfatasa Alcalina'},
+        {'value': 'ggt', 'label': 'GGT'},
+        {'value': 'amilasa', 'label': 'Amilasa'},
+        {'value': 'lipasa', 'label': 'Lipasa'},
+        {'value': 'electrolitos', 'label': 'Electrolitos (Na, K, Cl)'},
+        {'value': 'calcio', 'label': 'Calcio'},
+        {'value': 'magnesio', 'label': 'Magnesio'},
+        {'value': 'perfil_renal', 'label': 'Perfil Renal'},
+        {'value': 'perfil_hepatico', 'label': 'Perfil Hepático'},
+        {'value': 'perfil_lipidico', 'label': 'Perfil Lipídico'},
+        {'value': 'perfil_20', 'label': 'Perfil 20'},
+        {'value': 'perfil_21', 'label': 'Perfil 21'},
+      ],
+      'orina_y_heces': [
+        {'value': 'orina_rutina', 'label': 'Orina (Examen de Rutina)'},
+        {'value': 'urocultivo', 'label': 'Urocultivo'},
+        {'value': 'coprologico', 'label': 'Coprológico'},
+        {'value': 'parasitologico', 'label': 'Parasitológico'},
+        {'value': 'sangre_oculta', 'label': 'Sangre Oculta en Heces'},
+      ],
+      'inmunologia': [
+        {'value': 'vih', 'label': 'Prueba de VIH'},
+        {'value': 'vdrl', 'label': 'VDRL'},
+        {'value': 'hbsag', 'label': 'HBsAg (Hepatitis B)'},
+        {'value': 'anticore', 'label': 'Anti-HBc'},
+        {'value': 'anti_hcv', 'label': 'Anti-HCV'},
+        {'value': 'toxoplasmosis', 'label': 'Toxoplasmosis (IgG, IgM)'},
+        {'value': 'rubeola', 'label': 'Rubéola (IgG, IgM)'},
+        {'value': 'citomegalovirus', 'label': 'Citomegalovirus (IgG, IgM)'},
+        {'value': 'fiebre_tifoidea', 'label': 'Prueba de Widal'},
+      ],
+    },
+    'pruebas_funcionales': {
+      'espirometria': [
+        {'value': 'espirometria_simple', 'label': 'Espirometría Simple'},
+        {'value': 'espirometria_con_broncodilatador', 'label': 'Espirometría con Broncodilatador'},
+      ],
+      'prueba_esfuerzo': [
+        {'value': 'prueba_esfuerzo_estandar', 'label': 'Prueba de Esfuerzo Estándar'},
+      ],
+    },
+    'cardiologia': {
+      'electrocardiograma': [
+        {'value': 'ecg_reposo', 'label': 'Electrocardiograma en Reposo'},
+      ],
+      'ecocardiograma': [
+        {'value': 'eco_transtoracico', 'label': 'Ecocardiograma Transtorácico'},
+        {'value': 'eco_doppler', 'label': 'Ecocardiograma Doppler'},
+      ],
+      'holter': [
+        {'value': 'holter_24h', 'label': 'Holter 24h'},
+        {'value': 'holter_48h', 'label': 'Holter 48h'},
+      ],
+    },
+    'neurologia': {
+      'encefalograma': [
+        {'value': 'eeg', 'label': 'Electroencefalograma'},
+      ],
+      'potenciales_evocados': [
+        {'value': 'potenciales_auditivos', 'label': 'Potenciales Auditivos'},
+        {'value': 'potenciales_visuales', 'label': 'Potenciales Visuales'},
+      ],
+    },
+    'informes_medicos': {
+      'interconsultas': [
+        {'value': 'interconsulta_cardiologia', 'label': 'Interconsulta de Cardiología'},
+        {'value': 'interconsulta_neurologia', 'label': 'Interconsulta de Neurología'},
+      ],
+      'resumenes_clinicos': [
+        {'value': 'epicrisis', 'label': 'Epicrisis'},
+        {'value': 'informe_alta', 'label': 'Informe de Alta'},
+      ],
+      'referencias': [
+        {'value': 'referencia_hospitalaria', 'label': 'Referencia Hospitalaria'},
+      ],
+    },
+    'otros_documentos': {
+      'otros': [
+        {'value': 'consentimiento_informado', 'label': 'Consentimiento Informado'},
+        {'value': 'historia_medica', 'label': 'Historia Médica'},
+      ],
+      'sin_categoria': [
+        {'value': 'no_clasificado', 'label': 'Documento No Clasificado'},
+      ],
+    },
+  };
+
 
   Future<void> obtenerDatos() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
@@ -102,107 +211,43 @@ class _ExamenesPageState extends State<ExamenesPage> {
       print('Error: $e');
     }
   }
-  IconData _getIconExamen(String nombre) {
-    switch (nombre) {
-      case 'Hemograma completo':
-      case 'Hematológica':
-        return Icons.bloodtype;
 
-      case 'Química sanguínea':
-      case 'Perfil lipídico':
-      case 'Glucosa en ayunas':
-      case 'Curva de tolerancia a la glucosa':
-        return Icons.analytics;
+  IconData _getIconCategoria(String categoria) {
+    const Map<String, IconData> iconosPorCategoria = {
+      'laboratorio': Icons.science,                // Representa análisis de laboratorio
+      'pruebas_funcionales': Icons.fitness_center, // Representa esfuerzo físico o pruebas funcionales
+      'cardiologia': Icons.favorite,               // Representa el corazón
+      'neurologia': Icons.psychology,              // Representa actividad cerebral
+      'informes_medicos': Icons.description,       // Documentos médicos
+      'otros_documentos': Icons.folder,            // Otros documentos o archivos
+    };
 
-      case 'Examen general de orina':
-        return Icons.water_drop;
-
-      case 'Coprológico':
-        return Icons.inventory_2;
-
-      case 'Función hepática':
-        return Icons.local_bar;
-
-      case 'Función renal':
-        return Icons.opacity;
-
-      case 'Electrolitos séricos':
-        return Icons.bolt;
-
-      case 'Pruebas tiroideas':
-        return Icons.threesixty;
-
-      case 'Prueba de embarazo (beta-hCG)':
-        return Icons.pregnant_woman;
-
-      case 'Serología para VIH':
-      case 'Prueba de hepatitis B':
-      case 'Prueba de hepatitis C':
-      case 'Prueba de COVID-19':
-        return Icons.sick;
-
-      case 'Pruebas de coagulación':
-        return Icons.scatter_plot;
-
-      case 'Antígeno prostático específico (PSA)':
-      case 'Marcador tumoral CA-125':
-      case 'Marcador tumoral CEA':
-        return Icons.biotech;
-
-      default:
-        return Icons.device_unknown;
-    }
+    return iconosPorCategoria[categoria] ?? Icons.help_outline;
   }
-  Color _getColorExamen(String nombre) {
-    switch (nombre) {
-      case 'Hemograma completo':
-        return Colors.red;
 
-      case 'Química sanguínea':
-      case 'Perfil lipídico':
-      case 'Glucosa en ayunas':
-      case 'Curva de tolerancia a la glucosa':
-        return Colors.orange;
+  Color _getColorCategoria(String categoria) {
+    const Map<String, Color> coloresPorCategoria = {
+      'laboratorio': Colors.red,
+      'pruebas_funcionales': Colors.green,
+      'cardiologia': Colors.blue,
+      'neurologia': Colors.purple,
+      'informes_medicos': Colors.orange,
+      'otros_documentos': Colors.grey,
+    };
 
-      case 'Examen general de orina':
-        return Colors.yellow;
-
-      case 'Coprológico':
-        return Colors.brown;
-
-      case 'Función hepática':
-        return Colors.green;
-
-      case 'Función renal':
-        return Colors.blue;
-
-      case 'Electrolitos séricos':
-        return Colors.indigo;
-
-      case 'Pruebas tiroideas':
-        return Colors.purple;
-
-      case 'Prueba de embarazo (beta-hCG)':
-        return Colors.pink;
-
-      case 'Serología para VIH':
-      case 'Prueba de hepatitis B':
-      case 'Prueba de hepatitis C':
-      case 'Prueba de COVID-19':
-        return Colors.teal;
-
-      case 'Pruebas de coagulación':
-        return Colors.deepOrange;
-
-      case 'Antígeno prostático específico (PSA)':
-      case 'Marcador tumoral CA-125':
-      case 'Marcador tumoral CEA':
-        return Colors.grey;
-
-      default:
-        return Colors.black45;
-    }
+    return coloresPorCategoria[categoria] ?? Colors.black;
   }
+
+  String formatNombreExamen(String nombre) {
+    return nombre
+        .replaceAll('_', ' ')                        // Reemplaza guiones bajos por espacios
+        .split(' ')                                  // Divide en palabras
+        .map((word) => word.isNotEmpty
+        ? word[0].toUpperCase() + word.substring(1)
+        : '')
+        .join(' ');                                   // Une las palabras con espacio
+  }
+
 
   @override
   void initState() {
@@ -220,6 +265,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
 
   @override
   Widget build(BuildContext context) {
+    String fechaHoy = DateFormat('dd/MM/yyyy').format(DateTime.now());
     return Scaffold(
       body: FutureBuilder<List<Examen>>(
         future: _examenes,
@@ -252,54 +298,68 @@ class _ExamenesPageState extends State<ExamenesPage> {
                       child: Column(
                         children: [
                           SizedBox(height: 25),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                          Row(
                             children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white60,
-                                  borderRadius: BorderRadius.circular(100),
-                                ),
-                                padding: EdgeInsets.all(3), // Reducido
-                                child: foto == null || foto!.isEmpty
-                                    ? Icon(
-                                  Icons.person_pin,
-                                  color: Colors.white,
-                                  size: 100, // Reducido
-                                )
-                                    : ClipOval(
-                                  child: Image.network(
-                                    '$baseUrl$foto',
-                                    width: 100, // Reducido
-                                    height: 100,
-                                    fit: BoxFit.cover,
+                              GestureDetector(
+                                onTap: () {},
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.blueAccent,
+                                    borderRadius: BorderRadius.circular(100),
                                   ),
-                                ),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  SizedBox(height: 12),
-                                  Text(
-                                    "Vista de examen",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize:30,
-                                      fontWeight: FontWeight.bold,
+                                  padding: EdgeInsets.all(3),
+                                  child: foto == null || foto!.isEmpty
+                                      ? Icon(
+                                    Icons.person_pin,
+                                    color: Colors.white,
+                                    size: 70,
+                                  )
+                                      : ClipOval(
+                                    child: Image.network(
+                                      '$baseUrl$foto',
+                                      width: 70,
+                                      height: 70,
+                                      fit: BoxFit.cover,
                                     ),
                                   ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    nombreUsuario,
-                                    style: TextStyle(color: Colors.white.withOpacity(0.7),fontSize: 30),
-                                  ),
-                                ],
+                                ),
                               ),
-                              SizedBox(height: 12.0),
+                              SizedBox(width: 8.0),
+                              Expanded( // <- ¡Esta línea soluciona el overflow!
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(height: 4.0),
+                                    Text(
+                                      "Pc.$nombreUsuario $apellidoUsuario",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      overflow: TextOverflow.ellipsis, // <-- por si aún se desborda
+                                    ),
+                                    SizedBox(height: 1.0),
+                                    Text(
+                                      fechaHoy,
+                                      style: TextStyle(color: Colors.grey[300],fontSize: 12),
+                                      overflow: TextOverflow.ellipsis, // opcional
+                                    ),
 
-
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
+                          SizedBox(height: 15),
+                          Text(
+                            'Examenes ',
+                            style: TextStyle(color: Colors.white,fontSize: 25),
+                            overflow: TextOverflow.ellipsis, // opcional
+                          ),
+                          SizedBox(height: 25),
+
                         ],
                       ),
                     ),
@@ -322,13 +382,18 @@ class _ExamenesPageState extends State<ExamenesPage> {
                               children: [
                                 Flexible(
                                   child: GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
+                                    onTap: () async{
+                                      final resultado = await Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => ScanView(idPaciente: idPaciente),
                                         ),
                                       );
+                                      if (resultado == true) {
+                                        setState(() {
+                                          _examenes = obtenerExamenes(idPaciente);
+                                        });
+                                      }
                                     },
                                     child: Container(
                                       decoration: BoxDecoration(
@@ -368,14 +433,21 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                 const SizedBox(width: 10),
                                 Flexible(
                                   child: GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
+                                    onTap: () async {
+                                      final resultado = await Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => SubirPDFPage (idPaciente: idPaciente),
+                                          builder: (context) => SubirPDFPage(idPaciente: idPaciente),
                                         ),
                                       );
+
+                                      if (resultado == true) {
+                                        setState(() {
+                                          _examenes = obtenerExamenes(idPaciente);
+                                        });
+                                      }
                                     },
+
 
                                     child: Container(
                                       decoration: BoxDecoration(
@@ -414,110 +486,172 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                 ),
                               ],
                             ),
-
-
                             const SizedBox(height: 12),
 
                             Expanded(
+                              child: FutureBuilder<List<Examen>>(
+                                future: _examenes,
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState == ConnectionState.waiting) {
+                                    return const Center(child: CircularProgressIndicator());
+                                  } else if (snapshot.hasError) {
+                                    return const Center(
+                                      child: Text(
+                                        '❌ Error al cargar los exámenes.\nRevisa tu conexión o intenta más tarde.',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    );
+                                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                    return const Center(
+                                      child: Text(
+                                        'No hay exámenes disponibles para este paciente.',
+                                        style: TextStyle(color: Colors.black54),
+                                      ),
+                                    );
+                                  }
+                                  final examenes = snapshot.data!;
 
-                              child: examenes.isEmpty
-                                  ? const Center(child: CircularProgressIndicator())
-                                  : ListView.builder(
-                                itemCount: examenes.length,
-                                itemBuilder: (context, index) {
-                                  final examen = examenes[index];
-                                  print(examenes);
-
-                                  return Card(
-                                    margin: const EdgeInsets.only(bottom: 10),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    color: Colors.white,
-                                    elevation: 3,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12),
-                                      child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          // Espaciado arriba para alinear con la parte baja
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 30), // ajusta este valor si lo deseas más abajo
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: _getColorExamen(examen.nombreExamen).withOpacity(0.1),
-                                                shape: BoxShape.circle,
-                                              ),
-                                              padding: const EdgeInsets.all(10),
-                                              child: Icon(
-                                                _getIconExamen(examen.nombreExamen),
-                                                color: _getColorExamen(examen.nombreExamen),
-                                                size: 30,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Expanded(
-                                                      child: Text(
-                                                        examen.nombreExamen,
-                                                        style: const TextStyle(
-                                                          fontSize: 20,
-                                                          fontWeight: FontWeight.bold,
-                                                          color: Colors.black,
-                                                        ),
+                                  return ListView.builder(
+                                    itemCount: examenes.length,
+                                    itemBuilder: (context, index) {
+                                      final examen = examenes[index];
+                                      return Card(
+                                        margin: const EdgeInsets.only(bottom: 16),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        color: Colors.white,
+                                        elevation: 4,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(16),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              /// Título (nombre del examen) + PDF a la derecha
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      formatNombreExamen(examen.nombreExamen),
+                                                      style: const TextStyle(
+                                                        fontSize: 20,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.black87,
                                                       ),
                                                     ),
+                                                  ),
 
-                                                    IconButton(
-                                                      icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                                                    onPressed: () {
+                                                      _abrirPDF(examen.archivo);
+                                                    },
+                                                  ),
 
-                                                      onPressed: () {
-                                                        _abrirPDF(examen.archivo);
+                                                ],
+                                              ),
+                                              const SizedBox(height: 10),
 
-                                                      },
+                                              /// Contenido principal: ícono + info
+                                              Row(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Container(
+                                                    width: 60,
+                                                    height: 60,
+                                                    decoration: BoxDecoration(
+                                                      color: _getColorCategoria(examen.tipo),
+                                                      borderRadius: BorderRadius.circular(12),
                                                     ),
-                                                  ],
-                                                ),
-                                                Text(
-                                                  'Fecha: ${examen.fechaRealizacion}',
-                                                  style: const TextStyle(color: Colors.black54),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  'Descripción: ${examen.descripcion}',
-                                                  style: const TextStyle(color: Colors.black54),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
+                                                    child: Icon(
+                                                      _getIconCategoria(examen.tipo),
+                                                      color: Colors.white,
+                                                      size: 40,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 16),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Row(
+                                                          children: [
+                                                            const Icon(Icons.folder_open, size: 18, color: Colors.black54),
+                                                            const SizedBox(width: 4),
+                                                            Text(
+                                                              'Tipo: ${formatNombreExamen(examen.tipo)}',
+                                                              style: const TextStyle(
+                                                                color: Colors.black54,
+                                                                fontWeight: FontWeight.w600,
+                                                                fontSize: 12,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        const SizedBox(height: 4),
+                                                        Row(
+                                                          children: [
+                                                            const Icon(Icons.category, size: 18, color: Colors.black54),
+                                                            const SizedBox(width: 4),
+                                                            Text(
+                                                              'Categoría: ${formatNombreExamen(examen.categoria)}',
+                                                              style: const TextStyle(
+                                                                color: Colors.black54,
+                                                                fontWeight: FontWeight.w600,
+                                                                fontSize: 12,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        const SizedBox(height: 6),
+                                                        Row(
+                                                          children: [
+                                                            const Icon(Icons.calendar_today, size: 18, color: Colors.black54),
+                                                            const SizedBox(width: 4),
+                                                            Text(
+                                                              'Fecha: ${examen.fechaRealizacion}',
+                                                              style: const TextStyle(color: Colors.black54, fontSize: 12),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        const SizedBox(height: 4),
+                                                        if (examen.descripcion != null && examen.descripcion.isNotEmpty)
+                                                          Row(
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              const Icon(Icons.description, size: 18, color: Colors.black54),
+                                                              const SizedBox(width: 4),
+                                                              Expanded(
+                                                                child: Text(
+                                                                  'Descripción: ${examen.descripcion}',
+                                                                  style: const TextStyle(color: Colors.black54, fontSize: 12),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                      ],
+                                                    ),
+                                                  ),
 
+
+                                                ],
+                                              ),
+                                            ],
+                                          )
+
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
                               ),
-                            ),
+                            )
+
                           ],
                         ),
                       ),
                     )
-
-
-
-
-
-
-
-
 
 
 
@@ -555,11 +689,22 @@ class _ExamenesPageState extends State<ExamenesPage> {
 }
 
 Future<List<Examen>> obtenerExamenes(int pacienteId) async {
-  final response = await http.get(Uri.parse('$baseUrl/usuarios/api/examenes/$pacienteId/'));
-  if (response.statusCode == 200) {
-    List jsonData = json.decode(utf8.decode(response.bodyBytes));
-    return jsonData.map((e) => Examen.fromJson(e)).toList();
-  } else {
-    throw Exception('Error al cargar los exámenes');
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/usuarios/api/examenes/$pacienteId/'),
+    );
+
+    if (response.statusCode == 200) {
+      List jsonData = json.decode(utf8.decode(response.bodyBytes));
+      return jsonData.map((e) => Examen.fromJson(e)).toList();
+    } else if (response.statusCode == 404) {
+      // Puedes considerar devolver lista vacía si no hay exámenes
+      return [];
+    } else {
+      throw Exception('Error del servidor: ${response.statusCode}');
+    }
+  } catch (e) {
+    // Log o manejo personalizado
+    throw Exception('Error de conexión o formato: $e');
   }
 }

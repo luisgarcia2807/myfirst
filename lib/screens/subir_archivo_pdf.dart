@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
-
+import 'package:path/path.dart' as path;
 import '../constans.dart';
 
 class SubirPDFPage extends StatefulWidget {
@@ -164,6 +164,8 @@ class _SubirPDFPageState extends State<SubirPDFPage> {
     }
   }
 
+
+
   Future<void> subirPDF() async {
     if (archivoPDF == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -181,27 +183,39 @@ class _SubirPDFPageState extends State<SubirPDFPage> {
     }
 
     try {
+      final originalFile = archivoPDF!;
+      final directory = originalFile.parent;
+
+      // 🔧 Nombre original sin espacios
+      String originalName = path.basenameWithoutExtension(originalFile.path).replaceAll(' ', '_');
+
+      // 🔧 Datos adicionales
+      String idPaciente = widget.idPaciente.toString();
+      String nombreExamen = (_nombreExamenSeleccionado ?? 'Sin_especificar')
+          .replaceAll(RegExp(r'\s+'), '_')
+          .toLowerCase();
+
+      // 🧾 Nombre final del archivo
+      String nuevoNombre = '${originalName}_paciente${idPaciente}_$nombreExamen.pdf';
+      String newPath = path.join(directory.path, nuevoNombre);
+
+      // Crear nuevo archivo con nombre modificado
+      final renamedFile = await originalFile.copy(newPath);
+
       final uri = Uri.parse('$baseUrl/usuarios/api/examenes/');
       final request = http.MultipartRequest('POST', uri);
 
       // Campos del formulario
-      request.fields['paciente'] = widget.idPaciente.toString();
+      request.fields['paciente'] = idPaciente;
       request.fields['tipo'] = _tipoSeleccionado!;
       request.fields['categoria'] = _categoriaSeleccionada!;
       request.fields['nombre_examen'] = _nombreExamenSeleccionado ?? 'Sin especificar';
       request.fields['descripcion'] = _descripcionController.text;
       request.fields['fecha_realizacion'] = _fechaRealizacion.toIso8601String().split('T').first;
-      print('archivoPDF: ${archivoPDF?.path}');
-      print('paciente: ${widget.idPaciente}');
-      print('tipo: $_tipoSeleccionado');
-      print('categoria: $_categoriaSeleccionada');
-      print('nombre_examen: $_nombreExamenSeleccionado');
-      print('descripcion: ${_descripcionController.text}');
-      print('fecha_realizacion: ${_fechaRealizacion.toIso8601String().split('T').first}');
-      print( archivoPDF!.path);
-      // Archivo adjunto
+
+      // Adjuntar archivo
       request.files.add(
-        await http.MultipartFile.fromPath('archivo', archivoPDF!.path),
+        await http.MultipartFile.fromPath('archivo', renamedFile.path),
       );
 
       final response = await request.send();
@@ -209,7 +223,7 @@ class _SubirPDFPageState extends State<SubirPDFPage> {
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('PDF subido correctamente')),
-        );
+        ); Navigator.pop(context,true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al subir el PDF: ${response.statusCode}')),

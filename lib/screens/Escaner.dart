@@ -187,7 +187,17 @@ class _ScanViewState extends State<ScanView> {
     final picked = await ImagePicker().pickImage(source: ImageSource.camera);
     if (picked == null) return;
 
-    _imageBytesToCrop = await picked.readAsBytes();
+    // Leer bytes originales
+    Uint8List originalBytes = await picked.readAsBytes();
+
+    // ✅ Redimensionar antes del crop para mejorar el rendimiento
+    final decodedImage = img.decodeImage(originalBytes);
+    if (decodedImage != null) {
+      final resizedImage = img.copyResize(decodedImage, width: 1024); // Puedes probar 800 si necesitas más velocidad
+      _imageBytesToCrop = Uint8List.fromList(img.encodeJpg(resizedImage));
+    } else {
+      _imageBytesToCrop = originalBytes; // fallback si no se puede decodificar
+    }
 
     await showDialog(
       context: context,
@@ -209,26 +219,19 @@ class _ScanViewState extends State<ScanView> {
                       try {
                         final tempDir = await getTemporaryDirectory();
 
-                        // 1. Guardar la imagen recortada (como "original" desde tu punto de vista)
                         final croppedPath = '${tempDir.path}/original_recortada_${DateTime.now().millisecondsSinceEpoch}.jpg';
                         final croppedFile = await File(croppedPath).writeAsBytes(croppedData);
 
                         if (mounted) {
-                          setState(() => _imagenesRecortadas.add(croppedFile)); // Guardar recortada como "original"
+                          setState(() => _imagenesRecortadas.add(croppedFile));
                         }
 
-                        // 2. Procesar la imagen recortada
                         Uint8List? imagenProcesadaBytes = await ProcesadorDeDocumento.procesar(croppedFile);
+                        if (imagenProcesadaBytes == null) throw Exception('Error al procesar imagen');
 
-                        if (imagenProcesadaBytes == null) {
-                          throw Exception('Error al procesar imagen');
-                        }
-
-                        // 3. Guardar la imagen procesada
                         final processedPath = '${tempDir.path}/procesada_${DateTime.now().millisecondsSinceEpoch}.jpg';
                         File processedFile = await File(processedPath).writeAsBytes(imagenProcesadaBytes);
 
-                        // 4. Mejora adicional si se habilitó
                         if (_mejorarImagen) {
                           final original = img.decodeImage(imagenProcesadaBytes);
                           if (original != null) {
@@ -243,8 +246,8 @@ class _ScanViewState extends State<ScanView> {
                         }
 
                         if (mounted) {
-                          setState(() => _imagenes.add(processedFile)); // Guardar la imagen procesada
-                          Navigator.of(context).pop(); // Cierra el diálogo
+                          setState(() => _imagenes.add(processedFile));
+                          Navigator.of(context).pop();
                         }
                       } catch (e) {
                         if (mounted) {
@@ -261,15 +264,13 @@ class _ScanViewState extends State<ScanView> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(); // Cancelar recorte
-                      },
+                      onPressed: () => Navigator.of(context).pop(),
                       child: const Text('Cancelar'),
                     ),
                     ElevatedButton(
                       onPressed: () {
                         Future.delayed(const Duration(milliseconds: 100), () {
-                          _cropController.crop(); // Inicia recorte
+                          _cropController.crop();
                         });
                       },
                       child: const Text('Aceptar'),
@@ -283,6 +284,7 @@ class _ScanViewState extends State<ScanView> {
       ),
     );
   }
+
 
   // Modificar _saveAsPdf para que solo cree el PDF y lo guarde
 
@@ -347,12 +349,13 @@ class _ScanViewState extends State<ScanView> {
       request.fields['descripcion'] = _descripcionController.text;
       request.fields['fecha_realizacion'] = _fechaRealizacion.toIso8601String().split('T').first;
 
+
       final response = await request.send();
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('PDF subido correctamente')),
-        );
+        );Navigator.pop(context,true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al subir el PDF: ${response.statusCode}')),

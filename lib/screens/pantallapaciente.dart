@@ -415,7 +415,7 @@ class _PacienteScreen extends State<PacienteScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ExamenesPage(idusuario: 16),
+                                  builder: (context) => ExamenesPage(idusuario: widget.idusuario),
                                 ),
                               );
                             },
