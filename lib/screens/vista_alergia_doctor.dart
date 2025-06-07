@@ -221,7 +221,7 @@ class _VistaAlergiadoctor extends State<VistaAlergiadoctor> {
                               borderRadius: BorderRadius.circular(8.0),
                             ),
                           ),
-                          items: ['leve', 'moderada', 'severo'].map((String value) {
+                          items: ['leve', 'moderada', 'severa'].map((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
                               child: Text(value),
@@ -279,7 +279,9 @@ class _VistaAlergiadoctor extends State<VistaAlergiadoctor> {
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Alergia guardada correctamente")),
+
                           );
+
                           await _fetchAlergias();
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(

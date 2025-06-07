@@ -17,6 +17,7 @@ import 'package:mifirst/screens/vista_examenlaboratorio.dart';
 import 'package:mifirst/screens/vista_imagenologia.dart';
 import 'package:mifirst/screens/vista_paciente_doctor_escritorio.dart';
 import 'package:mifirst/screens/vista_paciente_pacientedoctor.dart';
+import 'package:mifirst/screens/vista_signovitales.dart';
 import 'package:mifirst/screens/vista_tramientofrecuente.dart';
 import 'package:mifirst/screens/vista_tratamiento_actual.dart';
 import 'package:mifirst/screens/vista_vacuna.dart';
@@ -125,7 +126,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => SubirArchivoPagesupa(),
+                              builder: (context) => VistaSignoVitales(idusuario: 1,),
                             ),
                           );
                         },

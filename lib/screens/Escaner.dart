@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
+import 'package:image_cropper/image_cropper.dart';
 
 // Import para crop_your_image:
 import 'package:crop_your_image/crop_your_image.dart';
@@ -175,6 +176,7 @@ class _ScanViewState extends State<ScanView> {
   final _cropController = CropController();
   Uint8List? _imageBytesToCrop;
 
+
   Future<void> _pickAndCropImage() async {
     final status = await Permission.camera.request();
     if (!status.isGranted) {
@@ -187,102 +189,73 @@ class _ScanViewState extends State<ScanView> {
     final picked = await ImagePicker().pickImage(source: ImageSource.camera);
     if (picked == null) return;
 
-    // Leer bytes originales
-    Uint8List originalBytes = await picked.readAsBytes();
+    File imageToProcess;
 
-    // ✅ Redimensionar antes del crop para mejorar el rendimiento
-    final decodedImage = img.decodeImage(originalBytes);
-    if (decodedImage != null) {
-      final resizedImage = img.copyResize(decodedImage, width: 1024); // Puedes probar 800 si necesitas más velocidad
-      _imageBytesToCrop = Uint8List.fromList(img.encodeJpg(resizedImage));
+    // Intentar recortar
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: picked.path,
+      aspectRatioPresets: [
+        CropAspectRatioPreset.original,
+        CropAspectRatioPreset.ratio4x3,
+        CropAspectRatioPreset.ratio16x9,
+      ],
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Recortar imagen',
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: false,
+        ),
+        IOSUiSettings(
+          title: 'Recortar imagen',
+        ),
+      ],
+    );
+
+    if (croppedFile != null && await File(croppedFile.path).exists()) {
+      imageToProcess = File(croppedFile.path);
     } else {
-      _imageBytesToCrop = originalBytes; // fallback si no se puede decodificar
+      // Copiar la imagen original a un archivo temporal para asegurarse de que sea válido
+      final tempDir = await getTemporaryDirectory();
+      final tempPath = '${tempDir.path}/original_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      imageToProcess = await File(picked.path).copy(tempPath);
     }
 
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setStateDialog) {
-          return AlertDialog(
-            contentPadding: EdgeInsets.zero,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 300,
-                  height: 400,
-                  child: Crop(
-                    image: _imageBytesToCrop!,
-                    controller: _cropController,
-                    onCropped: (croppedData) async {
-                      try {
-                        final tempDir = await getTemporaryDirectory();
+    try {
+      final tempDir = await getTemporaryDirectory();
 
-                        final croppedPath = '${tempDir.path}/original_recortada_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                        final croppedFile = await File(croppedPath).writeAsBytes(croppedData);
+      // Guardar la imagen que vamos a procesar
+      if (mounted) {
+        setState(() => _imagenesRecortadas.add(imageToProcess));
+      }
 
-                        if (mounted) {
-                          setState(() => _imagenesRecortadas.add(croppedFile));
-                        }
+      Uint8List? imagenProcesadaBytes = await ProcesadorDeDocumento.procesar(imageToProcess);
 
-                        Uint8List? imagenProcesadaBytes = await ProcesadorDeDocumento.procesar(croppedFile);
-                        if (imagenProcesadaBytes == null) throw Exception('Error al procesar imagen');
+      if (imagenProcesadaBytes == null || imagenProcesadaBytes.isEmpty) {
+        throw Exception('La imagen procesada está vacía o falló el procesamiento');
+      }
 
-                        final processedPath = '${tempDir.path}/procesada_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                        File processedFile = await File(processedPath).writeAsBytes(imagenProcesadaBytes);
+      final processedPath = '${tempDir.path}/procesada_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      File processedFile = await File(processedPath).writeAsBytes(imagenProcesadaBytes);
 
-                        if (_mejorarImagen) {
-                          final original = img.decodeImage(imagenProcesadaBytes);
-                          if (original != null) {
-                            final mejorada = img.adjustColor(
-                              original,
-                              contrast: 1.2,
-                              brightness: 0.1,
-                            );
-                            processedFile = File(processedPath)
-                              ..writeAsBytesSync(img.encodeJpg(mejorada));
-                          }
-                        }
+      if (_mejorarImagen) {
+        final original = img.decodeImage(imagenProcesadaBytes);
+        if (original != null) {
+          final mejorada = img.adjustColor(original, contrast: 1.2, brightness: 0.1);
+          final mejoradaBytes = img.encodeJpg(mejorada);
+          await processedFile.writeAsBytes(mejoradaBytes);
+        }
+      }
 
-                        if (mounted) {
-                          setState(() => _imagenes.add(processedFile));
-                          Navigator.of(context).pop();
-                        }
-                      } catch (e) {
-                        if (mounted) {
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error al procesar imagen: $e')),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancelar'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Future.delayed(const Duration(milliseconds: 100), () {
-                          _cropController.crop();
-                        });
-                      },
-                      child: const Text('Aceptar'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
+      if (mounted) {
+        setState(() => _imagenes.add(processedFile));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al procesar imagen: $e')),
+        );
+      }
+    }
   }
 
 

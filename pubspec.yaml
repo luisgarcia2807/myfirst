@@ -52,6 +52,9 @@ dependencies:
   http_parser: ^4.0.2
   font_awesome_flutter: ^10.7.0
   intl: ^0.18.1
+  syncfusion_flutter_pdf: ^25.1.37
+  fl_chart: ^0.66.0
+
 
 
 

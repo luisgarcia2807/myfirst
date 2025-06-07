@@ -1028,6 +1028,6 @@ Future<List<EnfermedadPersistente>> fetchEnfermedadesPersistente(String tipo) as
     List<dynamic> data = json.decode(utf8DecodedBody);
     return data.map((json) => EnfermedadPersistente.fromJson(json)).toList();
   } else {
-    throw Exception('Error al cargar las alergias');
+    throw Exception('Error al cargar las enfermedades');
   }
 }
