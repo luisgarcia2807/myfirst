@@ -9,16 +9,19 @@ import '../models/examenlaboratorio.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import '../constans.dart';
-class ExamenesPage extends StatefulWidget {
+class ExamenesPageDoctor extends StatefulWidget {
   final int idusuario;
+  final String nombre;
+  final String apellido;
+  final int idusuariodoc;
 
-  const ExamenesPage({super.key, required this.idusuario});
+  const ExamenesPageDoctor( {super.key, required this.idusuario,required this.nombre, required this.apellido, required this.idusuariodoc});
 
   @override
-  State<ExamenesPage> createState() => _ExamenesPageState();
+  State<ExamenesPageDoctor> createState() => _ExamenesPageDoctor();
 }
 
-class _ExamenesPageState extends State<ExamenesPage> {
+class _ExamenesPageDoctor extends State<ExamenesPageDoctor> {
 
   String nombreUsuario = '';
   String apellidoUsuario = '';
@@ -240,9 +243,6 @@ class _ExamenesPageState extends State<ExamenesPage> {
       print('Error: $e');
     }
   }
-
-
-
   IconData _getIconCategoria(String categoria) {
     const Map<String, IconData> iconosPorCategoria = {
       'laboratorio': Icons.science,                // Representa análisis de laboratorio
@@ -291,7 +291,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
     await obtenerDatos(); // no es necesario await si no depende de datos
     await obtenerDatosPacienteSangre(widget.idusuario);
     _examenes = obtenerExamenes(idPaciente);
-     //// Llamar después de que idPaciente esté disponible
+    //// Llamar después de que idPaciente esté disponible
   }
 
   @override
@@ -316,9 +316,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
                     colors: [
                       Color(0xFF0D47A1), // Azul oscuro
                       Color(0xFF1976D2), // Azul medio
-                      Color(0xFF42A5F5), // Azul claro
-                      Color(0xFF7E57C2), // Morado
-                      Color(0xFF26C6DA), // Turquesa,
+                       // Turquesa,
                     ]),
               ),
               child: SafeArea(
@@ -328,12 +326,26 @@ class _ExamenesPageState extends State<ExamenesPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 25.0),
                       child: Column(
                         children: [
-                          SizedBox(height: 25),
+                          SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text(
+                                'Dr. ${widget.nombre} ${widget.apellido}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
 
                           Row(
                             children: [
                               GestureDetector(
-                                onTap: () {},
+                                onTap: () {
+                                },
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: Colors.blueAccent,
@@ -385,7 +397,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
                           ),
                           SizedBox(height: 15),
                           Text(
-                            'Examenes ',
+                            'Examenes',
                             style: TextStyle(color: Colors.white,fontSize: 25),
                             overflow: TextOverflow.ellipsis, // opcional
                           ),
@@ -417,7 +429,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                       final resultado = await Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => ScanView(idPaciente: idPaciente),
+                                          builder: (context) => ScanView(idPaciente: idPaciente,idusuariodoc: widget.idusuariodoc,),
                                         ),
                                       );
                                       if (resultado == true) {
@@ -468,7 +480,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                       final resultado = await Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => SubirPDFPage(idPaciente: idPaciente),
+                                          builder: (context) => SubirPDFPage(idPaciente: idPaciente,idusuariodoc: widget.idusuariodoc,),
                                         ),
                                       );
 
@@ -555,185 +567,187 @@ class _ExamenesPageState extends State<ExamenesPage> {
                                         color: Colors.white,
                                         elevation: 4,
                                         child: Padding(
-                                          padding: const EdgeInsets.all(16),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              /// Título (nombre del examen) + PDF a la derecha
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      formatNombreExamen(examen.nombreExamen),
-                                                      style: const TextStyle(
-                                                        fontSize: 20,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: Colors.black87,
+                                            padding: const EdgeInsets.all(16),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                /// Título (nombre del examen) + PDF a la derecha
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        formatNombreExamen(examen.nombreExamen),
+                                                        style: const TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: Colors.black87,
+                                                        ),
                                                       ),
                                                     ),
-                                                  ),
-                                                  if (examen.doctor != null)
+                                                    if (examen.doctor != null)
+                                                      Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.green.shade50,
+                                                          borderRadius: BorderRadius.circular(20),
+                                                        ),
+                                                        child: Row(
+                                                          children: const [
+                                                            Icon(Icons.verified, color: Colors.green, size: 18),
+                                                            SizedBox(width: 4),
+                                                            Text(
+                                                              "Aprobado",
+                                                              style: TextStyle(
+                                                                color: Colors.green,
+                                                                fontWeight: FontWeight.w600,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+
+                                                    IconButton(
+                                                      icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                                                      onPressed: () {
+                                                        _abrirPDF(examen.archivo);
+                                                      },
+                                                    ),
+
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 10),
+
+                                                /// Contenido principal: ícono + info
+                                                Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
                                                     Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                      width: 60,
+                                                      height: 60,
                                                       decoration: BoxDecoration(
-                                                        color: Colors.green.shade50,
-                                                        borderRadius: BorderRadius.circular(20),
+                                                        color: _getColorCategoria(examen.tipo),
+                                                        borderRadius: BorderRadius.circular(12),
                                                       ),
-                                                      child: Row(
-                                                        children: const [
-                                                          Icon(Icons.verified, color: Colors.green, size: 18),
-                                                          SizedBox(width: 4),
-                                                          Text(
-                                                            "Aprobado",
-                                                            style: TextStyle(
-                                                              color: Colors.green,
-                                                              fontWeight: FontWeight.w600,
-                                                            ),
-                                                          ),
-                                                        ],
+                                                      child: Icon(
+                                                        _getIconCategoria(examen.tipo),
+                                                        color: Colors.white,
+                                                        size: 40,
                                                       ),
                                                     ),
-
-                                                  IconButton(
-                                                    icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
-                                                    onPressed: () {
-                                                      _abrirPDF(examen.archivo);
-                                                    },
-                                                  ),
-
-                                                ],
-                                              ),
-                                              const SizedBox(height: 10),
-
-                                              /// Contenido principal: ícono + info
-                                              Row(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Container(
-                                                    width: 60,
-                                                    height: 60,
-                                                    decoration: BoxDecoration(
-                                                      color: _getColorCategoria(examen.tipo),
-                                                      borderRadius: BorderRadius.circular(12),
-                                                    ),
-                                                    child: Icon(
-                                                      _getIconCategoria(examen.tipo),
-                                                      color: Colors.white,
-                                                      size: 40,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 16),
-                                                  Expanded(
-                                                    child: Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Row(
-                                                          children: [
-                                                            const Icon(Icons.folder_open, size: 18, color: Colors.black54),
-                                                            const SizedBox(width: 4),
-                                                            Text(
-                                                              'Tipo: ${formatNombreExamen(examen.tipo)}',
-                                                              style: const TextStyle(
-                                                                color: Colors.black54,
-                                                                fontWeight: FontWeight.w600,
-                                                                fontSize: 12,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        const SizedBox(height: 4),
-                                                        Row(
-                                                          children: [
-                                                            const Icon(Icons.category, size: 18, color: Colors.black54),
-                                                            const SizedBox(width: 4),
-                                                            Text(
-                                                              'Categoría: ${formatNombreExamen(examen.categoria)}',
-                                                              style: const TextStyle(
-                                                                color: Colors.black54,
-                                                                fontWeight: FontWeight.w600,
-                                                                fontSize: 12,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        const SizedBox(height: 6),
-                                                        Row(
-                                                          children: [
-                                                            const Icon(Icons.calendar_today, size: 18, color: Colors.black54),
-                                                            const SizedBox(width: 4),
-                                                            Text(
-                                                              'Fecha: ${examen.fechaRealizacion}',
-                                                              style: const TextStyle(color: Colors.black54, fontSize: 12),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        const SizedBox(height: 4),
-                                                        if (examen.descripcion != null && examen.descripcion.isNotEmpty)
+                                                    const SizedBox(width: 16),
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
                                                           Row(
-                                                            crossAxisAlignment: CrossAxisAlignment.start,
                                                             children: [
-                                                              const Icon(Icons.description, size: 18, color: Colors.black54),
+                                                              const Icon(Icons.folder_open, size: 18, color: Colors.black54),
                                                               const SizedBox(width: 4),
-                                                              Expanded(
-                                                                child: Text(
-                                                                  'Descripción: ${examen.descripcion}',
-                                                                  style: const TextStyle(color: Colors.black54, fontSize: 12),
+                                                              Text(
+                                                                'Tipo: ${formatNombreExamen(examen.tipo)}',
+                                                                style: const TextStyle(
+                                                                  color: Colors.black54,
+                                                                  fontWeight: FontWeight.w600,
+                                                                  fontSize: 12,
                                                                 ),
                                                               ),
                                                             ],
                                                           ),
-                                                        if (examen.doctor != null && examen.doctor.toString().isNotEmpty) ...[
                                                           const SizedBox(height: 4),
                                                           Row(
                                                             children: [
-                                                              const Icon(Icons.medical_services, size: 18, color: Colors.black54),
+                                                              const Icon(Icons.category, size: 18, color: Colors.black54),
                                                               const SizedBox(width: 4),
-                                                              Text('Doctor: ${examen.nombre_doctor}', style: const TextStyle(color: Colors.black87, fontSize: 12)),
+                                                              Text(
+                                                                'Categoría: ${formatNombreExamen(examen.categoria)}',
+                                                                style: const TextStyle(
+                                                                  color: Colors.black54,
+                                                                  fontWeight: FontWeight.w600,
+                                                                  fontSize: 12,
+                                                                ),
+                                                              ),
                                                             ],
                                                           ),
-                                                        ],
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              if (examen.doctor == null)
-                                                Row(
-                                                  mainAxisAlignment: MainAxisAlignment.end,
-                                                  children: [
+                                                          const SizedBox(height: 6),
+                                                          Row(
+                                                            children: [
+                                                              const Icon(Icons.calendar_today, size: 18, color: Colors.black54),
+                                                              const SizedBox(width: 4),
+                                                              Text(
+                                                                'Fecha: ${examen.fechaRealizacion}',
+                                                                style: const TextStyle(color: Colors.black54, fontSize: 12),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const SizedBox(height: 4),
+                                                          if (examen.descripcion != null && examen.descripcion.isNotEmpty)
+                                                            Row(
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              children: [
+                                                                const Icon(Icons.description, size: 18, color: Colors.black54),
+                                                                const SizedBox(width: 4),
+                                                                Expanded(
+                                                                  child: Text(
+                                                                    'Descripción: ${examen.descripcion}',
+                                                                    style: const TextStyle(color: Colors.black54, fontSize: 12),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          if (examen.doctor != null && examen.doctor.toString().isNotEmpty) ...[
+                                                            const SizedBox(height: 4),
+                                                            Row(
+                                                              children: [
+                                                                const Icon(Icons.medical_services, size: 18, color: Colors.black54),
+                                                                const SizedBox(width: 4),
+                                                                Text('Doctor: ${examen.nombre_doctor}', style: const TextStyle(color: Colors.black87, fontSize: 12)),
+                                                              ],
+                                                            ),
+                                                          ],
 
-                                                    IconButton(
-                                                      icon: const Icon(Icons.delete, color: Colors.redAccent),
-                                                      onPressed: () {
-                                                        showDialog(
-                                                          context: context,
-                                                          builder: (context) => AlertDialog(
-                                                            title: const Text('Confirmar eliminación'),
-                                                            content: const Text('¿Estás seguro de que deseas eliminar esta examen?'),
-                                                            actions: [
-                                                              TextButton(
-                                                                onPressed: () => Navigator.of(context).pop(),
-                                                                child: const Text('Cancelar'),
-                                                              ),
-                                                              TextButton(
-                                                                onPressed: () async {
-                                                                  Navigator.of(context).pop();
-                                                                  await eliminarExamen(examen.id);
-                                                                  setState(() {
-                                                                    examenes.removeAt(examen.id);
-                                                                  });
-                                                                },
-                                                                child: const Text('Eliminar'),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        );
-                                                      },
+
+                                                        ],
+                                                      ),
                                                     ),
                                                   ],
                                                 ),
-                                            ],
-                                          )
+                                                if (examen.doctor == null)
+                                                  Row(
+                                                    mainAxisAlignment: MainAxisAlignment.end,
+                                                    children: [
+
+                                                      IconButton(
+                                                        icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                                        onPressed: () {
+                                                          showDialog(
+                                                            context: context,
+                                                            builder: (context) => AlertDialog(
+                                                              title: const Text('Confirmar eliminación'),
+                                                              content: const Text('¿Estás seguro de que deseas eliminar esta examen?'),
+                                                              actions: [
+                                                                TextButton(
+                                                                  onPressed: () => Navigator.of(context).pop(),
+                                                                  child: const Text('Cancelar'),
+                                                                ),
+                                                                TextButton(
+                                                                  onPressed: () async {
+                                                                    Navigator.of(context).pop();
+                                                                    await eliminarExamen(examen.id);
+                                                                    setState(() {
+                                                                      examenes.removeAt(examen.id);
+                                                                    });
+                                                                  },
+                                                                  child: const Text('Eliminar'),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ],
+                                                  ),
+                                              ],
+                                            )
 
                                         ),
                                       );

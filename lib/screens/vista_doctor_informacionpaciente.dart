@@ -3,10 +3,11 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:mifirst/screens/vista_alergia.dart';
+
 import 'package:mifirst/screens/vista_alergia_doctor.dart';
-import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente_doctor.dart';
+import 'package:mifirst/screens/vista_examenlaboratorio_doctor.dart';
+import 'package:mifirst/screens/vista_signovitales_doctor.dart';
 import 'package:mifirst/screens/vista_tramientofrecuente_doctor.dart';
 import 'package:mifirst/screens/vista_tratamiento_actual_doctor.dart';
 import 'package:mifirst/screens/vista_vacuna_doctor.dart';
@@ -41,11 +42,14 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
   String tipoSangre = '';
   String? foto='';
   int idUsuario=0;
+  bool isLoadingSignos = false;
+  bool hasErrorSignos = false;
   List<dynamic> alergias = [];
   List<dynamic> EnfermedadesPersistente = [];
   List<dynamic> vacunas = [];
   List<dynamic> tratamientos = [];
   List<dynamic> Tratamientofrecuente = [];
+  List<dynamic> signovitales = [];
 
   Future<void> obtenerIdUsuarioDesdePaciente() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario-desde-paciente/${widget.idusuariopac}/');
@@ -204,7 +208,64 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
       throw Exception('Error al cargar vacunas');
     }
   }
+  Future<void> _fetchSignosVitales() async {
+    setState(() {
+      isLoadingSignos = true;
+      hasErrorSignos = false;
+    });
 
+    try {
+      final url = '$baseUrl/usuarios/api/signos_vitales/?paciente_id=$idPaciente';
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+
+        setState(() {
+          signovitales = data;
+
+          // Verificar si hay signos viejos
+          if (data.isNotEmpty) {
+            final ultimaFecha = DateTime.parse(data.first['fecha']);
+            final dias = DateTime.now().difference(ultimaFecha).inDays;
+
+            if (dias > 30) {
+              // Puedes mostrar una alerta o activar una bandera para mostrar advertencia visual
+              Future.delayed(Duration.zero, () {
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: Text("Advertencia"),
+                    content: Text("Los signos vitales registrados tienen más de 30 días."),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text("Aceptar"),
+                      ),
+                    ],
+                  ),
+                );
+              });
+            }
+          }
+        });
+      }
+      else {
+        setState(() {
+          hasErrorSignos = true;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        hasErrorSignos = true;
+      });
+    } finally {
+      setState(() {
+        isLoadingSignos = false;
+      });
+    }
+  }
   int calcularEdad(String fechaNacimiento) {
     DateTime fecha = DateTime.parse(fechaNacimiento);
     DateTime hoy = DateTime.now();
@@ -223,6 +284,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
     await obtenerIdUsuarioDesdePaciente();
     await obtenerDatos(); // no es necesario await si no depende de datos
     await obtenerDatosPacienteSangre(idUsuario);
+    await _fetchSignosVitales();
     await _fetchAlergias(); // Llamar después de que idPaciente esté disponible
     await _fetchEnfermedadesPersistente(); // Llamar después de que idPaciente esté disponible
     await _fetchVacunas();
@@ -419,6 +481,79 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             ],
                           ),
                         ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VistaSignoVitalesDoctor(
+                                  idusuario: idUsuario,
+                                  nombre: widget.nombre,
+                                  apellido: widget.apellido,
+                                  idusuariodoc: widget.idusuariodoc,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            margin: EdgeInsets.only(bottom: 20),
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.red[50],
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Text("🩺", style: TextStyle(fontSize: 40)),
+                                SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Signos vitales",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.red[800],
+                                        ),
+                                      ),
+                                      SizedBox(height: 10),
+                                      signovitales.isEmpty
+                                          ? Text("No se registran signos vitales")
+                                          : Builder(
+                                        builder: (_) {
+                                          final signo = signovitales.first; // Usa .first si está al revés
+                                          return Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text("• Fecha: ${signo['fecha'].toString().substring(0, 10)}"),
+                                              Text("• Peso: ${signo['peso']} kg"),
+                                              Text("• Altura: ${signo['altura']} m"),
+                                              Text("• Presión: ${signo['presion_sistolica']}/${signo['presion_diastolica']} mmHg"),
+                                              Text("• FC: ${signo['frecuencia_cardiaca']} lpm"),
+                                              Text("• FR: ${signo['frecuencia_respiratoria']} rpm"),
+                                              Text("• Temp: ${signo['temperatura']}°C"),
+                                              Text("• SpO2: ${signo['spo2']}%"),
+                                              Text("• Glucosa: ${signo['glucosa']} mg/dL"),
+                                              Text("• IMC: ${signo['imc']}"),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+
                         // Alergias
                         GestureDetector(
                           onTap: () {
@@ -697,36 +832,62 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             ),
                           ),
                         ),
-
-
-
-                        // Medicamentos
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.green[50],
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
-                          ),
-                          child: Row(
-                            children: [
-                              Text("💉", style: TextStyle(fontSize: 40)),
-                              SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Medicamentos actuales", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green[800])),
-                                    SizedBox(height: 10),
-                                    Text("• Metformina 500 mg (2 veces al día)"),
-                                    Text("• Salbutamol Inhalador (constantemente)"),
-                                  ],
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ExamenesPageDoctor(
+                                  idusuario: idUsuario,
+                                  nombre: widget.nombre,
+                                  apellido: widget.apellido,
+                                  idusuariodoc: widget.idusuariodoc,
                                 ),
                               ),
-                            ],
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            margin: EdgeInsets.only(bottom: 20),
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 8,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Text("📄", style: TextStyle(fontSize: 40)),
+                                SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Ver exámenes médicos",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.blue[800],
+                                        ),
+                                      ),
+                                      SizedBox(height: 10),
+                                      Text("Toque para revisar los archivos subidos"),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
+
+
                       ],
                     ),
                   ),

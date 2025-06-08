@@ -19,7 +19,8 @@ import '../constans.dart'; // Ajusta la ruta según tu proyecto
 
 class ScanView extends StatefulWidget {
   final int idPaciente;
-  const ScanView({super.key, required this.idPaciente});
+  final int? idusuariodoc;
+  const ScanView({super.key, required this.idPaciente, this.idusuariodoc});
 
   @override
   State<ScanView> createState() => _ScanViewState();
@@ -259,7 +260,7 @@ class _ScanViewState extends State<ScanView> {
   }
 
 
-  // Modificar _saveAsPdf para que solo cree el PDF y lo guarde
+
 
   Future<void> _saveAsPdf() async {
     final listaImagenes = _usarRecortadas ? _imagenesRecortadas : _imagenes;
@@ -321,7 +322,9 @@ class _ScanViewState extends State<ScanView> {
       request.fields['nombre_examen'] = _nombreExamenSeleccionado ?? 'Sin especificar';
       request.fields['descripcion'] = _descripcionController.text;
       request.fields['fecha_realizacion'] = _fechaRealizacion.toIso8601String().split('T').first;
-
+      if (widget.idusuariodoc != null) {
+        request.fields['doctor'] = widget.idusuariodoc.toString();
+      }
 
       final response = await request.send();
 

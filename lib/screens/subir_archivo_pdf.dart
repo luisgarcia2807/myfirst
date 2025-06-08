@@ -7,7 +7,8 @@ import '../constans.dart';
 
 class SubirPDFPage extends StatefulWidget {
   final int idPaciente;
-  const SubirPDFPage({super.key, required this.idPaciente});
+  final int? idusuariodoc;
+  const SubirPDFPage({super.key, required this.idPaciente, this.idusuariodoc});
   @override
   _SubirPDFPageState createState() => _SubirPDFPageState();
 }
@@ -212,6 +213,9 @@ class _SubirPDFPageState extends State<SubirPDFPage> {
       request.fields['nombre_examen'] = _nombreExamenSeleccionado ?? 'Sin especificar';
       request.fields['descripcion'] = _descripcionController.text;
       request.fields['fecha_realizacion'] = _fechaRealizacion.toIso8601String().split('T').first;
+      if (widget.idusuariodoc != null) {
+        request.fields['doctor'] = widget.idusuariodoc.toString();
+      }
 
       // Adjuntar archivo
       request.files.add(

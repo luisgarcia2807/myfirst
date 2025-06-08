@@ -5,19 +5,20 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/fotoPerfil.dart';
-
 import '../constans.dart';
 
-class VistaSignoVitales extends StatefulWidget {
+class VistaSignoVitalesDoctor extends StatefulWidget {
   final int idusuario;
-
-  const VistaSignoVitales( {super.key, required this.idusuario});
+  final String nombre;
+  final String apellido;
+  final int idusuariodoc;
+  const VistaSignoVitalesDoctor( {super.key, required this.idusuario,required this.nombre, required this.apellido, required this.idusuariodoc});
 
   @override
-  State<VistaSignoVitales> createState() => _VistaSignoVitales();
+  State<VistaSignoVitalesDoctor> createState() => _VistaSignoVitalesDoctor();
 }
 
-class _VistaSignoVitales extends State<VistaSignoVitales> {
+class _VistaSignoVitalesDoctor extends State<VistaSignoVitalesDoctor> {
   String nombreUsuario = '';
   String apellidoUsuario = '';
   String cedulaUsuario = '';
@@ -1507,11 +1508,8 @@ class _VistaSignoVitales extends State<VistaSignoVitales> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0xFF0D47A1), // Azul oscuro
-                Color(0xFF1976D2), // Azul medio
-                Color(0xFF42A5F5), // Azul claro
-                Color(0xFF7E57C2), // Morado
-                Color(0xFF26C6DA), // Turquesa,
+                Color(0xFF0D47A1),
+                Color(0xFF1976D2),
               ]),
         ),
         child: SafeArea(
@@ -1521,7 +1519,20 @@ class _VistaSignoVitales extends State<VistaSignoVitales> {
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Column(
                   children: [
-                    SizedBox(height: 25),
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Dr. ${widget.nombre} ${widget.apellido}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
 
                     Row(
                       children: [
@@ -1583,7 +1594,7 @@ class _VistaSignoVitales extends State<VistaSignoVitales> {
                     ),
                     SizedBox(height: 15),
                     Text(
-                      'Signos Registrados',
+                      'Signos Registradas',
                       style: TextStyle(color: Colors.white,fontSize: 25),
                       overflow: TextOverflow.ellipsis, // opcional
                     ),
@@ -1615,16 +1626,58 @@ class _VistaSignoVitales extends State<VistaSignoVitales> {
                     children: [
                       // Header mejorado con botones estilizados
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Row(
-                          children: [
-                            Flexible(
-                              flex: 1,
-                              child: GestureDetector(
-                                onTap: _mostrarDialogoSignoVitales,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              Flexible(
+                                flex: 1,
+                                child: GestureDetector(
+                                  onTap: _mostrarDialogoSignoVitales,
+                                  child: Container(
+                                    height: 48,
+                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          Color(0xFF0D47A1),
+                                          Color(0xFF1976D2),
+                                          Color(0xFF42A5F5),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(14),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0xFF1976D2).withOpacity(0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: const [
+                                        Icon(Icons.add_circle_outline, color: Colors.white, size: 20),
+                                        SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            "Añadir Signos",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                flex: 1,
                                 child: Container(
                                   height: 48,
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       begin: Alignment.topLeft,
@@ -1638,113 +1691,71 @@ class _VistaSignoVitales extends State<VistaSignoVitales> {
                                     borderRadius: BorderRadius.circular(14),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Color(0xFF1976D2).withOpacity(0.3),
+                                        color:  Color(0xFF0D47A1).withOpacity(0.3),
                                         blurRadius: 8,
                                         offset: const Offset(0, 4),
                                       ),
                                     ],
                                   ),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Icon(Icons.add_circle_outline, color: Colors.white, size: 20),
-                                      SizedBox(width: 4),
-                                      Flexible(
-                                        child: Text(
-                                          "Añadir Signos",
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
-                                        ),
+                                    children: [
+                                      Icon(
+                                        tipoGraficoSeleccionado == 'Ver registros'
+                                            ? Icons.list_alt
+                                            : Icons.analytics_outlined,
+                                        color: Colors.white,
+                                        size: 18,
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              flex: 1,
-                              child: Container(
-                                height: 48,
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      Color(0xFF0D47A1),
-                                      Color(0xFF1976D2),
-                                      Color(0xFF42A5F5),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(14),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:  Color(0xFF0D47A1).withOpacity(0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      tipoGraficoSeleccionado == 'Ver registros'
-                                          ? Icons.list_alt
-                                          : Icons.analytics_outlined,
-                                      color: Colors.white,
-                                      size: 18,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: DropdownButton<String>(
-                                        value: tipoGraficoSeleccionado,
-                                        isExpanded: true,
-                                        underline: Container(),
-                                        dropdownColor: Color(0xFF0D47A1),
-                                        style: const TextStyle(
-                                          color: Colors.blueAccent,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 13,
-                                        ),
-                                        icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
-                                        items: opcionesGraficas.map((String tipo) {
-                                          return DropdownMenuItem<String>(
-                                            value: tipo,
-                                            child: Row(
-                                              children: [
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: DropdownButton<String>(
+                                          value: tipoGraficoSeleccionado,
+                                          isExpanded: true,
+                                          underline: Container(),
+                                          dropdownColor: Color(0xFF0D47A1),
+                                          style: const TextStyle(
+                                            color: Colors.blueAccent,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13,
+                                          ),
+                                          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                                          items: opcionesGraficas.map((String tipo) {
+                                            return DropdownMenuItem<String>(
+                                              value: tipo,
+                                              child: Row(
+                                                children: [
 
-                                                const SizedBox(width: 8),
-                                                Flexible(
-                                                  child: Text(
-                                                    tipo,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontWeight: FontWeight.w500,
-                                                      fontSize: 13,
+                                                  const SizedBox(width: 8),
+                                                  Flexible(
+                                                    child: Text(
+                                                      tipo,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight: FontWeight.w500,
+                                                        fontSize: 13,
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        }).toList(),
-                                        onChanged: (String? nuevoTipo) {
-                                          if (nuevoTipo != null) {
-                                            setState(() {
-                                              tipoGraficoSeleccionado = nuevoTipo;
-                                            });
-                                          }
-                                        },
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (String? nuevoTipo) {
+                                            if (nuevoTipo != null) {
+                                              setState(() {
+                                                tipoGraficoSeleccionado = nuevoTipo;
+                                              });
+                                            }
+                                          },
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        )
+                            ],
+                          )
 
                       ),
 
@@ -1762,13 +1773,6 @@ class _VistaSignoVitales extends State<VistaSignoVitales> {
               )
 
 
-
-
-
-
-
-
-
             ],
           ),
         ),
@@ -1776,3 +1780,4 @@ class _VistaSignoVitales extends State<VistaSignoVitales> {
     );
   }
 }
+
