@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:mifirst/models/alergias.dart';
 import 'package:mifirst/screens/fotoPerfil.dart';
 import 'package:mifirst/screens/pantalla_doctor_mobile.dart';
 import 'package:mifirst/screens/vista_doctor_informacionpaciente.dart';

@@ -298,14 +298,6 @@ class _ExamenesPageDoctor extends State<ExamenesPageDoctor> {
   Widget build(BuildContext context) {
     String fechaHoy = DateFormat('dd/MM/yyyy').format(DateTime.now());
     return Scaffold(
-      body: FutureBuilder<List<Examen>>(
-        future: _examenes,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-          if (snapshot.hasError) return const Center(child: Text('Error al cargar los exámenes'));
-
-          final examenes = snapshot.data!;
-          return Scaffold(
             body: isLoading
                 ? Center(child: CircularProgressIndicator())
                 : Container(
@@ -775,9 +767,7 @@ class _ExamenesPageDoctor extends State<ExamenesPageDoctor> {
 
 
 
-        },
-      ),
-    );
+
   }
 
   Future<void> _abrirPDF(String url) async {

@@ -7,7 +7,6 @@ import 'package:mifirst/screens/vista_alergia.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
 import 'package:mifirst/screens/vista_examenlaboratorio.dart';
 import 'package:mifirst/screens/vista_imagenologia.dart';
-import 'package:mifirst/screens/vista_paciente_bebe.dart';
 import 'package:mifirst/screens/vista_paciente_pacientedoctor.dart';
 import 'package:mifirst/screens/vista_tramientofrecuente.dart';
 import 'package:mifirst/screens/vista_tratamiento_actual.dart';
@@ -16,15 +15,15 @@ import '../util/emoticon_face.dart';
 import '../constans.dart';
 import 'informacion_Principal.dart';
 
-class PacienteScreen extends StatefulWidget {
+class PacientebbScreen extends StatefulWidget {
   final int idusuario;
-  const PacienteScreen({super.key, required this.idusuario});
+  const PacientebbScreen({super.key, required this.idusuario});
 
   @override
-  State<PacienteScreen> createState() => _PacienteScreen();
+  State<PacientebbScreen> createState() => _PacientebbScreen();
 }
 
-class _PacienteScreen extends State<PacienteScreen> {
+class _PacientebbScreen extends State<PacientebbScreen> {
 
   String nombreUsuario = '';
   String apellidoUsuario = '';
@@ -35,6 +34,7 @@ class _PacienteScreen extends State<PacienteScreen> {
   bool estadoUsuario = false;
   int idRolUsuario = 0;
   String? foto='';
+  String sexo = '';
   bool isLoading = true;
   int idPaciente = 0;
   int idSangre = 0;
@@ -43,7 +43,7 @@ class _PacienteScreen extends State<PacienteScreen> {
   // Método para obtener los datos de la API
   Future<void> obtenerDatos() async {
     // La URL de tu API (reemplázala por la URL correcta)
-    final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/'); // Asegúrate de cambiar esto
+    final url = Uri.parse('$baseUrl/usuarios/api/bebes/${widget.idusuario}/'); // Asegúrate de cambiar esto
 
     try {
       final response = await http.get(url);
@@ -54,24 +54,8 @@ class _PacienteScreen extends State<PacienteScreen> {
         setState(() {
           nombreUsuario = datos['nombre'];
           apellidoUsuario = datos['apellido'];
-          cedulaUsuario = datos['cedula'];
-          emailUsuario = datos['email'];
-          telefonoUsuario = datos['telefono'];
           fechaNacimientoUsuario = datos['fecha_nacimiento'];
-          estadoUsuario = datos['estado'];
-          idRolUsuario = datos['id_rol'];
-          foto =datos['foto_perfil'];
-
-          if (foto != null && foto!.isNotEmpty) {
-            String nuevaFotoUrl = foto!.replaceFirst('http://localhost:8000', baseUrl);
-            print('URL final de la imagen: $nuevaFotoUrl');
-
-          } else {
-            print('La foto no está disponible');
-
-          }
-
-
+          sexo= datos['sexo'];
 
         });
 
@@ -85,7 +69,7 @@ class _PacienteScreen extends State<PacienteScreen> {
     }
   }
   Future<void> obtenerDatosPacienteSangre(int idUsuario) async {
-    final url = Uri.parse('$baseUrl/usuarios/api/pacientes/por-usuario/$idUsuario/');
+    final url = Uri.parse('$baseUrl/usuarios/api/paciente/perfilbebe/$idUsuario/');
 
     try {
       final response = await http.get(url);
@@ -117,21 +101,12 @@ class _PacienteScreen extends State<PacienteScreen> {
           builder: (context) => SolititudPaciente(idusuario: widget.idusuario),
         ),
       );
-    }
-    if (index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => VistaBebe(idusuario: widget.idusuario),
-        ),
-      );
-    }else {
+    } else {
       setState(() {
         _selectedIndex = index;
       });
     }
   }
-  @override
   void initState() {
     super.initState();
     _inicializarDatos();
@@ -141,6 +116,7 @@ class _PacienteScreen extends State<PacienteScreen> {
     await obtenerDatosPacienteSangre(widget.idusuario);
 
   }
+
   @override
   Widget build(BuildContext context) {
     String fechaHoy = DateFormat('dd/MM/yyyy').format(DateTime.now());
@@ -148,52 +124,52 @@ class _PacienteScreen extends State<PacienteScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       bottomNavigationBar: Theme(
-        data: Theme.of(context).copyWith(
-          navigationBarTheme: NavigationBarThemeData(
-            backgroundColor: Colors.white,
-            indicatorColor: Colors.indigo,
-            labelTextStyle: MaterialStateProperty.resolveWith<TextStyle>((states) {
-              if (states.contains(MaterialState.selected)) {
-                return TextStyle(color: Colors.indigo, fontWeight: FontWeight.w600);
-              }
-              return TextStyle(color: Colors.grey);
-            }),
-            iconTheme: MaterialStateProperty.resolveWith<IconThemeData>((states) {
-              if (states.contains(MaterialState.selected)) {
-                return IconThemeData(color: Colors.white);
-              }
-              return IconThemeData(color: Colors.grey);
-            }),
+          data: Theme.of(context).copyWith(
+            navigationBarTheme: NavigationBarThemeData(
+              backgroundColor: Colors.white,
+              indicatorColor: Colors.indigo.withOpacity(0.2),
+              labelTextStyle: MaterialStateProperty.resolveWith<TextStyle>((states) {
+                if (states.contains(MaterialState.selected)) {
+                  return TextStyle(color: Colors.indigo, fontWeight: FontWeight.w600);
+                }
+                return TextStyle(color: Colors.grey);
+              }),
+              iconTheme: MaterialStateProperty.resolveWith<IconThemeData>((states) {
+                if (states.contains(MaterialState.selected)) {
+                  return IconThemeData(color: Colors.indigo);
+                }
+                return IconThemeData(color: Colors.grey);
+              }),
+            ),
           ),
-        ),
-        child: NavigationBar(
-          height: 70,
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: _onDestinationSelected,
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Inicio',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.verified_user_outlined), // Nuevo ícono
-              selectedIcon: Icon(Icons.verified_user), // Ícono cuando está seleccionado
-              label: 'Doctores',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.child_care_rounded),
-              selectedIcon: Icon(Icons.child_care_rounded),
-              label: 'Hijos',
-            ),
+          child: NavigationBar(
+            height: 70,
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: _onDestinationSelected,
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home),
+                label: 'Inicio',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.verified_user_outlined), // Nuevo ícono
+                selectedIcon: Icon(Icons.verified_user), // Ícono cuando está seleccionado
+                label: 'Doctores',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.qr_code_outlined),
+                selectedIcon: Icon(Icons.qr_code),
+                label: 'QR',
+              ),
 
-            NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings),
-              label: 'Ajustes',
-            ),
-          ],
-        )
+              NavigationDestination(
+                icon: Icon(Icons.settings_outlined),
+                selectedIcon: Icon(Icons.settings),
+                label: 'Ajustes',
+              ),
+            ],
+          )
 
       ),
       body: SafeArea(
@@ -218,12 +194,12 @@ class _PacienteScreen extends State<PacienteScreen> {
                             color: Colors.indigoAccent,
                             borderRadius: BorderRadius.circular(100),
                           ),
-                          padding: EdgeInsets.all(3),
+                          padding: EdgeInsets.all(6),
                           child: foto == null || foto!.isEmpty
                               ? Icon(
-                            Icons.person_pin,
+                            Icons.child_care,
                             color: Colors.white,
-                            size: 70,
+                            size: 60,
                           )
                               : ClipOval(
                             child: Image.network(
@@ -242,7 +218,7 @@ class _PacienteScreen extends State<PacienteScreen> {
                           children: [
                             SizedBox(height: 4.0),
                             Text(
-                              "Hola $nombreUsuario $apellidoUsuario",
+                              "Hijo $nombreUsuario $apellidoUsuario",
                               style: TextStyle(
                                 color: Colors.black87,
                                 fontSize: 24,
@@ -379,7 +355,7 @@ class _PacienteScreen extends State<PacienteScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => VistaAlergia(id_paciente: idPaciente),
+                                  builder: (context) => VistaAlergia(id_paciente: idPaciente,),
                                 ),
                               );
                             },

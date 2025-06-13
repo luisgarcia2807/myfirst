@@ -11,6 +11,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:image_cropper/image_cropper.dart';
+import 'package:path/path.dart' as path;
 
 // Import para crop_your_image:
 import 'package:crop_your_image/crop_your_image.dart';
@@ -310,13 +311,28 @@ class _ScanViewState extends State<ScanView> {
   }
 
 
-  Future<void> _subirPdfAlServidor(File archivo) async {
+  Future<void> _subirPdfAlServidor(File archivoOriginal) async {
     try {
+      // Obtener el directorio del archivo original
+      final directory = archivoOriginal.parent;
+
+      // 🔧 Renombrar archivo
+      String nombreOriginal = path.basenameWithoutExtension(archivoOriginal.path).replaceAll(' ', '_');
+      String idPaciente = widget.idPaciente.toString();
+      String nombreExamen = (_nombreExamenSeleccionado ?? 'Sin_especificar').replaceAll(RegExp(r'\s+'), '_').toLowerCase();
+
+      String nuevoNombre = '${nombreOriginal}_paciente${idPaciente}_$nombreExamen.pdf';
+      String nuevoPath = path.join(directory.path, nuevoNombre);
+
+      // Crear archivo renombrado
+      final archivoRenombrado = await archivoOriginal.copy(nuevoPath);
+
+      // 📡 Preparar solicitud HTTP
       final uri = Uri.parse('$baseUrl/usuarios/api/examenes/');
       final request = http.MultipartRequest('POST', uri);
 
-      request.files.add(await http.MultipartFile.fromPath('archivo', archivo.path));
-      request.fields['paciente'] = widget.idPaciente.toString();
+      request.files.add(await http.MultipartFile.fromPath('archivo', archivoRenombrado.path));
+      request.fields['paciente'] = idPaciente;
       request.fields['tipo'] = _tipoSeleccionado!;
       request.fields['categoria'] = _categoriaSeleccionada!;
       request.fields['nombre_examen'] = _nombreExamenSeleccionado ?? 'Sin especificar';
@@ -326,23 +342,30 @@ class _ScanViewState extends State<ScanView> {
         request.fields['doctor'] = widget.idusuariodoc.toString();
       }
 
+      // ⏫ Enviar solicitud
       final response = await request.send();
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('PDF subido correctamente')),
-        );Navigator.pop(context,true);
+        );
+        Navigator.pop(context, true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al subir el PDF: ${response.statusCode}')),
         );
       }
+
+      // ✅ OPCIONAL: Borrar el archivo temporal renombrado
+      await archivoRenombrado.delete();
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
     }
   }
+
 
   void _verPdfPreview() {
     if (_pdfFile != null) {

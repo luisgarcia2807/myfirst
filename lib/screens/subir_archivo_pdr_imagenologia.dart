@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
-
+import 'package:path/path.dart' as path;
 import '../constans.dart';
 
 class SubirPDFPageImagen extends StatefulWidget {
   final int idPaciente;
-  const SubirPDFPageImagen({super.key, required this.idPaciente});
+  final int? idusuariodoc;
+  const SubirPDFPageImagen({super.key, required this.idPaciente, this.idusuariodoc});
   @override
   _SubirPDFPageImagenState createState() => _SubirPDFPageImagenState();
 }
@@ -211,6 +212,18 @@ class _SubirPDFPageImagenState extends State<SubirPDFPageImagen> {
     }
   }
 
+  // Función para limpiar caracteres especiales del nombre del archivo
+  String limpiarNombreArchivo(String input) {
+    final conAcentos = 'áéíóúÁÉÍÓÚñÑ';
+    final sinAcentos = 'aeiouAEIOUnN';
+
+    for (int i = 0; i < conAcentos.length; i++) {
+      input = input.replaceAll(conAcentos[i], sinAcentos[i]);
+    }
+
+    return input.replaceAll(RegExp(r'[^a-zA-Z0-9_]+'), '_').toLowerCase();
+  }
+
   Future<void> subirPDF() async {
     if (archivoPDF == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -228,20 +241,42 @@ class _SubirPDFPageImagenState extends State<SubirPDFPageImagen> {
     }
 
     try {
+      final originalFile = archivoPDF!;
+      final directory = originalFile.parent;
+
+      // 🔧 Nombre original limpio
+      String originalName = limpiarNombreArchivo(
+        path.basenameWithoutExtension(originalFile.path).replaceAll(' ', '_'),
+      );
+
+      // 🔧 Datos adicionales
+      String idPaciente = widget.idPaciente.toString();
+      String nombreExamen = limpiarNombreArchivo(_nombreExamenSeleccionado ?? 'Sin_especificar');
+
+      // 🧾 Nombre final del archivo
+      String nuevoNombre = '${originalName}_paciente${idPaciente}_$nombreExamen.pdf';
+      String newPath = path.join(directory.path, nuevoNombre);
+
+      // Crear nuevo archivo con nombre modificado
+      final renamedFile = await originalFile.copy(newPath);
+
       final uri = Uri.parse('$baseUrl/usuarios/api/imagenologia/');
       final request = http.MultipartRequest('POST', uri);
 
       // Campos del formulario
-      request.fields['paciente'] = widget.idPaciente.toString();
+      request.fields['paciente'] = idPaciente;
       request.fields['tipo'] = _tipoSeleccionado!;
       request.fields['categoria'] = _categoriaSeleccionada!;
       request.fields['nombre_examen'] = _nombreExamenSeleccionado ?? 'Sin especificar';
       request.fields['descripcion'] = _descripcionController.text;
       request.fields['fecha_realizacion'] = _fechaRealizacion.toIso8601String().split('T').first;
+      if (widget.idusuariodoc != null) {
+        request.fields['doctor'] = widget.idusuariodoc.toString();
+      }
 
-      // Archivo adjunto
+      // Adjuntar archivo
       request.files.add(
-        await http.MultipartFile.fromPath('archivo', archivoPDF!.path),
+        await http.MultipartFile.fromPath('archivo', renamedFile.path),
       );
 
       final response = await request.send();
@@ -250,17 +285,23 @@ class _SubirPDFPageImagenState extends State<SubirPDFPageImagen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('PDF subido correctamente')),
         );
+        Navigator.pop(context, true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al subir el PDF: ${response.statusCode}')),
         );
       }
+
+      // Eliminar archivo temporal renombrado
+      await renamedFile.delete();
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ocurrió un error: $e')),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

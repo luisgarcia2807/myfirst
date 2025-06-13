@@ -10,7 +10,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
-
+import 'package:image_cropper/image_cropper.dart';
+import 'package:path/path.dart' as path;
 // Import para crop_your_image:
 import 'package:crop_your_image/crop_your_image.dart';
 
@@ -18,7 +19,8 @@ import '../constans.dart'; // Ajusta la ruta según tu proyecto
 
 class ScanViewImagen extends StatefulWidget {
   final int idPaciente;
-  const ScanViewImagen({super.key, required this.idPaciente});
+  final int? idusuariodoc;
+  const ScanViewImagen({super.key, required this.idPaciente, this.idusuariodoc});
 
   @override
   State<ScanViewImagen> createState() => _ScanViewImagenState();
@@ -216,7 +218,7 @@ class _ScanViewImagenState extends State<ScanViewImagen> {
   String? _nombreExamenSeleccionado;
   final TextEditingController _descripcionController = TextEditingController();
   DateTime _fechaRealizacion = DateTime.now();
-  // Cambia por el ID real del paciente
+
 
   // Controlador para crop_your_image
   final _cropController = CropController();
@@ -234,101 +236,73 @@ class _ScanViewImagenState extends State<ScanViewImagen> {
     final picked = await ImagePicker().pickImage(source: ImageSource.camera);
     if (picked == null) return;
 
-    _imageBytesToCrop = await picked.readAsBytes();
+    File imageToProcess;
 
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setStateDialog) {
-          return AlertDialog(
-            contentPadding: EdgeInsets.zero,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 300,
-                  height: 400,
-                  child: Crop(
-                    image: _imageBytesToCrop!,
-                    controller: _cropController,
-                    onCropped: (croppedData) async {
-                      try {
-                        final tempDir = await getTemporaryDirectory();
-
-                        // 1. Guardar la imagen recortada (como "original" desde tu punto de vista)
-                        final croppedPath = '${tempDir.path}/original_recortada_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                        final croppedFile = await File(croppedPath).writeAsBytes(croppedData);
-
-                        if (mounted) {
-                          setState(() => _imagenesRecortadas.add(croppedFile)); // Guardar recortada como "original"
-                        }
-
-                        // 2. Procesar la imagen recortada
-                        Uint8List? imagenProcesadaBytes = await ProcesadorDeDocumento.procesar(croppedFile);
-
-                        if (imagenProcesadaBytes == null) {
-                          throw Exception('Error al procesar imagen');
-                        }
-
-                        // 3. Guardar la imagen procesada
-                        final processedPath = '${tempDir.path}/procesada_${DateTime.now().millisecondsSinceEpoch}.jpg';
-                        File processedFile = await File(processedPath).writeAsBytes(imagenProcesadaBytes);
-
-                        // 4. Mejora adicional si se habilitó
-                        if (_mejorarImagen) {
-                          final original = img.decodeImage(imagenProcesadaBytes);
-                          if (original != null) {
-                            final mejorada = img.adjustColor(
-                              original,
-                              contrast: 1.2,
-                              brightness: 0.1,
-                            );
-                            processedFile = File(processedPath)
-                              ..writeAsBytesSync(img.encodeJpg(mejorada));
-                          }
-                        }
-
-                        if (mounted) {
-                          setState(() => _imagenes.add(processedFile)); // Guardar la imagen procesada
-                          Navigator.of(context).pop(); // Cierra el diálogo
-                        }
-                      } catch (e) {
-                        if (mounted) {
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error al procesar imagen: $e')),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(); // Cancelar recorte
-                      },
-                      child: const Text('Cancelar'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Future.delayed(const Duration(milliseconds: 100), () {
-                          _cropController.crop(); // Inicia recorte
-                        });
-                      },
-                      child: const Text('Aceptar'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+    // Intentar recortar
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: picked.path,
+      aspectRatioPresets: [
+        CropAspectRatioPreset.original,
+        CropAspectRatioPreset.ratio4x3,
+        CropAspectRatioPreset.ratio16x9,
+      ],
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Recortar imagen',
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: false,
+        ),
+        IOSUiSettings(
+          title: 'Recortar imagen',
+        ),
+      ],
     );
+
+    if (croppedFile != null && await File(croppedFile.path).exists()) {
+      imageToProcess = File(croppedFile.path);
+    } else {
+      // Copiar la imagen original a un archivo temporal para asegurarse de que sea válido
+      final tempDir = await getTemporaryDirectory();
+      final tempPath = '${tempDir.path}/original_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      imageToProcess = await File(picked.path).copy(tempPath);
+    }
+
+    try {
+      final tempDir = await getTemporaryDirectory();
+
+      // Guardar la imagen que vamos a procesar
+      if (mounted) {
+        setState(() => _imagenesRecortadas.add(imageToProcess));
+      }
+
+      Uint8List? imagenProcesadaBytes = await ProcesadorDeDocumento.procesar(imageToProcess);
+
+      if (imagenProcesadaBytes == null || imagenProcesadaBytes.isEmpty) {
+        throw Exception('La imagen procesada está vacía o falló el procesamiento');
+      }
+
+      final processedPath = '${tempDir.path}/procesada_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      File processedFile = await File(processedPath).writeAsBytes(imagenProcesadaBytes);
+
+      if (_mejorarImagen) {
+        final original = img.decodeImage(imagenProcesadaBytes);
+        if (original != null) {
+          final mejorada = img.adjustColor(original, contrast: 1.2, brightness: 0.1);
+          final mejoradaBytes = img.encodeJpg(mejorada);
+          await processedFile.writeAsBytes(mejoradaBytes);
+        }
+      }
+
+      if (mounted) {
+        setState(() => _imagenes.add(processedFile));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al procesar imagen: $e')),
+        );
+      }
+    }
   }
 
 
@@ -381,49 +355,80 @@ class _ScanViewImagenState extends State<ScanViewImagen> {
     await _subirPdfAlServidor(_pdfFile!);
   }
 
+  String limpiarNombreArchivo(String input) {
+    final conAcentos = 'áéíóúÁÉÍÓÚñÑ';
+    final sinAcentos = 'aeiouAEIOUnN';
 
-  Future<void> _subirPdfAlServidor(File archivo) async {
-    print('hola\n\n\n');
-    print(widget.idPaciente.toString());
-    print(_tipoSeleccionado!);
-    print(_categoriaSeleccionada!);
-    print(_nombreExamenSeleccionado);
-    print(_descripcionController.text);
-    print(_fechaRealizacion);
+    for (int i = 0; i < conAcentos.length; i++) {
+      input = input.replaceAll(conAcentos[i], sinAcentos[i]);
+    }
 
+    return input.replaceAll(RegExp(r'[^a-zA-Z0-9_]+'), '_').toLowerCase();
+  }
+
+  Future<void> _subirPdfAlServidor(File archivoOriginal) async {
     try {
+      final directory = archivoOriginal.parent;
+
+      // 🧼 Limpiar nombre original del archivo
+      String nombreOriginal = limpiarNombreArchivo(
+        path.basenameWithoutExtension(archivoOriginal.path).replaceAll(' ', '_'),
+      );
+
+      // 📋 Datos del paciente y examen
+      String idPaciente = widget.idPaciente.toString();
+      String nombreExamen = limpiarNombreArchivo(_nombreExamenSeleccionado ?? 'Sin_especificar');
+
+      // 🧾 Generar nombre final del archivo
+      String nuevoNombre = '${nombreOriginal}_paciente${idPaciente}_$nombreExamen.pdf';
+      String nuevoPath = path.join(directory.path, nuevoNombre);
+
+      // 📄 Crear archivo renombrado temporalmente
+      final archivoRenombrado = await archivoOriginal.copy(nuevoPath);
+
+      // 🌐 Crear la solicitud HTTP
       final uri = Uri.parse('$baseUrl/usuarios/api/imagenologia/');
       final request = http.MultipartRequest('POST', uri);
-      
 
-      request.files.add(await http.MultipartFile.fromPath('archivo', archivo.path));
-      request.fields['paciente'] = widget.idPaciente.toString();
+      // 📎 Adjuntar el archivo renombrado
+      request.files.add(await http.MultipartFile.fromPath('archivo', archivoRenombrado.path));
+
+      // 📝 Campos del formulario
+      request.fields['paciente'] = idPaciente;
       request.fields['tipo'] = _tipoSeleccionado!;
       request.fields['categoria'] = _categoriaSeleccionada!;
       request.fields['nombre_examen'] = _nombreExamenSeleccionado ?? 'Sin especificar';
       request.fields['descripcion'] = _descripcionController.text;
       request.fields['fecha_realizacion'] = _fechaRealizacion.toIso8601String().split('T').first;
 
-      final response = await request.send();
-      final responseBody = await response.stream.bytesToString();
-      print('Respuesta del servidor: $responseBody');
+      if (widget.idusuariodoc != null) {
+        request.fields['doctor'] = widget.idusuariodoc.toString();
+      }
 
+      // 🚀 Enviar la solicitud
+      final response = await request.send();
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('PDF subido correctamente')),
         );
+        Navigator.pop(context, true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al subir el PDF: ${response.statusCode}')),
         );
       }
+
+      // 🧹 Borrar archivo temporal
+      await archivoRenombrado.delete();
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
     }
   }
+
 
   void _verPdfPreview() {
     if (_pdfFile != null) {
@@ -450,7 +455,7 @@ class _ScanViewImagenState extends State<ScanViewImagen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: colores[0],
-        title: const Text('Tomar foto',style: TextStyle(color:Colors.white),),
+        title: const Text('Escanear Imagen',style: TextStyle(color:Colors.white),),
         actions: [
           Switch(
             value: _usarRecortadas,
@@ -663,7 +668,7 @@ class _ScanViewImagenState extends State<ScanViewImagen> {
                       DropdownButtonFormField<String>(
                         value: _nombreExamenSeleccionado,
                         decoration: InputDecoration(
-                          labelText: 'Examen',
+                          labelText: 'Imagenologia',
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         isExpanded: true,

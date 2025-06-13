@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:mifirst/screens/fotoPerfil.dart';
 import 'package:mifirst/screens/pantallapaciente.dart';
-import 'package:mifirst/util/emoticon_face.dart';
+import 'package:mifirst/screens/vista_paciente_bebe.dart';
 import '../constans.dart';
 import '../models/solicitudes.dart';
 
@@ -158,7 +158,15 @@ class _SolititudPaciente extends State<SolititudPaciente> {
           builder: (context) => PacienteScreen(idusuario: widget.idusuario),
         ),
       );
-    } else {
+    }
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VistaBebe(idusuario: widget.idusuario),
+        ),
+      );
+    }else {
       setState(() {
         _selectedIndex = index;
       });
@@ -181,11 +189,12 @@ class _SolititudPaciente extends State<SolititudPaciente> {
   Widget build(BuildContext context) {
     String fechaHoy = DateFormat('dd/MM/yyyy').format(DateTime.now());
     return Scaffold(
+      backgroundColor: Colors.indigo,
       bottomNavigationBar: Theme(
           data: Theme.of(context).copyWith(
             navigationBarTheme: NavigationBarThemeData(
               backgroundColor: Colors.white,
-              indicatorColor: Colors.indigo.withOpacity(0.2),
+              indicatorColor: Colors.indigo,
               labelTextStyle: MaterialStateProperty.resolveWith<TextStyle>((states) {
                 if (states.contains(MaterialState.selected)) {
                   return TextStyle(color: Colors.indigo, fontWeight: FontWeight.w600);
@@ -194,7 +203,7 @@ class _SolititudPaciente extends State<SolititudPaciente> {
               }),
               iconTheme: MaterialStateProperty.resolveWith<IconThemeData>((states) {
                 if (states.contains(MaterialState.selected)) {
-                  return IconThemeData(color: Colors.indigo);
+                  return IconThemeData(color: Colors.white);
                 }
                 return IconThemeData(color: Colors.grey);
               }),
@@ -216,9 +225,9 @@ class _SolititudPaciente extends State<SolititudPaciente> {
                 label: 'Doctores',
               ),
               NavigationDestination(
-                icon: Icon(Icons.qr_code_outlined),
-                selectedIcon: Icon(Icons.qr_code),
-                label: 'QR',
+                icon: Icon(Icons.child_care_rounded),
+                selectedIcon: Icon(Icons.child_care_rounded),
+                label: 'Hijos',
               ),
               NavigationDestination(
                 icon: Icon(Icons.settings_outlined),
@@ -237,93 +246,85 @@ class _SolititudPaciente extends State<SolititudPaciente> {
              child: SafeArea(
                child: Column(
                  children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                child: Column(
-                  children: [
-                    SizedBox(height: 25),
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => CambiarFotoScreen(idusuario: widget.idusuario,)), // Reemplaza con tu widget de destino
-                            );
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.blueAccent,
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                            padding: EdgeInsets.all(3),
-                            child: foto == null || foto!.isEmpty
-                                ? Icon(
-                              Icons.person_pin,
-                              color: Colors.white,
-                              size: 70,
-                            )
-                                : ClipOval(
-                              child: Image.network(
-                                '$baseUrl$foto',
-                                width: 70,
-                                height: 70,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 8.0),
-                        Expanded( // <- ¡Esta línea soluciona el overflow!
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(height: 4.0),
-                              Text(
-                                "Pc. $nombreUsuario $apellidoUsuario",
-                                style: TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                overflow: TextOverflow.ellipsis, // <-- por si aún se desborda
-                              ),
-                              SizedBox(height: 1.0),
-                              Text(
-                                fechaHoy,
-                                style: TextStyle(color: Colors.grey[600]),
-                                overflow: TextOverflow.ellipsis, // opcional
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 25),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Doctores Tratantes',
-                          style: TextStyle(
-                            color: Colors.indigo,
-                            fontSize: 25,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Icon(Icons.more_horiz, color: Colors.indigo),
-                      ],
-                    ),
-                    SizedBox(height: 25),
+                   Padding(
+                     padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                     child: Column(
+                       children: [
+                         SizedBox(height: 25),
+                         Row(
+                           children: [
+                             GestureDetector(
+                               onTap: () {
+                                 Navigator.push(
+                                   context,
+                                   MaterialPageRoute(builder: (context) => CambiarFotoScreen(idusuario: widget.idusuario,)), // Reemplaza con tu widget de destino
+                                 );
+                               },
+                               child: Container(
+                                 decoration: BoxDecoration(
+                                   color: Colors.indigoAccent,
+                                   borderRadius: BorderRadius.circular(100),
+                                 ),
+                                 padding: EdgeInsets.all(3),
+                                 child: foto == null || foto!.isEmpty
+                                     ? Icon(
+                                   Icons.person_pin,
+                                   color: Colors.white,
+                                   size: 70,
+                                 )
+                                     : ClipOval(
+                                   child: Image.network(
+                                     '$baseUrl$foto',
+                                     width: 70,
+                                     height: 70,
+                                     fit: BoxFit.cover,
+                                   ),
+                                 ),
+                               ),
+                             ),
+                             SizedBox(width: 8.0),
+                             Expanded( // <- ¡Esta línea soluciona el overflow!
+                               child: Column(
+                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                 children: [
+                                   SizedBox(height: 4.0),
+                                   Text(
+                                     "Pac. $nombreUsuario $apellidoUsuario",
+                                     style: TextStyle(
+                                       color: Colors.white,
+                                       fontSize: 20,
+                                       fontWeight: FontWeight.bold,
+                                     ),
+                                     overflow: TextOverflow.ellipsis, // <-- por si aún se desborda
+                                   ),
+                                   SizedBox(height: 1.0),
+                                   Text(
+                                     fechaHoy,
+                                     style: TextStyle(color: Colors.grey[300],fontSize: 12),
+                                     overflow: TextOverflow.ellipsis, // opcional
+                                   ),
 
-                  ],
-                ),
-              ),
+                                 ],
+                               ),
+                             ),
+                           ],
+                         ),
+                         SizedBox(height: 15),
+                         Text(
+                           'Doctores Registrados',
+                           style: TextStyle(color: Colors.white,fontSize: 25),
+                           overflow: TextOverflow.ellipsis, // opcional
+                         ),
+                         SizedBox(height: 25),
+
+                       ],
+                     ),
+                   ),
               Expanded(
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.indigo, // Fondo gris claro
+                    color: Colors.grey[200], // Fondo gris claro
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(30),
                       topRight: Radius.circular(30),
@@ -332,11 +333,12 @@ class _SolititudPaciente extends State<SolititudPaciente> {
                   padding: const EdgeInsets.all(15),
                   child: Column(
                     children: [
+                      const SizedBox(height: 16),
                       Expanded(
                         child: Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.indigo,
+                            color: Colors.grey[200],
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(30),
                               topRight: Radius.circular(30),

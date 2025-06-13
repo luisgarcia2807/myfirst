@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/vista_alergia_doctor.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente_doctor.dart';
 import 'package:mifirst/screens/vista_examenlaboratorio_doctor.dart';
+import 'package:mifirst/screens/vista_imagenologia_doctor.dart';
 import 'package:mifirst/screens/vista_signovitales_doctor.dart';
 import 'package:mifirst/screens/vista_tramientofrecuente_doctor.dart';
 import 'package:mifirst/screens/vista_tratamiento_actual_doctor.dart';
@@ -36,6 +37,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
   String fechaNacimientoUsuario = '';
   bool estadoUsuario = false;
   int idRolUsuario = 0;
+  String tipoUsuario='';
+  int idtipoUsuario=0;
   bool isLoading = true; // Para controlar el estado de carga
   int idPaciente = 0; // Para almacenar el id del paciente
   int idSangre = 0;   // Para almacenar el id de sangre
@@ -60,8 +63,12 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
       if (response.statusCode == 200) {
         var datos = jsonDecode(utf8.decode(response.bodyBytes));
         setState(() {
-          idUsuario = datos['id_usuario']; // Asignamos el id del usuario
-          print(idUsuario);
+          idPaciente= datos['id_paciente'];
+          idSangre=datos['id_sangre'];
+          tipoSangre=datos['tipo_sangre'];
+          tipoUsuario=datos['tipo'];
+          idtipoUsuario=datos['id_u'];
+          print(tipoUsuario);
           isLoading = false; // Terminamos la carga
         });
       } else {
@@ -72,8 +79,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
     }
   }
 
-  Future<void> obtenerDatos() async {
-    final url = Uri.parse('$baseUrl/usuarios/api/usuario/$idUsuario/');
+  Future<void> obtenerDatos(id) async {
+    final url = Uri.parse('$baseUrl/usuarios/api/usuario/$id/');
 
     try {
       final response = await http.get(url);
@@ -99,7 +106,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
             // Si la foto es nula o vacía, puedes manejar el caso como desees
             print('La foto no está disponible');
           }
-          isLoading = false; // Cambiamos el estado de carga cuando los datos se han cargado
+          isLoading = false;
         });
       } else {
         setState(() {
@@ -282,7 +289,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
   }
   Future<void> _inicializarDatos() async {
     await obtenerIdUsuarioDesdePaciente();
-    await obtenerDatos(); // no es necesario await si no depende de datos
+    await obtenerDatos(idtipoUsuario); // no es necesario await si no depende de datos
     await obtenerDatosPacienteSangre(idUsuario);
     await _fetchSignosVitales();
     await _fetchAlergias(); // Llamar después de que idPaciente esté disponible
@@ -424,29 +431,51 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                           margin: EdgeInsets.only(bottom: 20),
                           padding: EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            gradient: LinearGradient(
+                              colors: [Colors.blue[50]!, Colors.blue[100]!],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                             borderRadius: BorderRadius.circular(20),
-                            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.blue.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: Offset(0, 5),
+                              ),
+                            ],
                           ),
                           child: Row(
                             children: [
-                              Text("🧍", style: TextStyle(fontSize: 40)),
+                              Container(
+                                padding: EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue[800],
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: Icon(Icons.person, color: Colors.white, size: 28),
+                              ),
                               SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Información personal", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                                    Text(
+                                      "Información personal",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                        color: Colors.blue[800],
+                                      ),
+                                    ),
                                     SizedBox(height: 10),
                                     Text("$nombreUsuario $apellidoUsuario"),
-                                    Text("Ci: $cedulaUsuario"),
+                                    Text("CI: $cedulaUsuario"),
                                     fechaNacimientoUsuario != null && fechaNacimientoUsuario.isNotEmpty
                                         ? Text("${calcularEdad(fechaNacimientoUsuario)} años")
                                         : Text(""),
                                     Text("$telefonoUsuario"),
                                     Text("$emailUsuario"),
-
-
                                   ],
                                 ),
                               ),
@@ -460,27 +489,60 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                           margin: EdgeInsets.only(bottom: 20),
                           padding: EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.red[50],
+                            gradient: LinearGradient(
+                              colors: [Colors.red[50]!, Colors.red[100]!],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                             borderRadius: BorderRadius.circular(20),
-                            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: Offset(0, 5),
+                              ),
+                            ],
                           ),
                           child: Row(
                             children: [
-                              Text("🩸", style: TextStyle(fontSize: 40)),
+                              Container(
+                                padding: EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.red[700],
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: Icon(Icons.bloodtype, color: Colors.white, size: 28),
+                              ),
                               SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Tipo de sangre", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.red[800])),
+                                    Text(
+                                      "Tipo de sangre",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                        color: Colors.red[800],
+                                      ),
+                                    ),
                                     SizedBox(height: 10),
-                                    Text("$tipoSangre"),
+                                    Text(
+                                      "$tipoSangre",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.red[700],
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
                             ],
                           ),
                         ),
+
+                        // Signos vitales
                         GestureDetector(
                           onTap: () {
                             Navigator.push(
@@ -500,15 +562,30 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             margin: EdgeInsets.only(bottom: 20),
                             padding: EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.red[50],
+                              gradient: LinearGradient(
+                                colors: [Colors.teal[50]!, Colors.teal[100]!],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
-                                BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
+                                BoxShadow(
+                                  color: Colors.teal.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 5),
+                                ),
                               ],
                             ),
                             child: Row(
                               children: [
-                                Text("🩺", style: TextStyle(fontSize: 40)),
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.teal[700],
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Icon(Icons.monitor_heart, color: Colors.white, size: 28),
+                                ),
                                 SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
@@ -519,7 +596,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
-                                          color: Colors.red[800],
+                                          color: Colors.teal[800],
                                         ),
                                       ),
                                       SizedBox(height: 10),
@@ -527,7 +604,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                           ? Text("No se registran signos vitales")
                                           : Builder(
                                         builder: (_) {
-                                          final signo = signovitales.first; // Usa .first si está al revés
+                                          final signo = signovitales.first;
                                           return Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
@@ -553,13 +630,19 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                           ),
                         ),
 
-
                         // Alergias
                         GestureDetector(
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => VistaAlergiadoctor(idusuario: idUsuario, nombre: widget.nombre, apellido: widget.apellido,idusuariodoc: widget.idusuariodoc,)),
+                              MaterialPageRoute(
+                                builder: (context) => VistaAlergiadoctor(
+                                  id_paciente: widget.idusuariopac,
+                                  nombre: widget.nombre,
+                                  apellido: widget.apellido,
+                                  idusuariodoc: widget.idusuariodoc,
+                                ),
+                              ),
                             );
                           },
                           child: Container(
@@ -567,25 +650,43 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             margin: EdgeInsets.only(bottom: 20),
                             padding: EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.orange[50],
+                              gradient: LinearGradient(
+                                colors: [Colors.orange[50]!, Colors.orange[100]!],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
-                                BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))
+                                BoxShadow(
+                                  color: Colors.orange.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 5),
+                                ),
                               ],
                             ),
                             child: Row(
                               children: [
-                                Text("💊", style: TextStyle(fontSize: 40)),
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange[700],
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Icon(Icons.warning_amber, color: Colors.white, size: 28),
+                                ),
                                 SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text("Alergias conocidas",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
-                                              color: Colors.orange[800])),
+                                      Text(
+                                        "Alergias conocidas",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.orange[800],
+                                        ),
+                                      ),
                                       SizedBox(height: 10),
                                       alergias.isEmpty
                                           ? Text("No se registran alergias")
@@ -602,7 +703,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             ),
                           ),
                         ),
-                        // Vacuna
+
+                        // Vacunas
                         GestureDetector(
                           onTap: () {
                             Navigator.push(
@@ -622,15 +724,30 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             margin: EdgeInsets.only(bottom: 20),
                             padding: EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.blue[50],
+                              gradient: LinearGradient(
+                                colors: [Colors.green[50]!, Colors.green[100]!],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
-                                BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))
+                                BoxShadow(
+                                  color: Colors.green.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 5),
+                                ),
                               ],
                             ),
                             child: Row(
                               children: [
-                                Text("🧪", style: TextStyle(fontSize: 40)), // Cambia el emoji si prefieres otro
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green[700],
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Icon(Icons.vaccines, color: Colors.white, size: 28),
+                                ),
                                 SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
@@ -641,7 +758,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
-                                          color: Colors.blue[800],
+                                          color: Colors.green[800],
                                         ),
                                       ),
                                       SizedBox(height: 10),
@@ -663,16 +780,19 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             ),
                           ),
                         ),
-                        //enfermedades
+
+                        // Enfermedades persistentes
                         GestureDetector(
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => VistaEnfermedadPersistentedoctor(idusuario: idUsuario,
+                                builder: (context) => VistaEnfermedadPersistentedoctor(
+                                  idusuario: idUsuario,
                                   nombre: widget.nombre,
                                   apellido: widget.apellido,
-                                  idusuariodoc: widget.idusuariodoc,),
+                                  idusuariodoc: widget.idusuariodoc,
+                                ),
                               ),
                             );
                           },
@@ -681,13 +801,30 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             margin: EdgeInsets.only(bottom: 20),
                             padding: EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.purple[50],
+                              gradient: LinearGradient(
+                                colors: [Colors.purple[50]!, Colors.purple[100]!],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               borderRadius: BorderRadius.circular(20),
-                              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.purple.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 5),
+                                ),
+                              ],
                             ),
                             child: Row(
                               children: [
-                                Text("🏥", style: TextStyle(fontSize: 40)),
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.purple[700],
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Icon(Icons.local_hospital, color: Colors.white, size: 28),
+                                ),
                                 SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
@@ -703,7 +840,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                       ),
                                       SizedBox(height: 10),
                                       EnfermedadesPersistente.isEmpty
-                                          ? Text("No se registran Enfermedades")
+                                          ? Text("No se registran enfermedades")
                                           : Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: EnfermedadesPersistente.map<Widget>((enfermedad) {
@@ -717,7 +854,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             ),
                           ),
                         ),
-                        //tratamiento actual
+
+                        // Tratamientos actuales
                         GestureDetector(
                           onTap: () {
                             Navigator.push(
@@ -737,25 +875,43 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             margin: EdgeInsets.only(bottom: 20),
                             padding: EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.blue[50],
+                              gradient: LinearGradient(
+                                colors: [Colors.indigo[50]!, Colors.indigo[100]!],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
-                                BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))
+                                BoxShadow(
+                                  color: Colors.indigo.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 5),
+                                ),
                               ],
                             ),
                             child: Row(
                               children: [
-                                Text("💊", style: TextStyle(fontSize: 40)),
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.indigo[700],
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Icon(Icons.medication, color: Colors.white, size: 28),
+                                ),
                                 SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text("Tratamientos actuales",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
-                                              color: Colors.blue[800])),
+                                      Text(
+                                        "Tratamientos actuales",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.indigo[800],
+                                        ),
+                                      ),
                                       SizedBox(height: 10),
                                       tratamientos.where((item) => item['finalizado'] == false).isEmpty
                                           ? Text("No hay tratamientos activos")
@@ -774,7 +930,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             ),
                           ),
                         ),
-                        // tratamiento frecuente
+
+                        // Tratamiento frecuente
                         GestureDetector(
                           onTap: () {
                             Navigator.push(
@@ -794,15 +951,30 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             margin: EdgeInsets.only(bottom: 20),
                             padding: EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.blue[50],
+                              gradient: LinearGradient(
+                                colors: [Colors.cyan[50]!, Colors.cyan[100]!],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
-                                BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
+                                BoxShadow(
+                                  color: Colors.cyan.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 5),
+                                ),
                               ],
                             ),
                             child: Row(
                               children: [
-                                FaIcon(FontAwesomeIcons.pills, size: 36, color: Colors.blue[800]),
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.cyan[700],
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Icon(Icons.history, color: Colors.white, size: 28),
+                                ),
                                 SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
@@ -813,7 +985,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
-                                          color: Colors.blue[800],
+                                          color: Colors.cyan[800],
                                         ),
                                       ),
                                       SizedBox(height: 10),
@@ -832,6 +1004,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             ),
                           ),
                         ),
+
+                        // Exámenes médicos
                         GestureDetector(
                           onTap: () {
                             Navigator.push(
@@ -851,19 +1025,30 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             margin: EdgeInsets.only(bottom: 20),
                             padding: EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.blue[50],
+                              gradient: LinearGradient(
+                                colors: [Colors.amber[50]!, Colors.amber[100]!],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 8,
-                                  offset: Offset(0, 4),
+                                  color: Colors.amber.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 5),
                                 ),
                               ],
                             ),
                             child: Row(
                               children: [
-                                Text("📄", style: TextStyle(fontSize: 40)),
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber[700],
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Icon(Icons.assignment, color: Colors.white, size: 28),
+                                ),
                                 SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
@@ -874,11 +1059,14 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
-                                          color: Colors.blue[800],
+                                          color: Colors.amber[800],
                                         ),
                                       ),
                                       SizedBox(height: 10),
-                                      Text("Toque para revisar los archivos subidos"),
+                                      Text(
+                                        "Toque para revisar los archivos subidos",
+                                        style: TextStyle(color: Colors.amber[700]),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -887,7 +1075,75 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                           ),
                         ),
 
-
+                        // Imagenología médica
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ImagenPageDoctor(
+                                  idusuario: idUsuario,
+                                  nombre: widget.nombre,
+                                  apellido: widget.apellido,
+                                  idusuariodoc: widget.idusuariodoc,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            margin: EdgeInsets.only(bottom: 20),
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.deepOrange[50]!, Colors.deepOrange[100]!],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.deepOrange.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.deepOrange[700],
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Icon(Icons.image, color: Colors.white, size: 28),
+                                ),
+                                SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Ver imagenología médica",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.deepOrange[800],
+                                        ),
+                                      ),
+                                      SizedBox(height: 10),
+                                      Text(
+                                        "Toque para revisar los archivos subidos",
+                                        style: TextStyle(color: Colors.deepOrange[700]),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),

@@ -88,7 +88,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
         {'value': 'toxoplasmosis', 'label': 'Toxoplasmosis (IgG, IgM)'},
         {'value': 'rubeola', 'label': 'Rubéola (IgG, IgM)'},
         {'value': 'citomegalovirus', 'label': 'Citomegalovirus (IgG, IgM)'},
-        {'value': 'fiebre_tifoidea', 'label': 'Prueba de Widal'},
+        {'value': 'Prueba de Widal', 'label': 'Prueba de Widal'},
       ],
     },
     'pruebas_funcionales': {
@@ -210,6 +210,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
       print('Error: $e');
     }
   }
+
   Future<void> eliminarExamen(int idExamen) async {
     final url = Uri.parse('$baseUrl/usuarios/api/examenes/eliminar/$idExamen/');
 
@@ -240,8 +241,6 @@ class _ExamenesPageState extends State<ExamenesPage> {
       print('Error: $e');
     }
   }
-
-
 
   IconData _getIconCategoria(String categoria) {
     const Map<String, IconData> iconosPorCategoria = {
@@ -298,14 +297,6 @@ class _ExamenesPageState extends State<ExamenesPage> {
   Widget build(BuildContext context) {
     String fechaHoy = DateFormat('dd/MM/yyyy').format(DateTime.now());
     return Scaffold(
-      body: FutureBuilder<List<Examen>>(
-        future: _examenes,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-          if (snapshot.hasError) return const Center(child: Text('Error al cargar los exámenes'));
-
-          final examenes = snapshot.data!;
-          return Scaffold(
             body: isLoading
                 ? Center(child: CircularProgressIndicator())
                 : Container(
@@ -761,9 +752,7 @@ class _ExamenesPageState extends State<ExamenesPage> {
 
 
 
-        },
-      ),
-    );
+
   }
 
   Future<void> _abrirPDF(String url) async {
