@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/fotoPerfil.dart';
 import 'package:mifirst/screens/pantalla_doctor_mobile.dart';
 import 'package:mifirst/screens/vista_doctor_informacionpaciente.dart';
+import 'package:mifirst/screens/vista_doctor_scanear_qr.dart';
 import '../constans.dart';
 import '../models/solicitudes.dart';
 
@@ -33,7 +34,7 @@ class _buscarPaciente extends State<buscarPaciente> {
   String tipoSangre = '';
   final TextEditingController _descripcionAlergiaController = TextEditingController();
   final TextEditingController _cedulaController = TextEditingController();
-  String? _nombrePaciente;
+
 
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic>? _datosPaciente; // para guardar todos los datos
@@ -264,7 +265,7 @@ class _buscarPaciente extends State<buscarPaciente> {
                       ? () async {
                     final comentario = _comentarioController.text.trim();
                     final pacienteId = _datosPaciente!['id_paciente'];
-                    final doctorId = 1; // Define esto como corresponda
+                    final doctorId = idDoctor;
 
                     final url = Uri.parse('$baseUrl/usuarios/api/doctor-paciente/');
                     final Map<String, dynamic> data = {
@@ -281,11 +282,19 @@ class _buscarPaciente extends State<buscarPaciente> {
                       );
 
                       if (response.statusCode == 201) {
+                        // ✅ Limpiar variables
+                        setStateDialog(() {
+                          _cedulaController.clear();
+                          _comentarioController.clear();
+                          _datosPaciente = null;
+                          _pacienteSeleccionado = false;
+                        });
+
                         Navigator.of(context).pop();
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text("Solicitud enviada correctamente")),
                         );
-                        // Aquí puedes recargar la lista si deseas
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text("Error al guardar: ${response.statusCode}")),
@@ -315,7 +324,7 @@ class _buscarPaciente extends State<buscarPaciente> {
 
   Future<void> _fetchSolicitudes() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/usuarios/api/solicitudes/doctor/1/'),
+      Uri.parse('$baseUrl/usuarios/api/solicitudes/doctor/$idDoctor/'),
     );
 
     if (response.statusCode == 200) {
@@ -509,46 +518,98 @@ class _buscarPaciente extends State<buscarPaciente> {
                   child: Column(
                     children: [
                       // Botón de "Añadir alergias" en la parte superior derecha
-                      Align(
-                        alignment: Alignment.center, // Asegura que quede arriba y a la derecha
-                        child: GestureDetector(
-                          onTap: _mostrarDialogoAlergia,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Color(0xFF0D47A1), // Azul oscuro
-                                    Color(0xFF1976D2), // Azul medio
-                                    Color(0xFF42A5F5), // Azul claro
-
-
-                                  ]),
-                              borderRadius:  BorderRadius.circular(12),
-
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min, // Evita que ocupe todo el ancho
-                              children: [
-                                const Icon(
-                                  Icons.add_circle_outline_sharp,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  "Registar un Paciente",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            // Botón 1: Registrar un Paciente
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: _mostrarDialogoAlergia,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFF0D47A1),
+                                        Color(0xFF1976D2),
+                                        Color(0xFF42A5F5),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(Icons.add_circle_outline_sharp, color: Colors.white),
+                                      SizedBox(width: 6),
+                                      Flexible(
+                                        child: Text(
+                                          "Registrar",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
+
+                            const SizedBox(width: 12), // Espacio entre botones
+
+                            // Botón 2: Escanear QR
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => QrScanScreen(iddoctor: idDoctor,)),
+                                  );
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFF0D47A1),
+                                        Color(0xFF1976D2),
+                                        Color(0xFF42A5F5),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(Icons.qr_code_scanner, color: Colors.white),
+                                      SizedBox(width: 6),
+                                      Flexible(
+                                        child: Text(
+                                          "Escanear",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+
                       SizedBox(height: 12,),
                       Expanded(
                         child: Container(
@@ -588,8 +649,15 @@ class _buscarPaciente extends State<buscarPaciente> {
                                           color: Colors.white,
                                           borderRadius: BorderRadius.circular(10),
                                         ),
-                                        child: const Center(
-                                          child: Icon(Icons.person, size: 28, color: Colors.black),
+                                        child:  Center(
+                                          child: Icon(
+                                            (item.pacienteCedula == 'No tiene, es hijo' || item.pacienteCedula.isEmpty)
+                                                ? Icons.child_care  // 👶 Si no tiene cédula → es un bebé
+                                                : Icons.person,     // 👤 Si tiene cédula → es un paciente normal
+                                            size: 28,
+                                            color: Colors.black,
+                                          ),
+
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -609,7 +677,7 @@ class _buscarPaciente extends State<buscarPaciente> {
                                             ),
                                             const SizedBox(height: 4),
                                             Text('Cédula: ${item.pacienteCedula}',
-                                                style: const TextStyle(color: Colors.black54)),
+                                               style: const TextStyle(color: Colors.black54)),
                                             Row(
                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                               children: [

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:mifirst/screens/fotoPerfil.dart';
 import '../models/alergias.dart';
 import '../constans.dart';
 

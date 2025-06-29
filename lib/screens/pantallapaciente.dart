@@ -9,11 +9,13 @@ import 'package:mifirst/screens/vista_examenlaboratorio.dart';
 import 'package:mifirst/screens/vista_imagenologia.dart';
 import 'package:mifirst/screens/vista_paciente_bebe.dart';
 import 'package:mifirst/screens/vista_paciente_pacientedoctor.dart';
+import 'package:mifirst/screens/vista_signovitales.dart';
 import 'package:mifirst/screens/vista_tramientofrecuente.dart';
 import 'package:mifirst/screens/vista_tratamiento_actual.dart';
 import 'package:mifirst/screens/vista_vacuna.dart';
 import '../util/emoticon_face.dart';
 import '../constans.dart';
+import 'Paciente_qr.dart';
 import 'informacion_Principal.dart';
 
 class PacienteScreen extends StatefulWidget {
@@ -125,7 +127,16 @@ class _PacienteScreen extends State<PacienteScreen> {
           builder: (context) => VistaBebe(idusuario: widget.idusuario),
         ),
       );
-    }else {
+    }
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PacienteScreenqr(idusuario: widget.idusuario, id_paciente: idPaciente,),
+        ),
+      );
+    }
+    else {
       setState(() {
         _selectedIndex = index;
       });
@@ -188,9 +199,9 @@ class _PacienteScreen extends State<PacienteScreen> {
             ),
 
             NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings),
-              label: 'Ajustes',
+              icon: Icon(Icons.qr_code),
+              selectedIcon: Icon(Icons.qr_code_outlined),
+              label: 'Qr',
             ),
           ],
         )
@@ -360,7 +371,7 @@ class _PacienteScreen extends State<PacienteScreen> {
                             emoji: '🩺',
                             title: 'Información Médica',
                             subtitle: 'Datos clave',
-                            color: Colors.indigo.shade700,
+                            color: Color(0xFF1E3A8A), // Azul marino profundo
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -371,10 +382,24 @@ class _PacienteScreen extends State<PacienteScreen> {
                             },
                           ),
                           CardItem(
-                            emoji: '⚠️', // Más claro para indicar alergias/alertas
+                            emoji: '📊',
+                            title: 'Signos Vitales',
+                            subtitle: 'Indicadores clave',
+                            color: Color(0xFF1F2937), // Gris carbón
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => VistaSignoVitales(id_paciente: idPaciente),
+                                ),
+                              );
+                            },
+                          ),
+                          CardItem(
+                            emoji: '⚠️',
                             title: 'Alergias',
                             subtitle: 'Reacciones conocidas',
-                            color: Colors.red.shade600,
+                            color: Color(0xFF991B1B), // Rojo oscuro elegante
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -388,12 +413,12 @@ class _PacienteScreen extends State<PacienteScreen> {
                             emoji: '💉',
                             title: 'Vacunas',
                             subtitle: 'Historial de inmunización',
-                            color: Colors.blue.shade700,
+                            color: Color(0xFF1E40AF), // Azul real
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => VistaVacuna(idusuario: widget.idusuario),
+                                  builder: (context) => VistaVacuna(id_paciente: idPaciente),
                                 ),
                               );
                             },
@@ -402,77 +427,77 @@ class _PacienteScreen extends State<PacienteScreen> {
                             emoji: '💊',
                             title: 'Tratamiento Actual',
                             subtitle: 'Medicamentos en curso',
-                            color: Colors.lightBlue.shade700,
+                            color: Color(0xFF0F766E), // Verde azulado oscuro
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => VistaTratamientoActualmente(idusuario: widget.idusuario),
+                                  builder: (context) => VistaTratamientoActualmente(id_paciente: idPaciente),
                                 ),
                               );
                             },
                           ),
                           CardItem(
-                            emoji: '🫁', // Más específico para enfermedades persistentes
+                            emoji: '🫁',
                             title: 'Enfermedades Persistentes',
                             subtitle: 'Condiciones crónicas',
-                            color: Colors.deepPurple.shade600,
+                            color: Color(0xFF581C87), // Púrpura profundo
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => VistaEnfermedadPersistente(idusuario: widget.idusuario),
+                                  builder: (context) => VistaEnfermedadPersistente(id_paciente: idPaciente),
                                 ),
                               );
                             },
                           ),
                           CardItem(
-                            emoji: '🧴', // Frasco de medicamentos
-                            title: 'Tratamientos frecuentes',
+                            emoji: '🩹',
+                            title: 'Tratamientos Frecuentes',
                             subtitle: 'Medicinas habituales',
-                            color: Colors.cyan.shade600,
+                            color: Color(0xFF374151), // Gris pizarra
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => VistaTratamientofrecuente(idusuario: widget.idusuario),
+                                  builder: (context) => VistaTratamientofrecuente(id_paciente: idPaciente),
                                 ),
                               );
                             },
                           ),
                           CardItem(
-                            emoji: '🔬', // Laboratorio clínico
+                            emoji: '🔬',
                             title: 'Exámenes',
                             subtitle: 'Resultados de laboratorio',
-                            color: Colors.teal.shade600,
+                            color: Color(0xFF0C4A6E), // Azul petróleo
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ExamenesPage(idusuario: widget.idusuario),
+                                  builder: (context) => ExamenesPage(id_paciente: idPaciente),
                                 ),
                               );
                             },
                           ),
                           CardItem(
-                            emoji: '🩻', // Rayos X y estudios
+                            emoji: '🩻',
                             title: 'Imagenología',
                             subtitle: 'Rayos X y estudios',
-                            color: Colors.blueGrey.shade600,
+                            color: Color(0xFF0F172A), // Azul slate muy oscuro
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ImagenPage(idusuario: widget.idusuario),
+                                  builder: (context) => ImagenPage(id_paciente: idPaciente),
                                 ),
                               );
                             },
                           ),
                           CardItem(
-                            emoji: '🏥', // Hospital/sistema de salud
+                            emoji: '🏥',
                             title: 'Póliza de Seguro',
                             subtitle: 'Información de cobertura',
-                            color: Colors.indigo.shade500,
+                            color: Color(0xFF312E81), // Índigo profundo
                           ),
                         ],
                       ),

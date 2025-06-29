@@ -3,14 +3,13 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/fotoPerfil.dart';
-import '../models/alergias.dart';
 import '../constans.dart';
 import '../models/enfermedadespersistente.dart';
 
 class VistaEnfermedadPersistente extends StatefulWidget {
-  final int idusuario;
+  final int id_paciente;
 
-  const VistaEnfermedadPersistente({super.key, required this.idusuario});
+  const VistaEnfermedadPersistente({super.key, required this.id_paciente});
 
   @override
   State<VistaEnfermedadPersistente> createState() => _VistaEnfermedadPersistente();
@@ -30,6 +29,9 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
   int idPaciente = 0;
   int idSangre = 0;
   String tipoSangre = '';
+  String sexo = '';
+  String tipoUsuario='';
+  int idtipoUsuario=0;
   String? nivelSeleccionado;
   String? tipoSeleccionado= 'Endocrina';
   int? selectedEnfermedadesPersistenteId;
@@ -41,8 +43,33 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
 
   final TextEditingController _descripcionEnfermdadController = TextEditingController();
 
-  Future<void> obtenerDatos() async {
-    final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
+  Future<void> obtenerIdUsuarioDesdePaciente() async {
+    final url = Uri.parse('$baseUrl/usuarios/api/usuario-desde-paciente/${widget.id_paciente}/');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        var datos = jsonDecode(utf8.decode(response.bodyBytes));
+        setState(() {
+          idPaciente= datos['id_paciente'];
+          idSangre=datos['id_sangre'];
+          tipoSangre=datos['tipo_sangre'];
+          tipoUsuario=datos['tipo'];
+          idtipoUsuario=datos['id_u'];
+          print(tipoUsuario);
+          isLoading = false; // Terminamos la carga
+        });
+      } else {
+        print('Error al obtener el id del usuario: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  Future<void> obtenerDatos(id) async {
+    final url = Uri.parse('$baseUrl/usuarios/api/usuario/$id/');
 
     try {
       final response = await http.get(url);
@@ -83,24 +110,30 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
       print('Error: $e');
     }
   }
-  Future<void> obtenerDatosPacienteSangre(int idUsuario) async {
-    final url = Uri.parse('$baseUrl/usuarios/api/pacientes/por-usuario/$idUsuario/');
+  Future<void> obtenerDatosBebes(id) async {
+    // La URL de tu API (reemplázala por la URL correcta)
+    final url = Uri.parse('$baseUrl/usuarios/api/bebes/$id/'); // Asegúrate de cambiar esto
 
     try {
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
+        // La respuesta fue exitosa, imprimimos los datos en la consola
         var datos = jsonDecode(utf8.decode(response.bodyBytes));
         setState(() {
-          idPaciente = datos['id_paciente']; // Asignamos el id del paciente
-          idSangre = datos['id_sangre']['id_sangre']; // Asignamos el id de sangre
-          tipoSangre = datos['id_sangre']['tipo_sangre']; // Asignamos el tipo de sangre
-          isLoading = false; // Cambiamos el estado de carga
+          nombreUsuario = datos['nombre'];
+          apellidoUsuario = datos['apellido'];
+          fechaNacimientoUsuario = datos['fecha_nacimiento'];
+          sexo= datos['sexo'];
+
         });
+
       } else {
-        print('Error al obtener el tipo de sangre: ${response.statusCode}');
+        // Si el servidor no responde con un código 200
+        print('Error al obtener los datos: ${response.statusCode}');
       }
     } catch (e) {
+      // Si ocurre un error durante la petición
       print('Error: $e');
     }
   }
@@ -453,8 +486,12 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
   }
 
   Future<void> _inicializarDatos() async {
-    await obtenerDatos(); // no es necesario await si no depende de datos
-    await obtenerDatosPacienteSangre(widget.idusuario);
+    await obtenerIdUsuarioDesdePaciente();
+    if (tipoUsuario == "bebe") {
+      await obtenerDatosBebes(idtipoUsuario);
+    } else {
+      await obtenerDatos(idtipoUsuario);
+    }
     await _fetchEnfermedadesPersistente(); // Llamar después de que idPaciente esté disponible
   }
 
@@ -492,10 +529,6 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => CambiarFotoScreen(idusuario: widget.idusuario,)), // Reemplaza con tu widget de destino
-                            );
                           },
                           child: Container(
                             decoration: BoxDecoration(
@@ -958,6 +991,6 @@ Future<List<EnfermedadPersistente>> fetchEnfermedadesPersistente(String tipo) as
     List<dynamic> data = json.decode(utf8DecodedBody);
     return data.map((json) => EnfermedadPersistente.fromJson(json)).toList();
   } else {
-    throw Exception('Error al cargar las alergias');
+    throw Exception('Error al cargar las enfermedad');
   }
 }

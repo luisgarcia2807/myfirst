@@ -21,6 +21,13 @@ class _SignUpScreenState extends State<SignUpScreen>{
   final _formSignupKey = GlobalKey<FormState>();
   bool agreePersonalData=true;
   int? selectedGrupoSanguineo;
+  final List<Map<String, String>> sexos = [
+    {'codigo': 'M', 'descripcion': 'Masculino'},
+    {'codigo': 'F', 'descripcion': 'Femenino'},
+    {'codigo': 'O', 'descripcion': 'Otro'},
+  ];
+  String? selectedSexo = 'M';  // Valor inicial opcional
+
 
   // para guardar nombre, apellido, email, cedula y contrasena
   final TextEditingController _nameController = TextEditingController();
@@ -70,7 +77,7 @@ class _SignUpScreenState extends State<SignUpScreen>{
     String apellido = _lastNameController.text; // Extraemos el texto del controlador
     String email = _emailController.text;       // Extraemos el texto del controlador
     String contrasena = _passwordController.text; // Extraemos el texto del controlador
-    String cedula = _cedulaController.text;     // Extraemos el texto del controlador
+    String cedula = _numeroCedulaController.text;     // Extraemos el texto del controlador
 
     if (!_formSignupKey.currentState!.validate()) {
       return;
@@ -88,19 +95,24 @@ class _SignUpScreenState extends State<SignUpScreen>{
     // La URL de tu API Django para registrar el usuario
     final url = Uri.parse('$baseUrl/usuarios/api/usuarios/'); // Cambia la IP si es necesario
 // Concatenar el prefijo seleccionado con el número de cédula ingresado
-    String cedulaCompleta = "$prefijoce${_numeroCedulaController.text}";
+
     String telefonoCompleto = "$prefijoSeleccionado${_numeroController.text}";
+
 
     final Map<String, dynamic> data = {
       'nombre': nombre,
       'apellido': apellido,
-      'cedula': cedulaCompleta,
+      'cedula': cedula,
+      'nacionalidad': prefijoce,
       'email': email,
       'telefono': telefonoCompleto,
       'fecha_nacimiento': fechaFormateada,
       'password': contrasena,
       'id_rol': 1,
       "id_sangre":selectedGrupoSanguineo,
+      'sexo': selectedSexo,
+      "foto_perfil": null,
+
     };
 
     try {
@@ -112,6 +124,8 @@ class _SignUpScreenState extends State<SignUpScreen>{
       );
 
       if (response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        final int idUsuarioCreado = responseData['id_usuario'];
         // Si la solicitud fue exitosa, muestra un mensaje de éxito
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Registro exitoso')),
@@ -129,10 +143,11 @@ class _SignUpScreenState extends State<SignUpScreen>{
           fechaNacimiento = null;
           prefijoSeleccionado = "0414";
           prefijoce = "V";
+          selectedSexo= 'M';
         });
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (e) =>  PacienteScreen( idusuario: 1,),
+          MaterialPageRoute(builder: (e) =>  PacienteScreen( idusuario: idUsuarioCreado,),
           ),
         );
       } else {
@@ -505,6 +520,29 @@ class _SignUpScreenState extends State<SignUpScreen>{
                             }
                           },
                         ),
+                        const SizedBox(height: 20.0),
+                        DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            labelText: 'Sexo',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                          ),
+                          value: selectedSexo, // variable String? para guardar el valor seleccionado
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedSexo = newValue;
+                              print('Sexo seleccionado: $selectedSexo');
+                            });
+                          },
+                          items: sexos.map((sexo) {
+                            return DropdownMenuItem<String>(
+                              value: sexo['codigo'],
+                              child: Text(sexo['descripcion']!),
+                            );
+                          }).toList(),
+                        ),
+
                         //recordar datos
                         const SizedBox(height: 20.0),
                         Row(

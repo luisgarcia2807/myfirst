@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'package:mifirst/screens/vista_alergia_doctor.dart';
+import 'package:mifirst/screens/vista_consultad.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente_doctor.dart';
 import 'package:mifirst/screens/vista_examenlaboratorio_doctor.dart';
 import 'package:mifirst/screens/vista_imagenologia_doctor.dart';
@@ -39,6 +40,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
   int idRolUsuario = 0;
   String tipoUsuario='';
   int idtipoUsuario=0;
+  String sexo = '';
+  String nacionalidad = '';
   bool isLoading = true; // Para controlar el estado de carga
   int idPaciente = 0; // Para almacenar el id del paciente
   int idSangre = 0;   // Para almacenar el id de sangre
@@ -68,7 +71,6 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
           tipoSangre=datos['tipo_sangre'];
           tipoUsuario=datos['tipo'];
           idtipoUsuario=datos['id_u'];
-          print(tipoUsuario);
           isLoading = false; // Terminamos la carga
         });
       } else {
@@ -78,7 +80,6 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
       print('Error: $e');
     }
   }
-
   Future<void> obtenerDatos(id) async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario/$id/');
 
@@ -97,6 +98,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
           estadoUsuario = datos['estado'];
           idRolUsuario = datos['id_rol'];
           foto =datos['foto_perfil'];
+          sexo=datos['sexo'];
+          nacionalidad=datos['nacionalidad'];
 
           if (foto != null && foto!.isNotEmpty) {
             // Reemplazamos 'localhost' por tu baseUrl
@@ -121,25 +124,30 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
       print('Error: $e');
     }
   }
-  // Función para obtener el paciente, id_sangre y tipo de sangre
-  Future<void> obtenerDatosPacienteSangre(int idUsuario) async {
-    final url = Uri.parse('$baseUrl/usuarios/api/pacientes/por-usuario/$idUsuario/');
+  Future<void> obtenerDatosBebes(id) async {
+    // La URL de tu API (reemplázala por la URL correcta)
+    final url = Uri.parse('$baseUrl/usuarios/api/bebes/$id/'); // Asegúrate de cambiar esto
 
     try {
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
+        // La respuesta fue exitosa, imprimimos los datos en la consola
         var datos = jsonDecode(utf8.decode(response.bodyBytes));
         setState(() {
-          idPaciente = datos['id_paciente']; // Asignamos el id del paciente
-          idSangre = datos['id_sangre']['id_sangre']; // Asignamos el id de sangre
-          tipoSangre = datos['id_sangre']['tipo_sangre']; // Asignamos el tipo de sangre
-          isLoading = false; // Cambiamos el estado de carga
+          nombreUsuario = datos['nombre'];
+          apellidoUsuario = datos['apellido'];
+          fechaNacimientoUsuario = datos['fecha_nacimiento'];
+          sexo= datos['sexo'];
+
         });
+
       } else {
-        print('Error al obtener el tipo de sangre: ${response.statusCode}');
+        // Si el servidor no responde con un código 200
+        print('Error al obtener los datos: ${response.statusCode}');
       }
     } catch (e) {
+      // Si ocurre un error durante la petición
       print('Error: $e');
     }
   }
@@ -289,8 +297,11 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
   }
   Future<void> _inicializarDatos() async {
     await obtenerIdUsuarioDesdePaciente();
-    await obtenerDatos(idtipoUsuario); // no es necesario await si no depende de datos
-    await obtenerDatosPacienteSangre(idUsuario);
+    if (tipoUsuario == "bebe") {
+      await obtenerDatosBebes(idtipoUsuario);
+    } else {
+      await obtenerDatos(idtipoUsuario);
+    }
     await _fetchSignosVitales();
     await _fetchAlergias(); // Llamar después de que idPaciente esté disponible
     await _fetchEnfermedadesPersistente(); // Llamar después de que idPaciente esté disponible
@@ -453,15 +464,20 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                   color: Colors.blue[800],
                                   borderRadius: BorderRadius.circular(15),
                                 ),
-                                child: Icon(Icons.person, color: Colors.white, size: 28),
-                              ),
+                                child: Icon(
+                                  tipoUsuario == "bebe" ? Icons.child_friendly : Icons.person,
+                                  color: Colors.white,
+                                  size: 28,
+                    ),
+
+                  ),
                               SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      "Información personal",
+                                      tipoUsuario == "bebe" ? "Información del Bebé" : "Información personal",
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 18,
@@ -470,18 +486,32 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                     ),
                                     SizedBox(height: 10),
                                     Text("$nombreUsuario $apellidoUsuario"),
-                                    Text("CI: $cedulaUsuario"),
-                                    fechaNacimientoUsuario != null && fechaNacimientoUsuario.isNotEmpty
-                                        ? Text("${calcularEdad(fechaNacimientoUsuario)} años")
-                                        : Text(""),
-                                    Text("$telefonoUsuario"),
-                                    Text("$emailUsuario"),
+                                    if (fechaNacimientoUsuario != null && fechaNacimientoUsuario.isNotEmpty)
+                                      Text("${calcularEdad(fechaNacimientoUsuario)} años"),
+                                    Text(
+                                      "Sexo: ${sexo == 'M' ? 'Masculino' : sexo == 'F' ? 'Femenino' : 'Prefiero no decirlo'}",
+                                    ),
+                                    if (tipoUsuario != "bebe") ...[
+                                      Text("CI: $cedulaUsuario"),
+                                      Text(
+                                        "Nacionalidad: ${nacionalidad == 'V' ? 'Venezolano' : nacionalidad == 'E' ? 'Extranjero' : ''}",
+                                      ),
+                                      Text("$telefonoUsuario"),
+                                      Text("$emailUsuario"),
+
+
+                                    ],
+                                    if (tipoUsuario == "bebe") ...[
+                                      Text("Es un paciente hijo"),
+
+                                    ],
                                   ],
                                 ),
                               ),
                             ],
                           ),
                         ),
+
 
                         // Tipo de sangre
                         Container(
@@ -549,7 +579,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VistaSignoVitalesDoctor(
-                                  idusuario: idUsuario,
+                                  id_paciente: widget.idusuariopac,
                                   nombre: widget.nombre,
                                   apellido: widget.apellido,
                                   idusuariodoc: widget.idusuariodoc,
@@ -711,7 +741,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VistaVacunadoctor(
-                                  idusuario: idUsuario,
+                                  id_paciente: widget.idusuariopac,
                                   nombre: widget.nombre,
                                   apellido: widget.apellido,
                                   idusuariodoc: widget.idusuariodoc,
@@ -788,7 +818,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VistaEnfermedadPersistentedoctor(
-                                  idusuario: idUsuario,
+                                  id_paciente: widget.idusuariopac,
                                   nombre: widget.nombre,
                                   apellido: widget.apellido,
                                   idusuariodoc: widget.idusuariodoc,
@@ -862,7 +892,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VistaTratamientoActualmenteDoctor(
-                                  idusuario: idUsuario,
+                                  id_paciente: widget.idusuariopac,
                                   nombre: widget.nombre,
                                   apellido: widget.apellido,
                                   idusuariodoc: widget.idusuariodoc,
@@ -938,7 +968,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VistaTratamientofrecuentedoctor(
-                                  idusuario: idUsuario,
+                                  id_paciente: widget.idusuariopac,
                                   nombre: widget.nombre,
                                   apellido: widget.apellido,
                                   idusuariodoc: widget.idusuariodoc,
@@ -1012,7 +1042,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => ExamenesPageDoctor(
-                                  idusuario: idUsuario,
+                                  id_paciente: widget.idusuariopac,
                                   nombre: widget.nombre,
                                   apellido: widget.apellido,
                                   idusuariodoc: widget.idusuariodoc,
@@ -1082,7 +1112,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => ImagenPageDoctor(
-                                  idusuario: idUsuario,
+                                  id_paciente: widget.idusuariopac,
                                   nombre: widget.nombre,
                                   apellido: widget.apellido,
                                   idusuariodoc: widget.idusuariodoc,
@@ -1144,6 +1174,97 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             ),
                           ),
                         ),
+                        GestureDetector(
+                          onTap: () async {
+                            // Datos para crear consulta
+                            final data = {
+                              "paciente": widget.idusuariopac,
+                              "doctor": widget.idusuariodoc,
+                              "motivo": "Chequeo General", // Puedes mostrar un formulario si quieres
+                              "observaciones": "",
+                            };
+
+                            final response = await http.post(
+                              Uri.parse('$baseUrl/usuarios/api/consultas/'),
+                              headers: {"Content-Type": "application/json"},
+                              body: jsonEncode(data),
+                            );
+
+                            if (response.statusCode == 201) {
+                              final consulta = jsonDecode(response.body);
+                              final int idConsulta = consulta['id'];
+
+                              // Navegar a la pantalla donde gestionas la consulta (exámenes, diagnósticos, etc.)
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => VistaGestionConsulta(
+                                    idConsulta: idConsulta,
+                                    idPaciente: widget.idusuariopac,
+                                    nombre: widget.nombre,
+                                    apellido: widget.apellido,
+                                    idDoctor: widget.idusuariodoc,
+                                  ),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error al crear consulta: ${response.body}')),
+                              );
+                            }
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            margin: EdgeInsets.only(bottom: 20),
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.purple[50]!, Colors.purple[100]!],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.purple.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.purple[700],
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Icon(Icons.library_add_outlined, color: Colors.white, size: 28),
+                                ),
+                                SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Crear nueva consulta",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.purple[800],
+                                        ),
+                                      ),
+                                      SizedBox(height: 10),
+                                      Text("Inicia una nueva evaluación médica para este paciente"),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
                       ],
                     ),
                   ),
