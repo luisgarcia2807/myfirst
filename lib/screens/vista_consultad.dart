@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/Vista_diagnostico.dart';
 import 'package:mifirst/screens/Vista_examen_funcional.dart';
 import '../constans.dart';
+import '../models/tratamientoActual.dart';
 import 'Vista_examen_fisico.dart';
 
 class VistaGestionConsulta extends StatefulWidget {
@@ -31,10 +32,27 @@ class VistaGestionConsulta extends StatefulWidget {
 class _VistaGestionConsultaState extends State<VistaGestionConsulta> {
   final TextEditingController _motivoController = TextEditingController();
   final TextEditingController _sintomasController = TextEditingController();
+  final TextEditingController _observacionController = TextEditingController();
   bool _examenFuncionalHecho = false;
   bool _examenFisicoHecho = false;
   bool _diagnostico = false;
   bool _signosVitalesHechos = false;
+  bool _TratamientoHechos=false;
+  String? tipoSeleccionado;
+  int? selectedAlergiaId;
+  List<dynamic> Tratamientofrecuente = [];// Lista para almacenar las alergias
+  List<String> tiposMedicamentos = [
+    'Analgésico',
+    'Antiinflamatorio',
+    'Antibiótico',
+    'Hormonal',
+    'Broncodilatador',
+    'IBP',
+    'Antihistamínico',
+    'Antibacteriano',
+    'Corticoide',
+    'Analgésico combinado',
+  ];
   final TextEditingController _pesoController = TextEditingController();
   final TextEditingController _alturaController = TextEditingController();
   final TextEditingController _presionSistolicaController = TextEditingController();
@@ -500,6 +518,280 @@ class _VistaGestionConsultaState extends State<VistaGestionConsulta> {
       });
     }
   }
+  Future<void> _mostrarDialogoTratamientoFrecuente() async {
+    int? selectedTratamientofrecuenteid;
+    final TextEditingController _fechaController = TextEditingController();
+    final TextEditingController _fechafinController = TextEditingController();
+    final TextEditingController _frecuenciaController = TextEditingController();
+    final TextEditingController _observacionesController = TextEditingController();
+
+    final resultado = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              scrollable: true, // Para evitar overflow vertical
+              title: Text("Registrar Tratamiento Frecuente"),
+              content: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.85, // Ajustar el ancho máximo
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Tipo de medicamento
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: DropdownButtonFormField<String>(
+                          value: tipoSeleccionado,
+                          hint: Text('Tipo de medicamento'),
+                          onChanged: (String? newTipo) {
+                            setDialogState(() {
+                              tipoSeleccionado = newTipo;
+                              selectedTratamientofrecuenteid = null; // Reiniciar selección
+                            });
+                          },
+                          items: tiposMedicamentos.map((tipo) {
+                            return DropdownMenuItem<String>(
+                              value: tipo,
+                              child: Text(tipo),
+                            );
+                          }).toList(),
+                          decoration: InputDecoration(
+                            labelText: 'Tipo de medicamento',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                          ),
+                        ),
+                      ),
+
+                      // Medicamento
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: FutureBuilder<List<TratamientoFrecuente1>>(
+                          future: tipoSeleccionado != null
+                              ? fetchTratamientofrecuente(tipoSeleccionado!)
+                              : Future.value([]),
+                          builder: (context, snapshot) {
+                            List<TratamientoFrecuente1> tratamientofrecuente = snapshot.data ?? [];
+
+                            return DropdownButtonFormField<int>(
+                              decoration: InputDecoration(
+                                labelText: 'Medicamento',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                              ),
+                              isExpanded: true,
+                              value: selectedTratamientofrecuenteid,
+                              onChanged: snapshot.hasData && tratamientofrecuente.isNotEmpty
+                                  ? (int? newValue) {
+                                setDialogState(() {
+                                  selectedTratamientofrecuenteid = newValue;
+                                });
+                              }
+                                  : null,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
+                              selectedItemBuilder: (BuildContext context) {
+                                return tratamientofrecuente.map((tf) {
+                                  String texto =
+                                      '${tf.nombre} ${tf.concentracion} - ${tf.principioActivo} ${tf.via_administracion}';
+                                  return Text(
+                                    texto,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                    style: TextStyle(fontSize: 16, color: Colors.black),
+                                  );
+                                }).toList();
+                              },
+                              items: tratamientofrecuente.map((tf) {
+                                String texto =
+                                    '${tf.nombre} ${tf.concentracion} \n${tf.principioActivo} ${tf.via_administracion}\n';
+                                return DropdownMenuItem<int>(
+                                  value: tf.id,
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                        maxWidth: MediaQuery.of(context).size.width - 100),
+                                    child: Text(
+                                      texto,
+                                      softWrap: true,
+                                      style: TextStyle(fontSize: 16, color: Colors.black),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
+                      ),
+
+                      // Fecha de inicio
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: TextFormField(
+                          controller: _fechaController,
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: 'Fecha de inicio',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                            suffixIcon: Icon(Icons.calendar_today),
+                          ),
+                          onTap: () async {
+                            final pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                            );
+                            if (pickedDate != null) {
+                              setDialogState(() {
+                                _fechaController.text = '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
+                              });
+                            }
+                          },
+                        ),
+                      ),
+
+                      // Fecha de finalización
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: TextFormField(
+                          controller: _fechafinController,
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: 'Fecha de Finalización',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                            suffixIcon: Icon(Icons.calendar_today),
+                          ),
+                          onTap: () async {
+                            final pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2100),
+                            );
+                            if (pickedDate != null) {
+                              setDialogState(() {
+                                _fechafinController.text = '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
+                              });
+                            }
+                          },
+                        ),
+                      ),
+
+                      // Frecuencia
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: TextFormField(
+                          controller: _frecuenciaController,
+                          decoration: InputDecoration(
+                            labelText: 'Frecuencia',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                          ),
+                          keyboardType: TextInputType.text,
+                        ),
+                      ),
+
+                      // Observaciones
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: TextFormField(
+                          controller: _observacionesController,
+                          decoration: InputDecoration(
+                            labelText: 'Observaciones',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                          ),
+                          maxLines: 3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text("Cancelar"),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (selectedTratamientofrecuenteid != null &&
+                        _fechaController.text.isNotEmpty &&
+                        _frecuenciaController.text.isNotEmpty) {
+
+                      final url = Uri.parse('$baseUrl/usuarios/api/tratamiento/nuevo/');
+                      final Map<String, dynamic> data = {
+                        'paciente': widget.idPaciente,
+                        'medicamento': selectedTratamientofrecuenteid,
+                        'fecha_inicio': _fechaController.text,
+                        'fecha_fin': _fechafinController.text,
+                        'frecuencia': _frecuenciaController.text,
+                        'descripcion': _observacionesController.text,
+                        'doctor': widget.idDoctor,
+                        "consulta": widget.idConsulta,
+                      };
+
+                      try {
+                        final response = await http.post(
+                          url,
+                          headers: {"Content-Type": "application/json"},
+                          body: json.encode(data),
+                        );
+
+                        if (response.statusCode == 201) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Tratamiento registrado correctamente")),
+                          );
+
+                          Navigator.of(context).pop(true); // Solo esta línea
+                        } else {
+                          String errorMsg = "Error al guardar";
+
+                          try {
+                            final body = json.decode(response.body);
+                            if (body is Map && body.containsKey('error')) {
+                              errorMsg = body['error'];
+                            }
+                          } catch (e) {
+                            print("Error al leer la respuesta del servidor: $e");
+                          }
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(errorMsg)),
+                          );
+                        }
+
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Error al conectar con el servidor")),
+                        );
+                        print('Error: $e');
+                      }
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Completa todos los campos obligatorios")),
+                      );
+                    }
+                  },
+                  child: Text("Guardar"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (resultado == true) {
+      setState(() {
+        _TratamientoHechos= true;
+      });
+    }
+  }
 
 
 
@@ -647,7 +939,7 @@ class _VistaGestionConsultaState extends State<VistaGestionConsulta> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.description, color: Colors.blueAccent[600], size: 24),
+                        Icon(Icons.description, color: Colors.blueAccent, size: 24),
                         SizedBox(width: 8),
                         Text(
                           "Sintomas",
@@ -782,15 +1074,113 @@ class _VistaGestionConsultaState extends State<VistaGestionConsulta> {
               isCompleted: _diagnostico,
               color: Colors.teal,
             ),
-
+            SizedBox(height: 16),
+            _buildActionButton(
+              onPressed: _mostrarDialogoTratamientoFrecuente,
+              icon: Icons.medical_information,
+              label: 'Tratamiento',
+              isCompleted: _TratamientoHechos,
+              color: Colors.deepOrange,
+            ),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.remove_red_eye, color: Colors.blueAccent, size: 24),
+                        SizedBox(width: 8),
+                        Text(
+                          "Observaciones",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueAccent[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+                    TextField(
+                      controller: _observacionController,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        hintText: "Escriba las observaciones que tiene",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.indigo.shade400, width: 2),
+                        ),
+                        contentPadding: EdgeInsets.all(16),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             SizedBox(height: 40),
 
             // Botón de volver
             Center(
               child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () async {
+                  if (_motivoController.text.isNotEmpty &&
+                      _sintomasController.text.isNotEmpty &&
+                      _observacionController.text.isNotEmpty) {
+
+                    final url = Uri.parse('$baseUrl/usuarios/api/consultas/${widget.idConsulta}/');
+
+                    final Map<String, dynamic> data = {
+                      "paciente": widget.idPaciente,
+                      "doctor": widget.idDoctor,
+                      "motivo": _motivoController.text,
+                      "sintomas": _sintomasController.text,
+                      "observaciones": _observacionController.text,
+                    };
+
+                    try {
+                      final response = await http.put(
+                        url,
+                        headers: {"Content-Type": "application/json"},
+                        body: json.encode(data),
+                      );
+
+                      if (response.statusCode == 200) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Consulta actualizada correctamente")),
+                        );
+                        Navigator.pop(context); // Vuelve a la pantalla anterior
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Error al actualizar la consulta")),
+                        );
+                      }
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error de conexión con el servidor")),
+                      );
+                      print("Error: $e");
+                    }
+
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Completa todos los campos")),
+                    );
+                  }
+                },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[600],
+                  backgroundColor: Colors.green[600],
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -800,16 +1190,17 @@ class _VistaGestionConsultaState extends State<VistaGestionConsulta> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.arrow_back),
+                    Icon(Icons.check),
                     SizedBox(width: 8),
                     Text(
-                      "Volver",
+                      "Terminar Consulta",
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
               ),
             ),
+
           ],
         ),
       ),
@@ -885,5 +1276,18 @@ class _VistaGestionConsultaState extends State<VistaGestionConsulta> {
         ),
       ),
     );
+  }
+}
+
+Future<List<TratamientoFrecuente1>> fetchTratamientofrecuente(String tipo) async {
+  final url = Uri.parse('$baseUrl/usuarios/api/medicamentosfrecuente/?tipo=$tipo');
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final utf8DecodedBody = utf8.decode(response.bodyBytes);
+    List<dynamic> data = json.decode(utf8DecodedBody);
+    return data.map((json) => TratamientoFrecuente1.fromJson(json)).toList();
+  } else {
+    throw Exception('Error al cargar las vacunas');
   }
 }

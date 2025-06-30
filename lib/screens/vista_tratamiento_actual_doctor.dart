@@ -498,7 +498,7 @@ class _VistaTratamientoActualmenteDoctor extends State<VistaTratamientoActualmen
         print('Alergia actualizada correctamente.');
 
       } else {
-        print('Error al actualizar la alergia: ${response.statusCode}');
+        print('Error al actualizar la tratamiento: ${response.statusCode}');
         print('Cuerpo: ${response.body}');
       }
     } catch (e) {
