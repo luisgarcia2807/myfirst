@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../constans.dart';
+import '../models/enfermedadescomun.dart';
 import '../models/enfermedadespersistente.dart';
 
 class DiagnosticoView extends StatefulWidget {
@@ -28,10 +29,13 @@ class DiagnosticoView extends StatefulWidget {
 class _DiagnosticoViewState extends State<DiagnosticoView> {
   final TextEditingController _diagnosticoController = TextEditingController();
   final TextEditingController _descripcionEnfermedadController = TextEditingController();
+  final TextEditingController _descripcionEnfermdadcomunController = TextEditingController();
   List<String> enfermedadesDiagnosticadas = [];
   String? tipoSeleccionado= 'Endocrina';
   int? selectedEnfermedadPersistenteId;
+  int? selectedEnfermedadescomunId;
   String? nombreEnfermedadSeleccionada;
+  String? tipoSeleccionadocomun='respiratoria';
 
   @override
   Widget build(BuildContext context) {
@@ -161,6 +165,30 @@ class _DiagnosticoViewState extends State<DiagnosticoView> {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xFF4CAF50),
+                          padding: EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+
+                    // Botón para agregar enfermedad comun
+                    Container(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _mostrarDialogoEnfermedadescomun,
+                        icon: Icon(Icons.add_circle_outline, color: Colors.white),
+                        label: Text(
+                          'Agregar Enfermedad diaria',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF7E57C2),
                           padding: EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -300,7 +328,6 @@ class _DiagnosticoViewState extends State<DiagnosticoView> {
                   ),
                 ],
               ),
-
               content: SingleChildScrollView(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
@@ -471,6 +498,210 @@ class _DiagnosticoViewState extends State<DiagnosticoView> {
       },
     );
   }
+  void _mostrarDialogoEnfermedadescomun() {
+    Future<List<EnfermedadComun>> futureEnfermedadComun = fetchEnfermedadComun(tipoSeleccionadocomun ?? 'respiratoria');
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              scrollable: true,
+              title: Row(
+                children: [
+                  Icon(Icons.medical_information, color: Color(0xFF1565C0)),
+                  SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      "Añadir Enfermedad Común",
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.85,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Tipo de enfermedad
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: DropdownButtonFormField<String>(
+                          value: tipoSeleccionadocomun,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              tipoSeleccionadocomun = newValue;
+                              futureEnfermedadComun = fetchEnfermedadComun(newValue!);
+                              selectedEnfermedadescomunId = null;
+                              nombreEnfermedadSeleccionada = null;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: "Tipo de Enfermedad común",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                          items: ['respiratoria', 'viral', 'bacterial', 'digestiva', 'dermatológica', 'otros']
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+
+                      // Lista de enfermedades según tipo
+                      FutureBuilder<List<EnfermedadComun>>(
+                        future: futureEnfermedadComun,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return Text('No hay enfermedades comunes disponibles');
+                          } else {
+                            List<EnfermedadComun> enfermedades = snapshot.data!;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: DropdownButtonFormField<int>(
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Enfermedad Común',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                ),
+                                value: selectedEnfermedadescomunId,
+                                onChanged: (int? newValue) {
+                                  setState(() {
+                                    selectedEnfermedadescomunId = newValue;
+                                    // Obtener el nombre de la enfermedad seleccionada
+                                    if (newValue != null) {
+                                      nombreEnfermedadSeleccionada = enfermedades
+                                          .firstWhere((e) => e.id == newValue)
+                                          .nombre;
+                                    } else {
+                                      nombreEnfermedadSeleccionada = null;
+                                    }
+                                  });
+                                },
+                                selectedItemBuilder: (BuildContext context) {
+                                  return enfermedades.map((e) {
+                                    return Text(
+                                      e.nombre,
+                                      overflow: TextOverflow.ellipsis,
+                                      softWrap: false,
+                                    );
+                                  }).toList();
+                                },
+                                items: enfermedades.map((e) {
+                                  return DropdownMenuItem<int>(
+                                    value: e.id,
+                                    child: Text(e.nombre),
+                                  );
+                                }).toList(),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+
+                      // Descripción/Observaciones
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: TextField(
+                          controller: _descripcionEnfermdadcomunController,
+                          decoration: InputDecoration(
+                            labelText: "Observaciones",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                          maxLines: 3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text("Cancelar"),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (selectedEnfermedadescomunId != null) {
+                      final url = Uri.parse('$baseUrl/usuarios/api/paciente-enfermedad-comun/');
+                      final Map<String, dynamic> data = {
+                        'paciente': widget.idPaciente,
+                        'enfermedad_id': selectedEnfermedadescomunId,
+                        'observacion': _descripcionEnfermdadcomunController.text,
+                        'aprobado': true,
+                        "doctor_aprobador": widget.idusuariodoc,
+                      };
+
+
+                      try {
+                        final response = await http.post(
+                          url,
+                          headers: {"Content-Type": "application/json"},
+                          body: json.encode(data),
+                        );
+
+                        if (response.statusCode == 201) {
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Enfermedad común guardada correctamente")),
+                          );
+                          enfermedadesDiagnosticadas.add(nombreEnfermedadSeleccionada!);
+                          // Agregar al texto del diagnóstico
+                          String textoActual = _diagnosticoController.text;
+                          String nuevoTexto = textoActual.isEmpty
+                              ? "paciente actualmente $nombreEnfermedadSeleccionada"
+                              : "$textoActual\n\nDiagnosticado con: $nombreEnfermedadSeleccionada";
+                          _diagnosticoController.text = nuevoTexto;
+
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Error al guardar: ${response.statusCode}")),
+                          );
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Error al conectar con el servidor")),
+                        );
+                        print('Error: $e');
+                      }
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Completa todos los campos obligatorios")),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF4CAF50),
+                  ),
+                  child: Text("Guardar", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
   void _guardarDiagnostico() async {
     if (_diagnosticoController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -581,6 +812,19 @@ class _DiagnosticoViewState extends State<DiagnosticoView> {
     } else {
       throw Exception('Error al cargar las enfermedad');
     }
+  }
+}
+Future<List<EnfermedadComun>> fetchEnfermedadComun(String tipo) async {
+  final url = Uri.parse('$baseUrl/usuarios/api/enfermedad-comun/?tipo=$tipo');
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final utf8DecodedBody = utf8.decode(response.bodyBytes);
+    // Si la solicitud es exitosa, parsea los datos
+    List<dynamic> data = json.decode(utf8DecodedBody);
+    return data.map((json) => EnfermedadComun.fromJson(json)).toList();
+  } else {
+    throw Exception('Error al cargar las enfermedad');
   }
 }
 

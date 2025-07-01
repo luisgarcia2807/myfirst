@@ -133,7 +133,7 @@ class _VistaTratamientofrecuentedoctor extends State<VistaTratamientofrecuentedo
     }
   }
   void _mostrarDialogoTratamientoFrecuente() {
-    DateTime? fechaSeleccionada;
+
     int? selectedTratamientofrecuenteid;
 
     final TextEditingController _fechaController = TextEditingController();

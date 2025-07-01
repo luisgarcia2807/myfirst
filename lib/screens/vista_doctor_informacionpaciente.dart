@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
+import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:mifirst/screens/vista_enfermedadescomun_doctor.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:mifirst/screens/vista_alergia_doctor.dart';
 import 'package:mifirst/screens/vista_consultad.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente_doctor.dart';
@@ -29,7 +33,7 @@ class DetallePacienteScreen extends StatefulWidget {
 }
 
 class _DetallePacienteScreen extends State<DetallePacienteScreen> {
-  final TextEditingController _credencialController = TextEditingController();
+
   String nombreUsuario = '';
   String apellidoUsuario = '';
   String cedulaUsuario = '';
@@ -52,10 +56,12 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
   bool hasErrorSignos = false;
   List<dynamic> alergias = [];
   List<dynamic> EnfermedadesPersistente = [];
+  List<dynamic> Enfermedadescomun=[];
   List<dynamic> vacunas = [];
   List<dynamic> tratamientos = [];
   List<dynamic> Tratamientofrecuente = [];
   List<dynamic> signovitales = [];
+
 
   Future<void> obtenerIdUsuarioDesdePaciente() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario-desde-paciente/${widget.idusuariopac}/');
@@ -198,6 +204,21 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
       throw Exception('Error al cargar Enfermedades');
     }
   }
+  Future<void> _fetchEnfermedadescomun() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/usuarios/api/paciente/$idPaciente/enfermedades-comunes/?activas=true'),
+    );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          Enfermedadescomun = jsonDecode(utf8.decode(response.bodyBytes));
+        });
+      } else {
+        // Si hubo un error en la petición
+        throw Exception('Error al cargar Enfermedades');
+      }
+    }
+
   Future<void> _fetchTratamientoActual() async {
     final response = await http.get(
       Uri.parse('$baseUrl/usuarios/api/paciente/$idPaciente/tratamientos/'),
@@ -290,6 +311,41 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
     }
     return edad;
   }
+  bool isLoadinghistoria = false; // estado para controlar el spinner
+
+  Future<void> descargarYMostrarHistoriaMedica(int pacienteId) async {
+    setState(() => isLoadinghistoria = true);
+    try {
+      await Permission.storage.request();
+
+      final tempDir = await getTemporaryDirectory();
+      final filePath = '${tempDir.path}/historia_medica_$pacienteId.docx';
+
+      final response = await Dio().download(
+        '$baseUrl/usuarios/api/pacientes/$pacienteId/historia-clinica/word/',
+        filePath,
+      );
+
+      if (response.statusCode == 200) {
+        await OpenFilex.open(filePath);
+
+        Future.delayed(const Duration(seconds: 10), () {
+          final file = File(filePath);
+          if (file.existsSync()) file.delete();
+        });
+      } else {
+        throw Exception("Error al descargar el archivo");
+      }
+    } catch (e) {
+      print("Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al descargar archivo: $e')),
+      );
+    } finally {
+      setState(() => isLoadinghistoria = false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -305,6 +361,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
     await _fetchSignosVitales();
     await _fetchAlergias(); // Llamar después de que idPaciente esté disponible
     await _fetchEnfermedadesPersistente(); // Llamar después de que idPaciente esté disponible
+    await _fetchEnfermedadescomun();
     await _fetchVacunas();
     await _fetchTratamientoActual();
     await _fetchTratamientofrecuente();
@@ -885,6 +942,80 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                           ),
                         ),
 
+                        // enfermedades diarias
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VistaEnfermedadComun(
+                                  id_paciente: widget.idusuariopac,
+                                  nombre: widget.nombre,
+                                  apellido: widget.apellido,
+                                  idusuariodoc: widget.idusuariodoc,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            margin: EdgeInsets.only(bottom: 20),
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.purple[50]!, Colors.purple[100]!],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.purple.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.purple[700],
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Icon(Icons.local_hospital, color: Colors.white, size: 28),
+                                ),
+                                SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Enfermedades Agudas",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.purple[800],
+                                        ),
+                                      ),
+                                      SizedBox(height: 10),
+                                      Enfermedadescomun.isEmpty
+                                          ? Text("No se registran enfermedades")
+                                          : Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: Enfermedadescomun.map<Widget>((enfermedad) {
+                                          return Text("• ${enfermedad['nombre_enfermedad']}");
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
                         // Tratamientos actuales
                         GestureDetector(
                           onTap: () {
@@ -1201,8 +1332,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                   builder: (_) => VistaGestionConsulta(
                                     idConsulta: idConsulta,
                                     idPaciente: widget.idusuariopac,
-                                    nombre: widget.nombre,
-                                    apellido: widget.apellido,
+                                    nombre: nombreUsuario,
+                                    apellido: apellidoUsuario,
                                     idDoctor: widget.idusuariodoc,
                                   ),
                                 ),
@@ -1257,6 +1388,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                       ),
                                       SizedBox(height: 10),
                                       Text("Inicia una nueva evaluación médica para este paciente"),
+
                                     ],
                                   ),
                                 ),
@@ -1264,6 +1396,73 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             ),
                           ),
                         ),
+                        GestureDetector(
+                          onTap: isLoadinghistoria ? null : () => descargarYMostrarHistoriaMedica(idPaciente),
+                          child: Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 20),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.purple[50]!, Colors.purple[100]!],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.purple.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.purple[700],
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: isLoadinghistoria
+                                      ? SizedBox(
+                                    width: 28,
+                                    height: 28,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 3,
+                                    ),
+                                  )
+                                      : const Icon(Icons.description, color: Colors.white, size: 28),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Ver Historia Médica",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.purple[800],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        isLoadinghistoria ? 'Descargando...' : 'Descarga y visualiza la historia clínica del paciente',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+
+
 
                       ],
                     ),

@@ -14,6 +14,7 @@ import 'package:mifirst/screens/subir_archivo_pdf.dart';
 import 'package:mifirst/screens/vista_alergia.dart';
 import 'package:mifirst/screens/vista_doctor_buscarPaciente.dart';
 import 'package:mifirst/screens/vista_doctor_scanear_qr.dart';
+import 'package:mifirst/screens/vista_enfermedadescomun_doctor.dart';
 import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
 import 'package:mifirst/screens/vista_examenlaboratorio.dart';
 import 'package:mifirst/screens/vista_imagenologia.dart';
@@ -131,7 +132,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => DiagnosticoView(nombre: 'luis', apellido: 'garcia', idPaciente: 1,idusuariodoc: 1, idConsulta: 2,),
+                              builder: (context) => VistaEnfermedadComun(nombre: 'luis', apellido: 'garcia', id_paciente: 1,idusuariodoc: 1, ),
                             ),
                           );
                         },
