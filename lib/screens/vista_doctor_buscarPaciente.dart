@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mifirst/screens/fotoPerfil.dart';
 import 'package:mifirst/screens/pantalla_doctor_mobile.dart';
+import 'package:mifirst/screens/pantallapaciente.dart';
 import 'package:mifirst/screens/vista_doctor_informacionpaciente.dart';
 import 'package:mifirst/screens/vista_doctor_scanear_qr.dart';
 import '../constans.dart';
@@ -349,7 +350,15 @@ class _buscarPaciente extends State<buscarPaciente> {
           builder: (context) => DoctorMobileScreen(idusuario: widget.idusuario),
         ),
       );
-    } else {
+    }
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PacienteScreen(idusuario: widget.idusuario),
+        ),
+      );
+    }else {
       setState(() {
         _selectedIndex = index;
       });
@@ -410,9 +419,9 @@ class _buscarPaciente extends State<buscarPaciente> {
               label: 'Paciente',
             ),
             NavigationDestination(
-              icon: Icon(Icons.qr_code_outlined),
-              selectedIcon: Icon(Icons.qr_code),
-              label: 'QR',
+              icon: Icon(Icons.switch_account_outlined),
+              selectedIcon: Icon(Icons.switch_account),
+              label: 'Perfil Pac',
             ),
             NavigationDestination(
               icon: Icon(Icons.settings_outlined),
