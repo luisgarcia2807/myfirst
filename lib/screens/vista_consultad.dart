@@ -801,203 +801,186 @@ class _VistaGestionConsultaState extends State<VistaGestionConsulta> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
-          "Consulta #${widget.idConsulta}",
+          "Consulta Medica",
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
+            fontSize: 20,
           ),
         ),
         backgroundColor: Colors.indigo[700],
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: Colors.white),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.indigo[800]!, Colors.indigo[600]!],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Card de información del paciente
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: LinearGradient(
-                    colors: [Colors.indigo[700]!, Colors.indigo[500]!],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+            // Card mejorado de información del paciente
+            Container(
+              width: double.infinity,
+              margin: EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  colors: [Colors.indigo[700]!, Colors.indigo[500]!],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.indigo.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.person, color: Colors.white, size: 24),
-                        SizedBox(width: 8),
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(Icons.person, color: Colors.white, size: 28),
+                        ),
+                        SizedBox(width: 16),
                         Text(
-                          'Información del Paciente',
+                          '${widget.nombre} ${widget.apellido}',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 16),
-                    Text(
-                      '${widget.nombre} ${widget.apellido}',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildInfoChip('ID Consulta: ${widget.idConsulta}'),
-                        SizedBox(width: 8),
-                        _buildInfoChip('ID Paciente: ${widget.idPaciente}'),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    _buildInfoChip('ID Doctor: ${widget.idDoctor}'),
+
                   ],
                 ),
               ),
             ),
 
-            SizedBox(height: 24),
-
-            // Card de motivo de consulta
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.description, color: Colors.indigo[600], size: 24),
-                        SizedBox(width: 8),
-                        Text(
-                          "Motivo de la consulta",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.indigo[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _motivoController,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: "Describa el motivo principal de la consulta...",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.indigo.shade400, width: 2),
-                        ),
-                        contentPadding: EdgeInsets.all(16),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                      ),
-                    ),
-                  ],
+            // Card mejorado de motivo de consulta
+            _buildEnhancedCard(
+              icon: Icons.description_outlined,
+              title: "Motivo de la consulta",
+              color: Colors.indigo[600]!,
+              child: TextField(
+                controller: _motivoController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: "Describa el motivo principal de la consulta...",
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.indigo.shade400, width: 2),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  contentPadding: EdgeInsets.all(20),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
                 ),
               ),
             ),
 
-            SizedBox(height:16),
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.description, color: Colors.blueAccent, size: 24),
-                        SizedBox(width: 8),
-                        Text(
-                          "Sintomas",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blueAccent[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _sintomasController,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: "Describa los sintomas del paciente",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.indigo.shade400, width: 2),
-                        ),
-                        contentPadding: EdgeInsets.all(16),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                      ),
-                    ),
-                  ],
+            SizedBox(height: 20),
+
+            // Card mejorado de síntomas
+            _buildEnhancedCard(
+              icon: Icons.health_and_safety_outlined,
+              title: "Síntomas",
+              color: Colors.blue[600]!,
+              child: TextField(
+                controller: _sintomasController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: "Describa los síntomas del paciente...",
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.blue.shade400, width: 2),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  contentPadding: EdgeInsets.all(20),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
                 ),
               ),
             ),
 
-            SizedBox(height:16),
+            SizedBox(height: 32),
 
-
-            // Botones de acciones
-            Text(
-              "Acciones de la Consulta",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
+            // Título de acciones mejorado
+            Container(
+              margin: EdgeInsets.only(bottom: 20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: Colors.indigo[600],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    "Acciones de la Consulta",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                ],
               ),
             ),
 
-            SizedBox(height: 16),
-            _buildActionButton(
+            // Botones de acciones mejorados
+            _buildEnhancedActionButton(
               onPressed: _mostrarDialogoSignoVitales,
-              icon: Icons.favorite,
+              icon: Icons.favorite_outline,
               label: 'Signos Vitales',
               isCompleted: _signosVitalesHechos,
-              color: Colors.red,
+              color: Colors.red[600]!,
+              description: 'Registrar presión, pulso, temperatura',
             ),
+
             SizedBox(height: 16),
-            _buildActionButton(
+
+            _buildEnhancedActionButton(
               onPressed: () async {
                 final resultado = await Navigator.push(
                   context,
@@ -1019,10 +1002,13 @@ class _VistaGestionConsultaState extends State<VistaGestionConsulta> {
               icon: Icons.medical_services_outlined,
               label: 'Examen Funcional',
               isCompleted: _examenFuncionalHecho,
-              color: Colors.teal,
+              color: Colors.teal[600]!,
+              description: 'Evaluación de funciones corporales',
             ),
+
             SizedBox(height: 16),
-            _buildActionButton(
+
+            _buildEnhancedActionButton(
               onPressed: () async {
                 final resultado = await Navigator.push(
                   context,
@@ -1041,14 +1027,16 @@ class _VistaGestionConsultaState extends State<VistaGestionConsulta> {
                   });
                 }
               },
-              icon: Icons.medical_services_outlined,
-              label: 'Examen Fisico',
+              icon: Icons.healing_outlined,
+              label: 'Examen Físico',
               isCompleted: _examenFisicoHecho,
-              color: Colors.teal,
+              color: Colors.green[600]!,
+              description: 'Exploración física del paciente',
             ),
 
             SizedBox(height: 16),
-            _buildActionButton(
+
+            _buildEnhancedActionButton(
               onPressed: () async {
                 final resultado = await Navigator.push(
                   context,
@@ -1069,210 +1057,338 @@ class _VistaGestionConsultaState extends State<VistaGestionConsulta> {
                   });
                 }
               },
-              icon: Icons.medical_services_outlined,
-              label: 'Diagnostico',
+              icon: Icons.assignment_outlined,
+              label: 'Diagnóstico',
               isCompleted: _diagnostico,
-              color: Colors.teal,
+              color: Colors.purple[600]!,
+              description: 'Establecer diagnóstico médico',
             ),
+
             SizedBox(height: 16),
-            _buildActionButton(
+
+            _buildEnhancedActionButton(
               onPressed: _mostrarDialogoTratamientoFrecuente,
-              icon: Icons.medical_information,
+              icon: Icons.medical_information_outlined,
               label: 'Tratamiento',
               isCompleted: _TratamientoHechos,
-              color: Colors.deepOrange,
+              color: Colors.orange[600]!,
+              description: 'Prescribir medicamentos y tratamiento',
             ),
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.remove_red_eye, color: Colors.blueAccent, size: 24),
-                        SizedBox(width: 8),
-                        Text(
-                          "Observaciones",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blueAccent[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _observacionController,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: "Escriba las observaciones que tiene",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.indigo.shade400, width: 2),
-                        ),
-                        contentPadding: EdgeInsets.all(16),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                      ),
-                    ),
-                  ],
+
+            SizedBox(height: 24),
+
+            // Card mejorado de observaciones
+            _buildEnhancedCard(
+              icon: Icons.remove_red_eye_outlined,
+              title: "Observaciones",
+              color: Colors.amber[600]!,
+              child: TextField(
+                controller: _observacionController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: "Escriba las observaciones que considera importantes...",
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.amber.shade400, width: 2),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  contentPadding: EdgeInsets.all(20),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
                 ),
               ),
             ),
+
             SizedBox(height: 40),
 
-            // Botón de volver
+            // Botón de terminar consulta mejorado
             Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (_motivoController.text.isNotEmpty &&
-                      _sintomasController.text.isNotEmpty &&
-                      _observacionController.text.isNotEmpty) {
-
-                    final url = Uri.parse('$baseUrl/usuarios/api/consultas/${widget.idConsulta}/');
-
-                    final Map<String, dynamic> data = {
-                      "paciente": widget.idPaciente,
-                      "doctor": widget.idDoctor,
-                      "motivo": _motivoController.text,
-                      "sintomas": _sintomasController.text,
-                      "observaciones": _observacionController.text,
-                    };
-
-                    try {
-                      final response = await http.put(
-                        url,
-                        headers: {"Content-Type": "application/json"},
-                        body: json.encode(data),
-                      );
-
-                      if (response.statusCode == 200) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Consulta actualizada correctamente")),
-                        );
-                        Navigator.pop(context); // Vuelve a la pantalla anterior
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Error al actualizar la consulta")),
-                        );
-                      }
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Error de conexión con el servidor")),
-                      );
-                      print("Error: $e");
-                    }
-
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Completa todos los campos")),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[600],
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                height: 60,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.green[600]!, Colors.green[500]!],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.check),
-                    SizedBox(width: 8),
-                    Text(
-                      "Terminar Consulta",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: Offset(0, 8),
                     ),
                   ],
+                ),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (_motivoController.text.isNotEmpty &&
+                        _sintomasController.text.isNotEmpty &&
+                        _observacionController.text.isNotEmpty) {
+
+                      final url = Uri.parse('$baseUrl/usuarios/api/consultas/${widget.idConsulta}/');
+
+                      final Map<String, dynamic> data = {
+                        "paciente": widget.idPaciente,
+                        "doctor": widget.idDoctor,
+                        "motivo": _motivoController.text,
+                        "sintomas": _sintomasController.text,
+                        "observaciones": _observacionController.text,
+                      };
+
+                      try {
+                        final response = await http.put(
+                          url,
+                          headers: {"Content-Type": "application/json"},
+                          body: json.encode(data),
+                        );
+
+                        if (response.statusCode == 200) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Consulta actualizada correctamente"),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          Navigator.pop(context);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Error al actualizar la consulta"),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Error de conexión con el servidor"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        print("Error: $e");
+                      }
+
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Completa todos los campos"),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check_circle_outline, size: 24),
+                      SizedBox(width: 12),
+                      Text(
+                        "Terminar Consulta",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
 
+            SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInfoChip(String text) {
+// Widget mejorado para cards
+  Widget _buildEnhancedCard({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required Widget child,
+  }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: Offset(0, 10),
+          ),
+        ],
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 24),
+                ),
+                SizedBox(width: 16),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 20),
+            child,
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButton({
+// Widget mejorado para botones de acción
+  Widget _buildEnhancedActionButton({
     required VoidCallback onPressed,
     required IconData icon,
     required String label,
     required bool isCompleted,
     required Color color,
+    String? description,
   }) {
     return Container(
       width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: Offset(0, 8),
           ),
-          elevation: 4,
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 24),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(icon, color: color, size: 28),
                 ),
-              ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      if (description != null) ...[
+                        SizedBox(height: 4),
+                        Text(
+                          description,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (isCompleted) ...[
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ] else ...[
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.grey[600],
+                      size: 16,
+                    ),
+                  ),
+                ],
+              ],
             ),
-            if (isCompleted) ...[
-              Container(
-                padding: EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-            ],
-          ],
+          ),
+        ),
+      ),
+    );
+  }
+
+// Widget mejorado para chips de información
+  Widget _buildInfoChip(String text) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: Colors.white.withOpacity(0.3)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -1288,6 +1404,6 @@ Future<List<TratamientoFrecuente1>> fetchTratamientofrecuente(String tipo) async
     List<dynamic> data = json.decode(utf8DecodedBody);
     return data.map((json) => TratamientoFrecuente1.fromJson(json)).toList();
   } else {
-    throw Exception('Error al cargar las vacunas');
+    throw Exception('Error al cargar las Trantamiento');
   }
 }

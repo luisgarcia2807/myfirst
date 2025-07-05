@@ -963,7 +963,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             padding: EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Colors.purple[50]!, Colors.purple[100]!],
+                                colors: [Colors.blueGrey[50]!, Colors.blueGrey[100]!],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -981,7 +981,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                 Container(
                                   padding: EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: Colors.purple[700],
+                                    color: Colors.blueGrey[700],
                                     borderRadius: BorderRadius.circular(15),
                                   ),
                                   child: Icon(Icons.local_hospital, color: Colors.white, size: 28),
@@ -992,11 +992,11 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "Enfermedades Agudas",
+                                        "Enfermedades Virales",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
-                                          color: Colors.purple[800],
+                                          color: Colors.blueGrey[800],
                                         ),
                                       ),
                                       SizedBox(height: 10),
@@ -1142,7 +1142,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "Tratamiento frecuente",
+                                        "Tratamiento frecuentes",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
@@ -1350,7 +1350,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                             padding: EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Colors.purple[50]!, Colors.purple[100]!],
+                                colors: [Colors.pink[50]!, Colors.pink[100]!],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -1368,7 +1368,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                 Container(
                                   padding: EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: Colors.purple[700],
+                                    color: Colors.pink[700],
                                     borderRadius: BorderRadius.circular(15),
                                   ),
                                   child: Icon(Icons.library_add_outlined, color: Colors.white, size: 28),
@@ -1383,7 +1383,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
-                                          color: Colors.purple[800],
+                                          color: Colors.pink[800],
                                         ),
                                       ),
                                       SizedBox(height: 10),
