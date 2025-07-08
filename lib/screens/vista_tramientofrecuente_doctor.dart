@@ -276,11 +276,22 @@ class _VistaTratamientofrecuentedoctor extends State<VistaTratamientofrecuentedo
                         );
 
                         if (response.statusCode == 201) {
+                          // LIMPIAR VARIABLES ANTES DE CERRAR EL DIÁLOGO
+                          setState(() {
+                            selectedTratamientofrecuenteid = null;
+                          });
+
+                          // Limpiar controladores
+                          _fechaController.clear();
+                          _dosisController.clear();
+                          _frecuenciaController.clear();
+                          _observacionesController.clear();
+
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Tratamiento registrado correctamente")),
                           );
-                          await _fetchTratamientofrecuente(); // Si tienes función para actualizar la lista
+                          await _fetchTratamientofrecuente();
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Error al guardar: ${response.statusCode}")),
@@ -514,7 +525,7 @@ class _VistaTratamientofrecuentedoctor extends State<VistaTratamientofrecuentedo
                     ),
                     SizedBox(height: 15),
                     Text(
-                      'Tratamiento Actual',
+                      'Tratamiento Frecuentes',
                       style: TextStyle(color: Colors.white,fontSize: 25),
                       overflow: TextOverflow.ellipsis, // opcional
                     ),

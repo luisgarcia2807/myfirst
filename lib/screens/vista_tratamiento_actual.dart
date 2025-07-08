@@ -351,6 +351,18 @@ class _VistaTratamientoActualmente extends State<VistaTratamientoActualmente> {
                         );
 
                         if (response.statusCode == 201) {
+                          // LIMPIAR VARIABLES ANTES DE CERRAR EL DIÁLOGO
+                          setState(() {
+                            tipoSeleccionado = null;
+                            selectedTratamientofrecuenteid = null;
+                          });
+
+                          // Limpiar controladores
+                          _fechaController.clear();
+                          _fechafinController.clear();
+                          _frecuenciaController.clear();
+                          _observacionesController.clear();
+
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("Tratamiento registrado correctamente")),

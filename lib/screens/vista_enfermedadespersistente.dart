@@ -307,6 +307,16 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                         );
 
                         if (response.statusCode == 201) {
+                          // LIMPIAR VARIABLES ANTES DE CERRAR EL DIÁLOGO
+                          setState(() {
+                            tipoSeleccionado = 'Endocrina';
+                            selectedEnfermedadesPersistenteId = null;
+                          });
+
+                          // Limpiar controladores
+                          _fechaController.clear();
+                          _descripcionEnfermdadController.clear();
+
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Enfermedad persistente guardada correctamente")),

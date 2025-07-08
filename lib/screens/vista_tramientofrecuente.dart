@@ -36,7 +36,6 @@ class _VistaTratamientofrecuente extends State<VistaTratamientofrecuente> {
   int? selectedAlergiaId;
   List<dynamic> Tratamientofrecuente = [];  // Lista para almacenar las alergias
 
-  final TextEditingController _descripcionAlergiaController = TextEditingController();
 
   Future<void> obtenerIdUsuarioDesdePaciente() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario-desde-paciente/${widget.id_paciente}/');
@@ -276,11 +275,22 @@ class _VistaTratamientofrecuente extends State<VistaTratamientofrecuente> {
                         );
 
                         if (response.statusCode == 201) {
+                          // LIMPIAR VARIABLES ANTES DE CERRAR EL DIÁLOGO
+                          setState(() {
+                            selectedTratamientofrecuenteid = null;
+                          });
+
+                          // Limpiar controladores
+                          _fechaController.clear();
+                          _dosisController.clear();
+                          _frecuenciaController.clear();
+                          _observacionesController.clear();
+
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Tratamiento registrado correctamente")),
                           );
-                          await _fetchTratamientofrecuente(); // Si tienes función para actualizar la lista
+                          await _fetchTratamientofrecuente();
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Error al guardar: ${response.statusCode}")),

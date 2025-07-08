@@ -1,40 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mifirst/screens/Escanerimagenologia.dart';
-import 'package:mifirst/screens/Vista_examen_funcional.dart';
 import 'package:mifirst/screens/iniciar_sesion.dart';
-import 'package:mifirst/screens/nuevaprueba.dart';
-import 'package:mifirst/screens/pantalla_doctor_escritorio.dart';
 import 'package:mifirst/screens/pantalla_doctor_mobile.dart';
-import 'package:mifirst/screens/pantallapaciente.dart';
-import 'package:mifirst/screens/prueba%20de%20imagen.dart';
-import 'package:mifirst/screens/pruebadeimagen.dart';
-import 'package:mifirst/screens/registrar_doctor.dart';
-import 'package:mifirst/screens/registrarse.dart';
-import 'package:mifirst/screens/subir_archivo_pdf.dart';
-import 'package:mifirst/screens/vista_alergia.dart';
-import 'package:mifirst/screens/vista_doctor_buscarPaciente.dart';
-import 'package:mifirst/screens/vista_doctor_scanear_qr.dart';
 import 'package:mifirst/screens/vista_enfermedadescomun_doctor.dart';
-import 'package:mifirst/screens/vista_enfermedadespersistente.dart';
-import 'package:mifirst/screens/vista_examenlaboratorio.dart';
-import 'package:mifirst/screens/vista_imagenologia.dart';
-import 'package:mifirst/screens/vista_paciente_bebe.dart';
-import 'package:mifirst/screens/vista_paciente_doctor_escritorio.dart';
-import 'package:mifirst/screens/vista_paciente_pacientedoctor.dart';
-import 'package:mifirst/screens/vista_signovitales.dart';
-import 'package:mifirst/screens/vista_tramientofrecuente.dart';
-import 'package:mifirst/screens/vista_tratamiento_actual.dart';
-import 'package:mifirst/screens/vista_vacuna.dart';
-import 'package:mifirst/theme/theme.dart';
-import 'package:mifirst/widgets/custom_scaffold.dart';
 
-import '../util/Informacion_principal.dart';
-import 'Escaner.dart';
-import 'Vista_diagnostico.dart';
-import 'Vista_examen_fisico.dart';
-import 'centro_medico_screen.dart';
-import 'fotoPerfil.dart';
-import 'informacion_Principal.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -65,27 +33,21 @@ class WelcomeScreen extends StatelessWidget {
 
           Column(
             children: [
-              const SizedBox(height: 100),
+              const SizedBox(height: 120),
+              Container(
+                width: 400,
+                height: 80,
+                child: Image.asset(
+                  'assets/images/fotologo.png', // Cambia esto por la ruta de tu imagen
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(height: 1),
               Center(
                 child: RichText(
                   textAlign: TextAlign.center,
                   text: const TextSpan(
                     children: [
-                      TextSpan(
-                        text: '\n¡Bienvenido!\n',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 45.0,
-                          fontWeight: FontWeight.w600,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black54,
-                              blurRadius: 8,
-                              offset: Offset(2, 2),
-                            ),
-                          ],
-                        ),
-                      ),
                       TextSpan(
                         text: '\nBienvenido a tu respaldo de datos',
                         style: TextStyle(
@@ -105,13 +67,14 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
 
+
               // Cuadro blanco reducido abajo
-              const Spacer(),
+              const SizedBox(height: 80),
               ClipPath(
                 clipper: WavyTopClipper(),
                 child: Container(
                   width: double.infinity,
-                  height: 380,
+                  height: 478.3,
                   padding: const EdgeInsets.fromLTRB(20, 40, 20, 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -125,7 +88,7 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      const SizedBox(height: 50),
+                      const SizedBox(height: 120),
                       _buildButton(
                         text: 'Registrarse como Paciente',
                         onTap: () {
@@ -138,7 +101,7 @@ class WelcomeScreen extends StatelessWidget {
                         },
                         color: Colors.blue.shade900,
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 25),
                       _buildButton(
                         text: 'Registrarse como Doctor',
                         onTap: () {
@@ -151,7 +114,7 @@ class WelcomeScreen extends StatelessWidget {
                         },
                         color: Colors.blue.shade400,
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 25),
                       _buildButton(
                         text: 'Iniciar Sesión',
                         onTap: () {

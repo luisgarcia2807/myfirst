@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mifirst/screens/pantallapaciente.dart'; // Asegúrate de importar la pantalla a la que quieres ir
 import 'olvido_contrasena.dart';
 import 'registrarse.dart';
-import 'package:mifirst/widgets/custom_scaffold.dart';
 import '../theme/theme.dart';
 import '../constans.dart';
 
@@ -25,7 +24,7 @@ class _SingInScreenState extends State<SingInScreen>{
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   // Función para hacer la solicitud POST y obtener el token
-  // Función para hacer la solicitud POST y obtener el token
+
   Future<void> loginUser() async {
     if (!_formSignInKey.currentState!.validate()) {
       return;
@@ -52,7 +51,18 @@ class _SingInScreenState extends State<SingInScreen>{
       int id = data['id_usuario'];
       int idrol = data['id_rol'];
 
-      // Guardar en SharedPreferences
+      // Verificar primero si es un Centro Médico (rol 3) antes de guardar datos
+      if (idrol == 3) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Esta aplicación no permite Centros Medicos. Acceso denegado.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return; // Salir de la función sin navegar ni mostrar éxito
+      }
+
+      // Guardar en SharedPreferences solo si no es rol 3
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString('auth_token', token);
       prefs.setString('nombre_usuario', nombre);
@@ -60,7 +70,7 @@ class _SingInScreenState extends State<SingInScreen>{
       prefs.setInt('user_role', idrol); // También guardar el rol
       print('\n\n\nhola is $id');
 
-      // Mostrar mensaje de éxito
+      // Mostrar mensaje de éxito solo para roles permitidos
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Inicio de sesión exitoso')),
       );

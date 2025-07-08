@@ -12,7 +12,6 @@ import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:path/path.dart' as path;
-// Import para crop_your_image:
 import 'package:crop_your_image/crop_your_image.dart';
 
 import '../constans.dart'; // Ajusta la ruta según tu proyecto

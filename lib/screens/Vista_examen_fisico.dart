@@ -328,11 +328,6 @@ class _CuerpoInteractivoPageState extends State<CuerpoInteractivoPage> {
                     // Zonas interactivas con mejor posicionamiento
                     // Estado General
                     // GENERAL
-                    Positioned(
-                      top: -20,
-                      left: 5,
-                      child: zonaInteractiva('general', Icons.health_and_safety_outlined, Color(0xFF3F51B5)),
-                    ),
 
 // CABEZA
                     Positioned(

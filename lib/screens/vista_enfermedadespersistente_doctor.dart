@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:mifirst/screens/fotoPerfil.dart';
 import '../constans.dart';
 import '../models/enfermedadespersistente.dart';
 
@@ -310,6 +309,16 @@ class _VistaEnfermedadPersistentedoctor extends State<VistaEnfermedadPersistente
                         );
 
                         if (response.statusCode == 201) {
+                          // LIMPIAR VARIABLES ANTES DE CERRAR EL DIÁLOGO
+                          setState(() {
+                            tipoSeleccionado = 'Endocrina';
+                            selectedEnfermedadesPersistenteId = null;
+                          });
+
+                          // Limpiar controladores
+                          _fechaController.clear();
+                          _descripcionEnfermdadController.clear();
+
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Enfermedad persistente guardada correctamente")),
@@ -385,19 +394,19 @@ class _VistaEnfermedadPersistentedoctor extends State<VistaEnfermedadPersistente
         return Icons.favorite;
       case 'Respiratoria':
         return Icons.air;
-      case 'Neurológica':
+      case 'Neurologica':
         return Icons.memory;
-      case 'Psiquiátrica':
+      case 'Psiquiatrica':
         return Icons.psychology;
       case 'Gastrointestinal':
         return Icons.lunch_dining;
-      case 'Reumatológica':
+      case 'Reumatologica':
         return Icons.accessibility_new;
       case 'Renal':
         return Icons.opacity;
-      case 'Hematológica':
+      case 'Hematologica':
         return Icons.bloodtype;
-      case 'Infecciosa':
+      case 'Infectologia':
         return Icons.sick;
       default:
         return Icons.device_unknown;
@@ -412,19 +421,19 @@ class _VistaEnfermedadPersistentedoctor extends State<VistaEnfermedadPersistente
         return Colors.red;
       case 'Respiratoria':
         return Colors.lightBlue;
-      case 'Neurológica':
+      case 'Neurologica':
         return Colors.indigo;
-      case 'Psiquiátrica':
+      case 'Psiquiatrica':
         return Colors.deepOrange;
       case 'Gastrointestinal':
         return Colors.brown;
-      case 'Reumatológica':
+      case 'Reumatologica':
         return Colors.teal;
       case 'Renal':
         return Colors.blueGrey;
-      case 'Hematológica':
+      case 'Hematologica':
         return Colors.pink;
-      case 'Infecciosa':
+      case 'Infectologia':
         return Colors.green;
       default:
         return Colors.grey;

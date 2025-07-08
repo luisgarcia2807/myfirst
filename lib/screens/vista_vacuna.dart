@@ -42,7 +42,6 @@ class _VistaVacuna extends State<VistaVacuna> {
   bool verUltimasDosis = true;
   bool hasError = false;
 
-  final TextEditingController _descripcionAlergiaController = TextEditingController();
 
   Future<void> obtenerIdUsuarioDesdePaciente() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario-desde-paciente/${widget.id_paciente}/');
@@ -325,11 +324,20 @@ class _VistaVacuna extends State<VistaVacuna> {
                         );
 
                         if (response.statusCode == 201) {
+                          // LIMPIAR VARIABLES ANTES DE CERRAR EL DIÁLOGO
+                          setState(() {
+                            selectedAlergiaId = null;
+                            nivelSeleccionado = null;
+                          });
+
+                          // Limpiar controlador
+                          _descripcionVacunaController.clear();
+
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Vacuna registrada correctamente")),
                           );
-                          await _fetchVacunas(); // <--- Esta línea actualiza la lista
+                          await _fetchVacunas(); // Esta línea actualiza la lista
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Error al guardar: ${response.statusCode}")),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:mifirst/screens/fotoPerfil.dart';
 import '../models/vacuna.dart';
 import '../constans.dart';
 
@@ -329,11 +328,20 @@ class _VistaVacunadoctor extends State<VistaVacunadoctor> {
                         );
 
                         if (response.statusCode == 201) {
+                          // LIMPIAR VARIABLES ANTES DE CERRAR EL DIÁLOGO
+                          setState(() {
+                            selectedAlergiaId = null;
+                            nivelSeleccionado = null;
+                          });
+
+                          // Limpiar controlador
+                          _descripcionVacunaController.clear();
+
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Vacuna registrada correctamente")),
                           );
-                          await _fetchVacunas(); // <--- Esta línea actualiza la lista
+                          await _fetchVacunas(); // Esta línea actualiza la lista
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Error al guardar: ${response.statusCode}")),

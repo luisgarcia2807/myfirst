@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:mifirst/screens/fotoPerfil.dart';
 import '../models/alergias.dart';
 import '../constans.dart';
 
@@ -309,10 +308,19 @@ class _VistaAlergiadoctor extends State<VistaAlergiadoctor> {
                         );
 
                         if (response.statusCode == 201) {
+                          // LIMPIAR VARIABLES ANTES DE CERRAR EL DIÁLOGO
+                          setState(() {
+                            tipoSeleccionado = 'medicamento'; // Regresa al valor inicial
+                            selectedAlergiaId = null;
+                            nivelSeleccionado = null;
+                          });
+
+                          // Limpiar controlador
+                          _descripcionAlergiaController.clear();
+
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Alergia guardada correctamente")),
-
                           );
 
                           await _fetchAlergias();

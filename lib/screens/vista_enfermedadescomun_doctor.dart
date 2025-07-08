@@ -284,6 +284,15 @@ class _VistaEnfermedadComun extends State<VistaEnfermedadComun> {
                         );
 
                         if (response.statusCode == 201) {
+                          // LIMPIAR VARIABLES ANTES DE CERRAR EL DIÁLOGO
+                          setState(() {
+                            tipoSeleccionado = 'respiratoria'; // Regresa al valor inicial
+                            selectedEnfermedadesPersistenteId = null;
+                          });
+
+                          // Limpiar controlador
+                          _descripcionEnfermdadController.clear();
+
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Enfermedad comun guardada correctamente")),

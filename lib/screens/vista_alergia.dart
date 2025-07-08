@@ -307,10 +307,21 @@ class _VistaAlergia extends State<VistaAlergia> {
                         );
 
                         if (response.statusCode == 201) {
+                          // LIMPIAR VARIABLES ANTES DE CERRAR EL DIÁLOGO
+                          setState(() {
+                            tipoSeleccionado = 'medicamento'; // Regresa al valor inicial
+                            selectedAlergiaId = null;
+                            nivelSeleccionado = null;
+                          });
+
+                          // Limpiar controlador
+                          _descripcionAlergiaController.clear();
+
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("Alergia guardada correctamente")),
                           );
+
                           await _fetchAlergias();
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
