@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mifirst/screens/iniciar_sesion.dart';
 import 'package:mifirst/screens/pantalla_doctor_mobile.dart';
-import 'package:mifirst/screens/vista_enfermedadescomun_doctor.dart';
+import 'package:mifirst/screens/registrar_doctor.dart';
+import 'package:mifirst/screens/registrarse.dart';
 
 
 class WelcomeScreen extends StatelessWidget {
@@ -95,7 +96,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => VistaEnfermedadComun(nombre: 'luis', apellido: 'garcia', id_paciente: 1,idusuariodoc: 1, ),
+                              builder: (context) => SignUpScreen(),
                             ),
                           );
                         },
@@ -108,7 +109,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => DoctorMobileScreen(idusuario:40,),
+                              builder: (context) => SignUpScreendoctor(),
                             ),
                           );
                         },

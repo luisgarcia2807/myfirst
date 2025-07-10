@@ -360,14 +360,65 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
     }
     await _fetchSignosVitales();
     await _fetchAlergias(); // Llamar después de que idPaciente esté disponible
+    await _fetchVacunas();
     await _fetchEnfermedadesPersistente(); // Llamar después de que idPaciente esté disponible
     await _fetchEnfermedadescomun();
-    await _fetchVacunas();
     await _fetchTratamientoActual();
     await _fetchTratamientofrecuente();
 
   }
+  Future<void> _actualizarDatos() async {
+    // Reinicia el estado de carga
+    setState(() {
+      isLoading = true;
+    });
 
+    try {
+      // Ejecuta todas las funciones de obtención de datos
+      await obtenerIdUsuarioDesdePaciente();
+
+      if (tipoUsuario == "bebe") {
+        await obtenerDatosBebes(idtipoUsuario);
+      } else {
+        await obtenerDatos(idtipoUsuario);
+      }
+
+      // Actualiza todos los datos médicos
+      await Future.wait([
+        _fetchSignosVitales(),
+        _fetchAlergias(),
+        _fetchVacunas(),
+        _fetchEnfermedadesPersistente(),
+        _fetchEnfermedadescomun(),
+        _fetchTratamientoActual(),
+        _fetchTratamientofrecuente(),
+      ]);
+
+      // Opcional: Mostrar mensaje de éxito
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Datos actualizados correctamente'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+    } catch (e) {
+      // Manejo de errores
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al actualizar datos: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } finally {
+      // Finaliza el estado de carga
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     String fechaHoy = DateFormat('dd/MM/yyyy').format(DateTime.now());
@@ -490,8 +541,11 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                     ),
                   ),
                   padding: const EdgeInsets.all(20),
-                  child: SingleChildScrollView(
-                    child: Column(
+                  child: RefreshIndicator(
+                    onRefresh: _actualizarDatos, // Función que ejecutará la actualización
+                    child: SingleChildScrollView(
+                      physics: AlwaysScrollableScrollPhysics(), // Permite scroll siempre para activar el refresh
+                      child: Column(
                       children: [
                         // Bloque: Información Personal
                         Container(
@@ -631,8 +685,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
 
                         // Signos vitales
                         GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VistaSignoVitalesDoctor(
@@ -643,6 +697,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                 ),
                               ),
                             );
+                            await _fetchSignosVitales();
                           },
                           child: Container(
                             width: double.infinity,
@@ -719,8 +774,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
 
                         // Alergias
                         GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VistaAlergiadoctor(
@@ -731,6 +786,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                 ),
                               ),
                             );
+                            await _fetchAlergias();
                           },
                           child: Container(
                             width: double.infinity,
@@ -793,8 +849,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
 
                         // Vacunas
                         GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VistaVacunadoctor(
@@ -805,6 +861,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                 ),
                               ),
                             );
+                            await _fetchVacunas();
                           },
                           child: Container(
                             width: double.infinity,
@@ -870,8 +927,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
 
                         // Enfermedades persistentes
                         GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VistaEnfermedadPersistentedoctor(
@@ -882,6 +939,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                 ),
                               ),
                             );
+                            await _fetchEnfermedadesPersistente();
                           },
                           child: Container(
                             width: double.infinity,
@@ -944,8 +1002,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
 
                         // enfermedades diarias
                         GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VistaEnfermedadComun(
@@ -956,6 +1014,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                 ),
                               ),
                             );
+                            await _fetchEnfermedadescomun();
                           },
                           child: Container(
                             width: double.infinity,
@@ -1018,8 +1077,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
 
                         // Tratamientos actuales
                         GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async  {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VistaTratamientoActualmenteDoctor(
@@ -1030,6 +1089,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                 ),
                               ),
                             );
+                            await _fetchTratamientoActual();
                           },
                           child: Container(
                             width: double.infinity,
@@ -1094,8 +1154,8 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
 
                         // Tratamiento frecuente
                         GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async  {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => VistaTratamientofrecuentedoctor(
@@ -1106,6 +1166,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                                 ),
                               ),
                             );
+                            await _fetchTratamientofrecuente();
                           },
                           child: Container(
                             width: double.infinity,
@@ -1468,7 +1529,7 @@ class _DetallePacienteScreen extends State<DetallePacienteScreen> {
                     ),
                   ),
                 ),
-              ),
+              ),),
             ],
           ),
         ),

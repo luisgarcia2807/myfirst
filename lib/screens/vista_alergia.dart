@@ -136,7 +136,15 @@ class _VistaAlergia extends State<VistaAlergia> {
       print('Error: $e');
     }
   }
+  Future<void> _onRefresh() async {
+    // Refresca todos los datos
+    await _inicializarDatos();
 
+    // Si hay un filtro activo, aplicarlo nuevamente
+    if (filtroActivo != null && filtroActivo!.isNotEmpty) {
+      await _fetchAlergias(tipo: filtroActivo);
+    }
+  }
 
   void _mostrarDialogoAlergia() {
     Future<List<Alergia>> futureAlergias = fetchAlergias(tipoSeleccionado!);
@@ -254,7 +262,7 @@ class _VistaAlergia extends State<VistaAlergia> {
                               borderRadius: BorderRadius.circular(8.0),
                             ),
                           ),
-                          items: ['leve', 'moderada', 'severo'].map((String value) {
+                          items: ['leve', 'moderada', 'severa'].map((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
                               child: Text(value),
@@ -707,290 +715,306 @@ class _VistaAlergia extends State<VistaAlergia> {
                       SizedBox(height: 12),
                       // Lista de alergias
                       Expanded(
-                        child: isLoading
-                            ? const Center(
-                          child: CircularProgressIndicator(),
-                        )
-                            : hasError
-                            ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'No se pudo conectar con el servidor.',
-                                style: TextStyle(color: Colors.grey, fontSize: 16),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 8),
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.refresh),
-                                label: const Text("Reintentar"),
-                                onPressed: () => _fetchAlergias(tipo: filtroActivo),
-                              ),
-                            ],
-                          ),
-                        )
-                            : alergias.isEmpty
-                            ? Center(
-                          child: Text(
-                            filtroActivo == null || filtroActivo == ''
-                                ? 'No hay alergias registradas.'
-                                : 'No se encontraron alergias de tipo "$filtroActivo".',
-                            style: const TextStyle(color: Colors.grey, fontSize: 16),
-                          ),
-                        )
-                            : ListView.builder(
-                          itemCount: alergias.length,
-                          itemBuilder: (context, index) {
-                            final item = alergias[index];
-                            final tipo = item['tipo_alergia'];
-                            final aprobado = item['aprobado'] == true;
-
-                            return Card(
-                              color: Colors.white,
-                              margin: const EdgeInsets.only(bottom: 16),
-                              elevation: 4,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
+                        child: RefreshIndicator(
+                          onRefresh: _onRefresh,
+                          child: isLoadingalergia
+                              ? const Center(
+                            child: CircularProgressIndicator(),
+                          )
+                              : hasError
+                              ? SingleChildScrollView(
+                            physics: AlwaysScrollableScrollPhysics(),
+                            child: Container(
+                              height: MediaQuery.of(context).size.height * 0.4,
+                              child: Center(
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    /// Título y estado de aprobación
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            item['nombre_alergia'],
-                                            style: const TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black87,
-                                            ),
-                                          ),
-                                        ),
-                                        if (aprobado)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: Colors.green.shade50,
-                                              borderRadius: BorderRadius.circular(20),
-                                            ),
-                                            child: Row(
-                                              children: const [
-                                                Icon(Icons.verified, color: Colors.green, size: 18),
-                                                SizedBox(width: 4),
-                                                Text(
-                                                  "Aprobado",
-                                                  style: TextStyle(
-                                                    color: Colors.green,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                      ],
+                                    const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'No se pudo conectar con el servidor.',
+                                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                                      textAlign: TextAlign.center,
                                     ),
-                                    const SizedBox(height: 16),
-
-                                    /// Contenido principal con ícono e info
-                                    Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          width: 60,
-                                          height: 60,
-                                          decoration: BoxDecoration(
-                                            color: _getColor(tipo),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Icon(
-                                            _getIcon(tipo),
-                                            color: Colors.white,
-                                            size: 40,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  const Icon(Icons.category, size: 18, color: Colors.black54),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    'Tipo: ${item['tipo_alergia']}',
-                                                    style: const TextStyle(color: Colors.black87,fontSize: 12),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.warning,
-                                                    size: 18,
-                                                    color: _colorSegunGravedad(item['gravedad']),
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  const Text(
-                                                    'Gravedad: ',
-                                                    style: TextStyle(color: Colors.black54,fontSize: 12),
-                                                  ),
-                                                  Text(
-                                                    '${item['gravedad']}',
-                                                    style: TextStyle(
-                                                      color: _colorSuaveSegunGravedad(item['gravedad']),
-                                                      fontWeight: FontWeight.w600,fontSize: 12
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-
-
-                                              if (item['observacion'] != null && item['observacion'].toString().isNotEmpty)
-                                                Padding(
-                                                  padding: const EdgeInsets.only(top: 4),
-                                                  child: Row(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      const Icon(Icons.note_alt, size: 18, color: Colors.black45),
-                                                      const SizedBox(width: 4),
-                                                      Expanded(
-                                                        child: Text(
-                                                          'Observación: ${item['observacion']}',
-                                                          style: const TextStyle(color: Colors.black54,fontSize: 12),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              if (item['doctor_aprobador'] != null && item['doctor_aprobador'].toString().isNotEmpty)
-                                                Padding(
-                                                  padding: const EdgeInsets.only(top: 4),
-                                                  child: Row(
-                                                    children: [
-                                                      const Icon(Icons.medical_services, size: 18, color: Colors.black54),
-                                                      const SizedBox(width: 4),
-                                                      Text(
-                                                        'Doctor: ${item['doctor_aprobador']}',
-                                                        style: const TextStyle(color: Colors.black87,fontSize: 12),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
+                                    const SizedBox(height: 8),
+                                    ElevatedButton.icon(
+                                      icon: const Icon(Icons.refresh),
+                                      label: const Text("Reintentar"),
+                                      onPressed: () => _fetchAlergias(tipo: filtroActivo),
                                     ),
-                                    const SizedBox(height: 16),
-
-                                    /// Botones (solo si no está aprobado)
-                                    if (!aprobado)
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.edit, color: Colors.blueGrey),
-                                            onPressed: () {
-                                              final observacionController = TextEditingController(text: item['observacion']);
-                                              String gravedadSeleccionada = item['gravedad'].toString().toLowerCase();
-
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) => AlertDialog(
-                                                  title: const Text('Editar alergia'),
-                                                  content: Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      DropdownButtonFormField<String>(
-                                                        value: gravedadSeleccionada,
-                                                        decoration: const InputDecoration(labelText: 'Gravedad'),
-                                                        items: ['leve', 'moderada', 'grave'].map((valor) {
-                                                          return DropdownMenuItem(
-                                                            value: valor,
-                                                            child: Text(valor),
-                                                          );
-                                                        }).toList(),
-                                                        onChanged: (valor) {
-                                                          if (valor != null) gravedadSeleccionada = valor;
-                                                        },
-                                                      ),
-                                                      const SizedBox(height: 10),
-                                                      TextField(
-                                                        controller: observacionController,
-                                                        decoration: const InputDecoration(labelText: 'Observación'),
-                                                        maxLines: 2,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () => Navigator.of(context).pop(),
-                                                      child: const Text('Cancelar'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () async {
-                                                        Navigator.of(context).pop();
-                                                        await editarAlergia(
-                                                          id: item['id'],
-                                                          gravedad: gravedadSeleccionada,
-                                                          observacion: observacionController.text,
-                                                        );
-                                                        setState(() {
-                                                          item['gravedad'] = gravedadSeleccionada;
-                                                          item['observacion'] = observacionController.text;
-                                                        });
-                                                      },
-                                                      child: const Text('Guardar'),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete, color: Colors.redAccent),
-                                            onPressed: () {
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) => AlertDialog(
-                                                  title: const Text('Confirmar eliminación'),
-                                                  content: const Text('¿Estás seguro de que deseas eliminar esta alergia?'),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () => Navigator.of(context).pop(),
-                                                      child: const Text('Cancelar'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () async {
-                                                        Navigator.of(context).pop();
-                                                        await eliminarAlergia(item['id']);
-                                                        setState(() {
-                                                          alergias.removeAt(index);
-                                                        });
-                                                      },
-                                                      child: const Text('Eliminar'),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      ),
                                   ],
                                 ),
                               ),
-                            );
-                          },
+                            ),
+                          )
+                              : alergias.isEmpty
+                              ? SingleChildScrollView(
+                            physics: AlwaysScrollableScrollPhysics(),
+                            child: Container(
+                              height: MediaQuery.of(context).size.height * 0.4,
+                              child: Center(
+                                child: Text(
+                                  filtroActivo == null || filtroActivo == ''
+                                      ? 'No hay alergias registradas.'
+                                      : 'No se encontraron alergias de tipo "$filtroActivo".',
+                                  style: const TextStyle(color: Colors.grey, fontSize: 16),
+                                ),
+                              ),
+                            ),
+                          )
+                              : ListView.builder(
+                            physics: AlwaysScrollableScrollPhysics(),
+                            itemCount: alergias.length,
+                            itemBuilder: (context, index) {
+                              final item = alergias[index];
+                              final tipo = item['tipo_alergia'];
+                              final aprobado = item['aprobado'] == true;
+
+                              return Card(
+                                // ... todo tu código actual del Card sin cambios
+                                color: Colors.white,
+                                margin: const EdgeInsets.only(bottom: 16),
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      /// Título y estado de aprobación
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              item['nombre_alergia'],
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                          ),
+                                          if (aprobado)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.green.shade50,
+                                                borderRadius: BorderRadius.circular(20),
+                                              ),
+                                              child: Row(
+                                                children: const [
+                                                  Icon(Icons.verified, color: Colors.green, size: 18),
+                                                  SizedBox(width: 4),
+                                                  Text(
+                                                    "Aprobado",
+                                                    style: TextStyle(
+                                                      color: Colors.green,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+
+                                      /// Contenido principal con ícono e info
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            width: 60,
+                                            height: 60,
+                                            decoration: BoxDecoration(
+                                              color: _getColor(tipo),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Icon(
+                                              _getIcon(tipo),
+                                              color: Colors.white,
+                                              size: 40,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    const Icon(Icons.category, size: 18, color: Colors.black54),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      'Tipo: ${item['tipo_alergia']}',
+                                                      style: const TextStyle(color: Colors.black87,fontSize: 12),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.warning,
+                                                      size: 18,
+                                                      color: _colorSegunGravedad(item['gravedad']),
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    const Text(
+                                                      'Gravedad: ',
+                                                      style: TextStyle(color: Colors.black54,fontSize: 12),
+                                                    ),
+                                                    Text(
+                                                      '${item['gravedad']}',
+                                                      style: TextStyle(
+                                                          color: _colorSuaveSegunGravedad(item['gravedad']),
+                                                          fontWeight: FontWeight.w600,fontSize: 12
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+
+                                                if (item['observacion'] != null && item['observacion'].toString().isNotEmpty)
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(top: 4),
+                                                    child: Row(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        const Icon(Icons.note_alt, size: 18, color: Colors.black45),
+                                                        const SizedBox(width: 4),
+                                                        Expanded(
+                                                          child: Text(
+                                                            'Observación: ${item['observacion']}',
+                                                            style: const TextStyle(color: Colors.black54,fontSize: 12),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                if (item['doctor_aprobador'] != null && item['doctor_aprobador'].toString().isNotEmpty)
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(top: 4),
+                                                    child: Row(
+                                                      children: [
+                                                        const Icon(Icons.medical_services, size: 18, color: Colors.black54),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          'Doctor: ${item['doctor_aprobador']}',
+                                                          style: const TextStyle(color: Colors.black87,fontSize: 12),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+
+                                      /// Botones (solo si no está aprobado)
+                                      if (!aprobado)
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                                              onPressed: () {
+                                                final observacionController = TextEditingController(text: item['observacion']);
+                                                String gravedadSeleccionada = item['gravedad'].toString().toLowerCase();
+
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) => AlertDialog(
+                                                    title: const Text('Editar alergia'),
+                                                    content: Column(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        DropdownButtonFormField<String>(
+                                                          value: gravedadSeleccionada,
+                                                          decoration: const InputDecoration(labelText: 'Gravedad'),
+                                                          items: ['leve', 'moderada', 'grave'].map((valor) {
+                                                            return DropdownMenuItem(
+                                                              value: valor,
+                                                              child: Text(valor),
+                                                            );
+                                                          }).toList(),
+                                                          onChanged: (valor) {
+                                                            if (valor != null) gravedadSeleccionada = valor;
+                                                          },
+                                                        ),
+                                                        const SizedBox(height: 10),
+                                                        TextField(
+                                                          controller: observacionController,
+                                                          decoration: const InputDecoration(labelText: 'Observación'),
+                                                          maxLines: 2,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () => Navigator.of(context).pop(),
+                                                        child: const Text('Cancelar'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () async {
+                                                          Navigator.of(context).pop();
+                                                          await editarAlergia(
+                                                            id: item['id'],
+                                                            gravedad: gravedadSeleccionada,
+                                                            observacion: observacionController.text,
+                                                          );
+                                                          setState(() {
+                                                            item['gravedad'] = gravedadSeleccionada;
+                                                            item['observacion'] = observacionController.text;
+                                                          });
+                                                        },
+                                                        child: const Text('Guardar'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                              onPressed: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) => AlertDialog(
+                                                    title: const Text('Confirmar eliminación'),
+                                                    content: const Text('¿Estás seguro de que deseas eliminar esta alergia?'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () => Navigator.of(context).pop(),
+                                                        child: const Text('Cancelar'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () async {
+                                                          Navigator.of(context).pop();
+                                                          await eliminarAlergia(item['id']);
+                                                          setState(() {
+                                                            alergias.removeAt(index);
+                                                          });
+                                                        },
+                                                        child: const Text('Eliminar'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
 

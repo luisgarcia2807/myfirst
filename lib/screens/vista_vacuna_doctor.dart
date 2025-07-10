@@ -330,8 +330,8 @@ class _VistaVacunadoctor extends State<VistaVacunadoctor> {
                         if (response.statusCode == 201) {
                           // LIMPIAR VARIABLES ANTES DE CERRAR EL DIÁLOGO
                           setState(() {
-                            selectedAlergiaId = null;
-                            nivelSeleccionado = null;
+                            selectedVacunaId = null;
+                            selectedDosis = null;
                           });
 
                           // Limpiar controlador

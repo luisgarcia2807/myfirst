@@ -10,6 +10,7 @@ import '../constans.dart';
 import '../models/bebe.dart';
 import '../models/grupoSanguineo.dart';
 import '../models/solicitudes.dart';
+import 'Paciente_qr.dart';
 
 class VistaBebe extends StatefulWidget {
   final int idusuario;
@@ -441,7 +442,16 @@ class _VistaBebe extends State<VistaBebe> {
           builder: (context) => SolititudPaciente(idusuario: widget.idusuario),
         ),
       );
-    }else {
+    }
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PacienteScreenqr(idusuario: widget.idusuario, id_paciente: idPaciente,),
+        ),
+      );
+    }
+    else {
       setState(() {
         _selectedIndex = index;
       });
@@ -506,9 +516,9 @@ class _VistaBebe extends State<VistaBebe> {
               label: 'Hijos',
             ),
             NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings),
-              label: 'Ajustes',
+              icon: Icon(Icons.qr_code),
+              selectedIcon: Icon(Icons.qr_code_outlined),
+              label: 'Qr',
             ),
           ],
         ),

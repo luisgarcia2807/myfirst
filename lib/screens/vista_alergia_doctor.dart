@@ -136,6 +136,15 @@ class _VistaAlergiadoctor extends State<VistaAlergiadoctor> {
       print('Error: $e');
     }
   }
+  Future<void> _onRefresh() async {
+    // Refresca todos los datos
+    await _inicializarDatos();
+
+    // Si hay un filtro activo, aplicarlo nuevamente
+    if (filtroActivo != null && filtroActivo!.isNotEmpty) {
+      await _fetchAlergias(tipo: filtroActivo);
+    }
+  }
 
   void _mostrarDialogoAlergia() {
     Future<List<Alergia>> futureAlergias = fetchAlergias(tipoSeleccionado!);
@@ -749,13 +758,19 @@ class _VistaAlergiadoctor extends State<VistaAlergiadoctor> {
 
                       SizedBox(height: 12,),
                       // Lista de alergias
-                      Expanded(
-                        child: isLoading
-                            ? const Center(
-                          child: CircularProgressIndicator(),
-                        )
-                            : hasError
-                            ? Center(
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _onRefresh,
+                      child: isLoadingalergia
+                          ? const Center(
+                        child: CircularProgressIndicator(),
+                      )
+                          : hasError
+                          ? SingleChildScrollView(
+                        physics: AlwaysScrollableScrollPhysics(),
+                        child: Container(
+                          height: MediaQuery.of(context).size.height * 0.4,
+                          child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -774,7 +789,7 @@ class _VistaAlergiadoctor extends State<VistaAlergiadoctor> {
                               ),
                             ],
                           ),
-                        )
+                        )))
                             : alergias.isEmpty
                             ? Center(
                           child: Text(
@@ -1067,7 +1082,7 @@ class _VistaAlergiadoctor extends State<VistaAlergiadoctor> {
                             );
                           },
                         ),
-                      ),
+                      ),),
 
 
 
@@ -1075,13 +1090,6 @@ class _VistaAlergiadoctor extends State<VistaAlergiadoctor> {
                   ),
                 ),
               )
-
-
-
-
-
-
-
 
 
             ],

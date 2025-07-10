@@ -33,13 +33,14 @@ class _buscarPaciente extends State<buscarPaciente> {
   int idDoctor = 0;
   int idSangre = 0;
   String tipoSangre = '';
-  final TextEditingController _descripcionAlergiaController = TextEditingController();
   final TextEditingController _cedulaController = TextEditingController();
-
 
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic>? _datosPaciente; // para guardar todos los datos
   bool _pacienteSeleccionado = false;
+
+  // Variable para controlar el estado de refresh
+  bool _isRefreshing = false;
 
   Future<void> obtenerDatos() async {
     final url = Uri.parse('$baseUrl/usuarios/api/usuario/${widget.idusuario}/');
@@ -83,6 +84,7 @@ class _buscarPaciente extends State<buscarPaciente> {
       print('Error: $e');
     }
   }
+
   Future<void> obtenerDatosPacienteSangre(int idUsuario) async {
     final url = Uri.parse('$baseUrl/usuarios/api/pacientes/por-usuario/$idUsuario/');
 
@@ -104,6 +106,7 @@ class _buscarPaciente extends State<buscarPaciente> {
       print('Error: $e');
     }
   }
+
   Future<void> obtenerDatosDoctor(int idUsuario) async {
     final url = Uri.parse('$baseUrl/usuarios/api/doctores/por-usuario/$idUsuario/');
 
@@ -116,9 +119,7 @@ class _buscarPaciente extends State<buscarPaciente> {
         // Ejemplo: acceso a los campos
         idDoctor = datos['id_doctor'];
 
-
         print('ID Doctor: $idDoctor');
-
 
         // Aquí podrías actualizar el estado con setState o similar
       } else {
@@ -296,6 +297,7 @@ class _buscarPaciente extends State<buscarPaciente> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text("Solicitud enviada correctamente")),
                         );
+                        await _fetchSolicitudes();
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text("Error al guardar: ${response.statusCode}")),
@@ -312,7 +314,6 @@ class _buscarPaciente extends State<buscarPaciente> {
                       : null,
                   child: Text("Guardar"),
                 ),
-
               ],
             );
           },
@@ -335,6 +336,39 @@ class _buscarPaciente extends State<buscarPaciente> {
       });
     } else {
       throw Exception('Error al cargar las solicitudes');
+    }
+  }
+
+  // Método para manejar el refresh
+  Future<void> _onRefresh() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      await _fetchSolicitudes();
+
+      // Mostrar mensaje de éxito
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Lista actualizada"),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      print('Error al actualizar: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error al actualizar la lista"),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isRefreshing = false;
+      });
     }
   }
 
@@ -364,19 +398,19 @@ class _buscarPaciente extends State<buscarPaciente> {
       });
     }
   }
+
   @override
   void initState() {
     super.initState();
     _inicializarDatos();
   }
+
   Future<void> _inicializarDatos() async {
     await obtenerDatos(); // no es necesario await si no depende de datos
     await obtenerDatosPacienteSangre(widget.idusuario);
     await obtenerDatosDoctor(widget.idusuario);
     await _fetchSolicitudes(); // Llamar después de que idPaciente esté disponible
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -434,7 +468,6 @@ class _buscarPaciente extends State<buscarPaciente> {
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : Container(
-
         child: SafeArea(
           child: Column(
             children: [
@@ -495,7 +528,6 @@ class _buscarPaciente extends State<buscarPaciente> {
                                 style: TextStyle(color: Colors.grey[300],fontSize: 12),
                                 overflow: TextOverflow.ellipsis, // opcional
                               ),
-
                             ],
                           ),
                         ),
@@ -508,7 +540,6 @@ class _buscarPaciente extends State<buscarPaciente> {
                       overflow: TextOverflow.ellipsis, // opcional
                     ),
                     SizedBox(height: 25),
-
                   ],
                 ),
               ),
@@ -633,137 +664,127 @@ class _buscarPaciente extends State<buscarPaciente> {
                           padding: const EdgeInsets.all(5),
                           child: solicitudes.isEmpty
                               ? const Center(child: CircularProgressIndicator())
-                              : ListView.builder(
-                            itemCount: solicitudes.length,
-                            itemBuilder: (context, index) {
-                              final item = solicitudes[index];
+                              : RefreshIndicator(
+                            onRefresh: _onRefresh,
+                            color: Colors.blue.shade900,
+                            backgroundColor: Colors.white,
+                            child: ListView.builder(
+                              physics: AlwaysScrollableScrollPhysics(), // Permite scroll siempre
+                              itemCount: solicitudes.length,
+                              itemBuilder: (context, index) {
+                                final item = solicitudes[index];
 
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 10),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                color: Colors.white,
-                                elevation: 2,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      // Ícono alineado
-                                      Container(
-                                        width: 50,
-                                        height: 50,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child:  Center(
-                                          child: Icon(
-                                            (item.pacienteCedula == 'No tiene, es hijo' || item.pacienteCedula.isEmpty)
-                                                ? Icons.child_care  // 👶 Si no tiene cédula → es un bebé
-                                                : Icons.person,     // 👤 Si tiene cédula → es un paciente normal
-                                            size: 28,
-                                            color: Colors.black,
-                                          ),
-
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-
-                                      // Información del paciente
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '${item.pacienteNombre.toString().toUpperCase()} ${item.pacienteApellido.toString().toUpperCase()}',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text('Cédula: ${item.pacienteCedula}',
-                                               style: const TextStyle(color: Colors.black54)),
-                                            Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                Text(
-                                                  'Estado: ${item.estado}',
-                                                  style: TextStyle(
-                                                    color: item.estado == 'pendiente'
-                                                        ? Colors.orange[700]
-                                                        : item.estado == 'aceptado'
-                                                        ? Colors.green[700]
-                                                        : item.estado == 'rechazado'
-                                                        ? Colors.red[700]
-                                                        : Colors.black54,
-                                                  ),
-                                                ),
-                                                ElevatedButton(
-                                                  onPressed: item.estado == 'aceptado'
-                                                      ? () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) => DetallePacienteScreen(idusuariopac: item.paciente,nombre: nombreUsuario, apellido: apellidoUsuario,idusuariodoc:idDoctor ,),
-                                                      ),
-                                                    );
-                                                  }
-                                                      : null, // Deshabilitado si no está aceptado
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: item.estado == 'aceptado'
-                                                        ? Colors.blue
-                                                        : Colors.grey[300],
-                                                    foregroundColor: item.estado == 'aceptado'
-                                                        ? Colors.white
-                                                        : Colors.black45,
-                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                                    minimumSize: const Size(40, 30),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(8),
-                                                    ),
-                                                    elevation: 0,
-                                                  ),
-                                                  child: const Icon(
-                                                    Icons.visibility,
-                                                    size: 20,
-                                                  ),
-                                                ),
-
-                                              ],
-                                            ),
-
-
-
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                ),
-                              );
-                            },
+                                  color: Colors.white,
+                                  elevation: 2,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        // Ícono alineado
+                                        Container(
+                                          width: 50,
+                                          height: 50,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child:  Center(
+                                            child: Icon(
+                                              (item.pacienteCedula == 'No tiene, es hijo' || item.pacienteCedula.isEmpty)
+                                                  ? Icons.child_care  // 👶 Si no tiene cédula → es un bebé
+                                                  : Icons.person,     // 👤 Si tiene cédula → es un paciente normal
+                                              size: 28,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+
+                                        // Información del paciente
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                '${item.pacienteNombre.toString().toUpperCase()} ${item.pacienteApellido.toString().toUpperCase()}',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text('Cédula: ${item.pacienteCedula}',
+                                                  style: const TextStyle(color: Colors.black54)),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    'Estado: ${item.estado}',
+                                                    style: TextStyle(
+                                                      color: item.estado == 'pendiente'
+                                                          ? Colors.orange[700]
+                                                          : item.estado == 'aceptado'
+                                                          ? Colors.green[700]
+                                                          : item.estado == 'rechazado'
+                                                          ? Colors.red[700]
+                                                          : Colors.black54,
+                                                    ),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: item.estado == 'aceptado'
+                                                        ? () {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) => DetallePacienteScreen(idusuariopac: item.paciente,nombre: nombreUsuario, apellido: apellidoUsuario,idusuariodoc:idDoctor ,),
+                                                        ),
+                                                      );
+                                                    }
+                                                        : null, // Deshabilitado si no está aceptado
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor: item.estado == 'aceptado'
+                                                          ? Colors.blue
+                                                          : Colors.grey[300],
+                                                      foregroundColor: item.estado == 'aceptado'
+                                                          ? Colors.white
+                                                          : Colors.black45,
+                                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                                      minimumSize: const Size(40, 30),
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(8),
+                                                      ),
+                                                      elevation: 0,
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.visibility,
+                                                      size: 20,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       )
-
-
                     ],
                   ),
                 ),
               )
-
-
-
-
-
-
-
-
-
             ],
           ),
         ),
@@ -771,6 +792,3 @@ class _buscarPaciente extends State<buscarPaciente> {
     );
   }
 }
-
-
-
