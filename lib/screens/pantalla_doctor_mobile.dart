@@ -9,6 +9,8 @@ import 'package:mifirst/screens/vista_doctor_buscarPaciente.dart';
 import 'package:http/http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
 
+import 'bienvenido.dart';
+
 class DoctorMobileScreen extends StatefulWidget {
   final int idusuario;
   const DoctorMobileScreen({super.key, required this.idusuario});
@@ -148,13 +150,118 @@ class _DoctorMobileScreenState extends State<DoctorMobileScreen> {
         ),
       );
     }
+    if (index == 3) {
+      // Opción de cerrar sesión
+      _mostrarDialogoCerrarSesion().then((shouldLogout) {
+        if (shouldLogout) {
+          _cerrarSesion();
+        }
+      });
+    }
     else {
       setState(() {
         _selectedIndex = index;
       });
     }
   }
+  Future<bool> _mostrarDialogoCerrarSesion() async {
+    return await showDialog(
+      context: context,
+      barrierDismissible: false, // No permite cerrar tocando fuera del diálogo
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.logout,
+                color: Colors.red,
+                size: 30,
+              ),
+              SizedBox(width: 10),
+              Text(
+                'Cerrar Sesión',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange,
+                size: 60,
+              ),
+              SizedBox(height: 20),
+              Text(
+                '¿Estás seguro que quieres cerrar sesión?',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Se perderá la sesión actual y tendrás que iniciar sesión nuevamente.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false); // Retorna false (no cerrar)
+              },
+              child: Text(
+                'Cancelar',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // Retorna true (cerrar sesión)
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(
+                'Cerrar Sesión',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    ) ?? false; // Retorna false si se cierra el diálogo sin seleccionar
+  }
 
+  // Método para cerrar sesión
+  void _cerrarSesion() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => WelcomeScreen()),
+          (Route<dynamic> route) => false,
+    );
+  }
   @override
   void initState() {
     super.initState();
@@ -171,7 +278,16 @@ class _DoctorMobileScreenState extends State<DoctorMobileScreen> {
   Widget build(BuildContext context) {
     String fechaHoy = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
-    return Scaffold(
+    return WillPopScope(
+        onWillPop: () async {
+      // Intercepta el botón de retroceso
+      bool shouldLogout = await _mostrarDialogoCerrarSesion();
+      if (shouldLogout) {
+        _cerrarSesion();
+      }
+      return false; // Siempre retorna false para evitar el comportamiento por defecto
+    },
+    child: Scaffold(
       backgroundColor: Colors.blue.shade900,
       bottomNavigationBar: Theme(
         data: Theme.of(context).copyWith(
@@ -210,12 +326,12 @@ class _DoctorMobileScreenState extends State<DoctorMobileScreen> {
             NavigationDestination(
               icon: Icon(Icons.switch_account_outlined),
               selectedIcon: Icon(Icons.switch_account),
-              label: 'Perfil Pac',
+              label: 'Perfil Pc',
             ),
             NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings),
-              label: 'Ajustes',
+              icon: Icon(Icons.logout),
+              selectedIcon: Icon(Icons.logout),
+              label: 'Salir',
             ),
           ],
         ),
@@ -245,7 +361,7 @@ class _DoctorMobileScreenState extends State<DoctorMobileScreen> {
             ),
           ],
         ),
-      ),
+      ),)
     );
   }
 

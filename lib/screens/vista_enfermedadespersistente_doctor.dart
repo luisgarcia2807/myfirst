@@ -171,7 +171,7 @@ class _VistaEnfermedadPersistentedoctor extends State<VistaEnfermedadPersistente
                             });
                           },
                           decoration: InputDecoration(
-                            labelText: "Tipo de alergia",
+                            labelText: "Tipo de Enfermedad",
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
                             ),

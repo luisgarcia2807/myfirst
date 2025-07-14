@@ -171,7 +171,7 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
                             });
                           },
                           decoration: InputDecoration(
-                            labelText: "Tipo de alergia",
+                            labelText: "Tipo de Enfermedad",
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
                             ),
@@ -392,19 +392,19 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
         return Icons.favorite;
       case 'Respiratoria':
         return Icons.air;
-      case 'Neurológica':
+      case 'Neurologica':
         return Icons.memory;
-      case 'Psiquiátrica':
+      case 'Psiquiatrica':
         return Icons.psychology;
       case 'Gastrointestinal':
         return Icons.lunch_dining;
-      case 'Reumatológica':
+      case 'Reumatologica':
         return Icons.accessibility_new;
       case 'Renal':
         return Icons.opacity;
-      case 'Hematológica':
+      case 'Hematologica':
         return Icons.bloodtype;
-      case 'Infecciosa':
+      case 'Infectologia':
         return Icons.sick;
       default:
         return Icons.device_unknown;
@@ -419,19 +419,19 @@ class _VistaEnfermedadPersistente extends State<VistaEnfermedadPersistente> {
         return Colors.red;
       case 'Respiratoria':
         return Colors.lightBlue;
-      case 'Neurológica':
+      case 'Neurologica':
         return Colors.indigo;
-      case 'Psiquiátrica':
+      case 'Psiquiatrica':
         return Colors.deepOrange;
       case 'Gastrointestinal':
         return Colors.brown;
-      case 'Reumatológica':
+      case 'Reumatologica':
         return Colors.teal;
       case 'Renal':
         return Colors.blueGrey;
-      case 'Hematológica':
+      case 'Hematologica':
         return Colors.pink;
-      case 'Infecciosa':
+      case 'Infectologia':
         return Colors.green;
       default:
         return Colors.grey;

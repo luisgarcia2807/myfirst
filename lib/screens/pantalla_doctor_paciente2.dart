@@ -17,6 +17,7 @@ import 'package:mifirst/screens/vista_vacuna.dart';
 import '../util/emoticon_face.dart';
 import '../constans.dart';
 import 'Paciente_qr2.dart';
+import 'bienvenido.dart';
 import 'informacion_Principal.dart';
 
 class PacienteScreen2 extends StatefulWidget {
@@ -237,11 +238,117 @@ class _PacienteScreen2 extends State<PacienteScreen2> {
           },
         );
       }
-    } else {
+    }
+    if (index == 5) {
+      // Opción de cerrar sesión
+      _mostrarDialogoCerrarSesion().then((shouldLogout) {
+        if (shouldLogout) {
+          _cerrarSesion();
+        }
+      });
+    }else {
       setState(() {
         _selectedIndex = index;
       });
     }
+  }
+  Future<bool> _mostrarDialogoCerrarSesion() async {
+    return await showDialog(
+      context: context,
+      barrierDismissible: false, // No permite cerrar tocando fuera del diálogo
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.logout,
+                color: Colors.red,
+                size: 30,
+              ),
+              SizedBox(width: 10),
+              Text(
+                'Cerrar Sesión',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange,
+                size: 60,
+              ),
+              SizedBox(height: 20),
+              Text(
+                '¿Estás seguro que quieres cerrar sesión?',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Se perderá la sesión actual y tendrás que iniciar sesión nuevamente.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false); // Retorna false (no cerrar)
+              },
+              child: Text(
+                'Cancelar',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // Retorna true (cerrar sesión)
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(
+                'Cerrar Sesión',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    ) ?? false; // Retorna false si se cierra el diálogo sin seleccionar
+  }
+
+  // Método para cerrar sesión
+  void _cerrarSesion() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => WelcomeScreen()),
+          (Route<dynamic> route) => false,
+    );
   }
   @override
   void initState() {
@@ -260,364 +367,497 @@ class _PacienteScreen2 extends State<PacienteScreen2> {
   Widget build(BuildContext context) {
     String fechaHoy = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
-    return Scaffold(
-      backgroundColor: Colors.grey.shade100,
-      bottomNavigationBar: Theme(
-          data: Theme.of(context).copyWith(
-            navigationBarTheme: NavigationBarThemeData(
-              backgroundColor: Colors.white,
-              indicatorColor: Colors.indigo,
-              labelTextStyle: MaterialStateProperty.resolveWith<TextStyle>((states) {
-                if (states.contains(MaterialState.selected)) {
-                  return TextStyle(color: Colors.indigo, fontWeight: FontWeight.w600);
-                }
-                return TextStyle(color: Colors.grey);
-              }),
-              iconTheme: MaterialStateProperty.resolveWith<IconThemeData>((states) {
-                if (states.contains(MaterialState.selected)) {
-                  return IconThemeData(color: Colors.white);
-                }
-                return IconThemeData(color: Colors.grey);
-              }),
-            ),
-          ),
-          child: NavigationBar(
-            height: 70,
+    return WillPopScope(
+        onWillPop: () async {
+          // Intercepta el botón de retroceso
+          bool shouldLogout = await _mostrarDialogoCerrarSesion();
+          if (shouldLogout) {
+            _cerrarSesion();
+          }
+          return false; // Siempre retorna false para evitar el comportamiento por defecto
+        },
+        child:Scaffold(
+          backgroundColor: Colors.grey.shade100,
+          bottomNavigationBar: CustomNavigationBar(
             selectedIndex: _selectedIndex,
             onDestinationSelected: _onDestinationSelected,
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home),
-                label: 'Inicio',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.verified_user_outlined), // Nuevo ícono
-                selectedIcon: Icon(Icons.verified_user), // Ícono cuando está seleccionado
-                label: 'Doctores',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.child_care_rounded),
-                selectedIcon: Icon(Icons.child_care_rounded),
-                label: 'Hijos',
-              ),
-
-              NavigationDestination(
-                icon: Icon(Icons.qr_code),
-                selectedIcon: Icon(Icons.qr_code_outlined),
-                label: 'Qr',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.switch_account_outlined),
-                selectedIcon: Icon(Icons.switch_account),
-                label: 'Perfil Doc',
-              ),
-            ],
-          )
-
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25.0),
-              child: Column(
-                children: [
-                  SizedBox(height: 25),
-                  Row(
+            isDoctorAccepted: aceptado,
+          ),
+          body: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                  child: Column(
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => CambiarFotoScreen(idusuario: widget.idusuario,)), // Reemplaza con tu widget de destino
-                          );
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.indigoAccent,
-                            borderRadius: BorderRadius.circular(100),
-                          ),
-                          padding: EdgeInsets.all(3),
-                          child: foto == null || foto!.isEmpty
-                              ? Icon(
-                            Icons.person_pin,
-                            color: Colors.white,
-                            size: 70,
-                          )
-                              : ClipOval(
-                            child: Image.network(
-                              '$baseUrl$foto',
-                              width: 70,
-                              height: 70,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 8.0),
-                      Expanded( // <- ¡Esta línea soluciona el overflow!
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(height: 4.0),
-                            Text(
-                              "Hola Dr.$nombreUsuario $apellidoUsuario",
-                              style: TextStyle(
-                                color: Colors.black87,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
+                      SizedBox(height: 25),
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => CambiarFotoScreen(idusuario: widget.idusuario,)), // Reemplaza con tu widget de destino
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.indigoAccent,
+                                borderRadius: BorderRadius.circular(100),
                               ),
-                              overflow: TextOverflow.ellipsis, // <-- por si aún se desborda
+                              padding: EdgeInsets.all(3),
+                              child: foto == null || foto!.isEmpty
+                                  ? Icon(
+                                Icons.person_pin,
+                                color: Colors.white,
+                                size: 70,
+                              )
+                                  : ClipOval(
+                                child: Image.network(
+                                  '$baseUrl$foto',
+                                  width: 70,
+                                  height: 70,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                             ),
-                            SizedBox(height: 1.0),
+                          ),
+                          SizedBox(width: 8.0),
+                          Expanded( // <- ¡Esta línea soluciona el overflow!
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(height: 4.0),
+                                Text(
+                                  "Hola Dr.$nombreUsuario $apellidoUsuario",
+                                  style: TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis, // <-- por si aún se desborda
+                                ),
+                                SizedBox(height: 1.0),
+                                Text(
+                                  fechaHoy,
+                                  style: TextStyle(color: Colors.grey[600]),
+                                  overflow: TextOverflow.ellipsis, // opcional
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+
+                      SizedBox(height: 25),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Icon(Icons.search, color: Colors.indigo),
+                            SizedBox(width: 5),
                             Text(
-                              fechaHoy,
-                              style: TextStyle(color: Colors.grey[600]),
-                              overflow: TextOverflow.ellipsis, // opcional
+                              'Explorar',
+                              style: TextStyle(color: Colors.indigo),
                             ),
                           ],
                         ),
                       ),
+                      SizedBox(height: 25),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '¿Cómo te sientes?',
+                            style: TextStyle(
+                              color: Colors.indigo,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Icon(Icons.more_horiz, color: Colors.indigo),
+                        ],
+                      ),
+                      SizedBox(height: 25),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Column(
+                            children: [
+                              EmoticonFace(emoticonface: '😃', color: Colors.green),
+                              SizedBox(height: 8),
+                              Text('Excelente', style: TextStyle(color: Colors.black)),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              EmoticonFace(emoticonface: '🙂', color: Colors.limeAccent),
+                              SizedBox(height: 8),
+                              Text('Bien', style: TextStyle(color: Colors.black)),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              EmoticonFace(emoticonface: '😐', color: Colors.orangeAccent),
+                              SizedBox(height: 8),
+                              Text('Regular', style: TextStyle(color: Colors.black)),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              EmoticonFace(emoticonface: '😢', color: Colors.red),
+                              SizedBox(height: 8),
+                              Text('Mal', style: TextStyle(color: Colors.black)),
+                            ],
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-
-
-                  SizedBox(height: 25),
-                  Container(
+                ),
+                SizedBox(height: 25),
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(25),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.transparent,
                     ),
-                    padding: EdgeInsets.all(12),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.search, color: Colors.indigo),
-                        SizedBox(width: 5),
                         Text(
-                          'Explorar',
-                          style: TextStyle(color: Colors.indigo),
+                          'Información Principal',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: Colors.indigo,
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        Expanded(
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              CardItem(
+                                emoji: '📊',
+                                title: 'Signos Vitales',
+                                subtitle: 'Indicadores clave',
+                                color: Color(0xFF1F2937), // Gris carbón
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => VistaSignoVitales(id_paciente: idPaciente),
+                                    ),
+                                  );
+                                },
+                              ),
+                              CardItem(
+                                emoji: '⚠️',
+                                title: 'Alergias',
+                                subtitle: 'Reacciones conocidas',
+                                color: Color(0xFF991B1B), // Rojo oscuro elegante
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => VistaAlergia(id_paciente: idPaciente),
+                                    ),
+                                  );
+                                },
+                              ),
+                              CardItem(
+                                emoji: '💉',
+                                title: 'Vacunas',
+                                subtitle: 'Historial de inmunización',
+                                color: Color(0xFF1E40AF), // Azul real
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => VistaVacuna(id_paciente: idPaciente),
+                                    ),
+                                  );
+                                },
+                              ),
+                              CardItem(
+                                emoji: '💊',
+                                title: 'Tratamiento Actual',
+                                subtitle: 'Medicamentos en curso',
+                                color: Color(0xFF0F766E), // Verde azulado oscuro
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => VistaTratamientoActualmente(id_paciente: idPaciente),
+                                    ),
+                                  );
+                                },
+                              ),
+                              CardItem(
+                                emoji: '🫁',
+                                title: 'Enfermedades Persistentes',
+                                subtitle: 'Condiciones crónicas',
+                                color: Color(0xFF581C87), // Púrpura profundo
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => VistaEnfermedadPersistente(id_paciente: idPaciente),
+                                    ),
+                                  );
+                                },
+                              ),
+                              CardItem(
+                                emoji: '🩹',
+                                title: 'Tratamientos Frecuentes',
+                                subtitle: 'Medicinas habituales',
+                                color: Color(0xFF374151), // Gris pizarra
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => VistaTratamientofrecuente(id_paciente: idPaciente),
+                                    ),
+                                  );
+                                },
+                              ),
+                              CardItem(
+                                emoji: '🔬',
+                                title: 'Exámenes',
+                                subtitle: 'Resultados de laboratorio',
+                                color: Color(0xFF0C4A6E), // Azul petróleo
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ExamenesPage(id_paciente: idPaciente),
+                                    ),
+                                  );
+                                },
+                              ),
+                              CardItem(
+                                emoji: '🩻',
+                                title: 'Imagenología',
+                                subtitle: 'Rayos X y estudios',
+                                color: Color(0xFF0F172A), // Azul slate muy oscuro
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ImagenPage(id_paciente: idPaciente),
+                                    ),
+                                  );
+                                },
+                              ),
+
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 25),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '¿Cómo te sientes?',
-                        style: TextStyle(
-                          color: Colors.indigo,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Icon(Icons.more_horiz, color: Colors.indigo),
-                    ],
-                  ),
-                  SizedBox(height: 25),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Column(
-                        children: [
-                          EmoticonFace(emoticonface: '😃', color: Colors.green),
-                          SizedBox(height: 8),
-                          Text('Excelente', style: TextStyle(color: Colors.black)),
-                        ],
-                      ),
-                      Column(
-                        children: [
-                          EmoticonFace(emoticonface: '🙂', color: Colors.limeAccent),
-                          SizedBox(height: 8),
-                          Text('Bien', style: TextStyle(color: Colors.black)),
-                        ],
-                      ),
-                      Column(
-                        children: [
-                          EmoticonFace(emoticonface: '😐', color: Colors.orangeAccent),
-                          SizedBox(height: 8),
-                          Text('Regular', style: TextStyle(color: Colors.black)),
-                        ],
-                      ),
-                      Column(
-                        children: [
-                          EmoticonFace(emoticonface: '😢', color: Colors.red),
-                          SizedBox(height: 8),
-                          Text('Mal', style: TextStyle(color: Colors.black)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            SizedBox(height: 25),
-            Expanded(
-              child: Container(
-                padding: EdgeInsets.all(25),
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Información Principal',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                        color: Colors.indigo,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    Expanded(
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          CardItem(
-                            emoji: '🩺',
-                            title: 'Información Médica',
-                            subtitle: 'Datos clave',
-                            color: Color(0xFF1E3A8A), // Azul marino profundo
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => InformacionPrincipalPaciente(idusuario: widget.idusuario),
-                                ),
-                              );
-                            },
-                          ),
-                          CardItem(
-                            emoji: '📊',
-                            title: 'Signos Vitales',
-                            subtitle: 'Indicadores clave',
-                            color: Color(0xFF1F2937), // Gris carbón
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => VistaSignoVitales(id_paciente: idPaciente),
-                                ),
-                              );
-                            },
-                          ),
-                          CardItem(
-                            emoji: '⚠️',
-                            title: 'Alergias',
-                            subtitle: 'Reacciones conocidas',
-                            color: Color(0xFF991B1B), // Rojo oscuro elegante
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => VistaAlergia(id_paciente: idPaciente),
-                                ),
-                              );
-                            },
-                          ),
-                          CardItem(
-                            emoji: '💉',
-                            title: 'Vacunas',
-                            subtitle: 'Historial de inmunización',
-                            color: Color(0xFF1E40AF), // Azul real
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => VistaVacuna(id_paciente: idPaciente),
-                                ),
-                              );
-                            },
-                          ),
-                          CardItem(
-                            emoji: '💊',
-                            title: 'Tratamiento Actual',
-                            subtitle: 'Medicamentos en curso',
-                            color: Color(0xFF0F766E), // Verde azulado oscuro
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => VistaTratamientoActualmente(id_paciente: idPaciente),
-                                ),
-                              );
-                            },
-                          ),
-                          CardItem(
-                            emoji: '🫁',
-                            title: 'Enfermedades Persistentes',
-                            subtitle: 'Condiciones crónicas',
-                            color: Color(0xFF581C87), // Púrpura profundo
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => VistaEnfermedadPersistente(id_paciente: idPaciente),
-                                ),
-                              );
-                            },
-                          ),
-                          CardItem(
-                            emoji: '🩹',
-                            title: 'Tratamientos Frecuentes',
-                            subtitle: 'Medicinas habituales',
-                            color: Color(0xFF374151), // Gris pizarra
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => VistaTratamientofrecuente(id_paciente: idPaciente),
-                                ),
-                              );
-                            },
-                          ),
-                          CardItem(
-                            emoji: '🔬',
-                            title: 'Exámenes',
-                            subtitle: 'Resultados de laboratorio',
-                            color: Color(0xFF0C4A6E), // Azul petróleo
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ExamenesPage(id_paciente: idPaciente),
-                                ),
-                              );
-                            },
-                          ),
-                          CardItem(
-                            emoji: '🩻',
-                            title: 'Imagenología',
-                            subtitle: 'Rayos X y estudios',
-                            color: Color(0xFF0F172A), // Azul slate muy oscuro
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ImagenPage(id_paciente: idPaciente),
-                                ),
-                              );
-                            },
-                          ),
-                          CardItem(
-                            emoji: '🏥',
-                            title: 'Póliza de Seguro',
-                            subtitle: 'Información de cobertura',
-                            color: Color(0xFF312E81), // Índigo profundo
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          ),)
+    );
+  }
+}
+
+class CustomNavigationBar extends StatelessWidget {
+  final int selectedIndex;
+  final Function(int) onDestinationSelected;
+  final bool isDoctorAccepted;
+
+  const CustomNavigationBar({
+    Key? key,
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    this.isDoctorAccepted = false,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 15,
+            offset: Offset(0, -8),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          navigationBarTheme: NavigationBarThemeData(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            height: 70,
+            indicatorColor: Colors.indigo.withOpacity(0.12),
+            indicatorShape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            labelTextStyle: MaterialStateProperty.resolveWith<TextStyle>((states) {
+              if (states.contains(MaterialState.selected)) {
+                return TextStyle(
+                  color: Colors.indigo,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  letterSpacing: 0.3,
+                );
+              }
+              return TextStyle(
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+                fontSize: 10,
+                letterSpacing: 0.2,
+              );
+            }),
+            iconTheme: MaterialStateProperty.resolveWith<IconThemeData>((states) {
+              if (states.contains(MaterialState.selected)) {
+                return IconThemeData(
+                  color: Colors.indigo,
+                  size: 24,
+                );
+              }
+              return IconThemeData(
+                color: Colors.grey.shade500,
+                size: 22,
+              );
+            }),
+          ),
+        ),
+        child: NavigationBar(
+          selectedIndex: selectedIndex,
+          onDestinationSelected: onDestinationSelected,
+          destinations: [
+            _buildNavigationDestination(
+              icon: Icons.home_outlined,
+              selectedIcon: Icons.home,
+              label: 'Inicio',
+              isSelected: selectedIndex == 0,
+            ),
+            _buildNavigationDestination(
+              icon: Icons.verified_user_outlined,
+              selectedIcon: Icons.verified_user,
+              label: 'Doctores',
+              isSelected: selectedIndex == 1,
+            ),
+            _buildNavigationDestination(
+              icon: Icons.child_care_outlined,
+              selectedIcon: Icons.child_care,
+              label: 'Hijos',
+              isSelected: selectedIndex == 2,
+            ),
+            _buildNavigationDestination(
+              icon: Icons.qr_code_outlined,
+              selectedIcon: Icons.qr_code,
+              label: 'QR',
+              isSelected: selectedIndex == 3,
+            ),
+            _buildNavigationDestination(
+              icon: Icons.switch_account_outlined,
+              selectedIcon: Icons.switch_account,
+              label: 'Perfil Dr.',
+              isSelected: selectedIndex == 4,
+              hasNotification: !isDoctorAccepted,
+            ),
+            _buildNavigationDestination(
+              icon: Icons.logout_outlined,
+              selectedIcon: Icons.logout,
+              label: 'Salir',
+              isSelected: selectedIndex == 5,
+              isLogout: true,
             ),
           ],
         ),
       ),
+    );
+  }
+
+  NavigationDestination _buildNavigationDestination({
+    required IconData icon,
+    required IconData selectedIcon,
+    required String label,
+    required bool isSelected,
+    bool hasNotification = false,
+    bool isLogout = false,
+  }) {
+    return NavigationDestination(
+      icon: Stack(
+        children: [
+          Container(
+            padding: EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: isSelected ? Colors.indigo.withOpacity(0.08) : Colors.transparent,
+            ),
+            child: Icon(
+              icon,
+              color: isLogout ? Colors.grey.shade500 : null,
+            ),
+          ),
+          if (hasNotification)
+            Positioned(
+              right: 2,
+              top: 2,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.orange,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+        ],
+      ),
+      selectedIcon: Stack(
+        children: [
+          Container(
+            padding: EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: isLogout
+                  ? Colors.red.withOpacity(0.08)
+                  : Colors.indigo.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isLogout
+                    ? Colors.red.withOpacity(0.2)
+                    : Colors.indigo.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              selectedIcon,
+              color: isLogout ? Colors.red : Colors.indigo,
+            ),
+          ),
+          if (hasNotification)
+            Positioned(
+              right: 2,
+              top: 2,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.orange,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+        ],
+      ),
+      label: label,
     );
   }
 }

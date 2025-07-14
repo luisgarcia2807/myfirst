@@ -457,11 +457,7 @@ class _buscarPaciente extends State<buscarPaciente> {
               selectedIcon: Icon(Icons.switch_account),
               label: 'Perfil Pac',
             ),
-            NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings),
-              label: 'Ajustes',
-            ),
+
           ],
         ),
       ),

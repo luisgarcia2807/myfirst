@@ -32,6 +32,7 @@ class _ScanViewImagenState extends State<ScanViewImagen> {
   File? _pdfFile;
   bool _mejorarImagen = false;
   bool _usarRecortadas = true;
+  bool _isProcessing = false;
 
   final Map<String, Map<String, List<Map<String, String>>>> tiposCategoriasExamenes = {
     'Rayos x': {
@@ -235,38 +236,40 @@ class _ScanViewImagenState extends State<ScanViewImagen> {
     final picked = await ImagePicker().pickImage(source: ImageSource.camera);
     if (picked == null) return;
 
-    File imageToProcess;
-
-    // Intentar recortar
-    final croppedFile = await ImageCropper().cropImage(
-      sourcePath: picked.path,
-      aspectRatioPresets: [
-        CropAspectRatioPreset.original,
-        CropAspectRatioPreset.ratio4x3,
-        CropAspectRatioPreset.ratio16x9,
-      ],
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: 'Recortar imagen',
-          initAspectRatio: CropAspectRatioPreset.original,
-          lockAspectRatio: false,
-        ),
-        IOSUiSettings(
-          title: 'Recortar imagen',
-        ),
-      ],
-    );
-
-    if (croppedFile != null && await File(croppedFile.path).exists()) {
-      imageToProcess = File(croppedFile.path);
-    } else {
-      // Copiar la imagen original a un archivo temporal para asegurarse de que sea válido
-      final tempDir = await getTemporaryDirectory();
-      final tempPath = '${tempDir.path}/original_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      imageToProcess = await File(picked.path).copy(tempPath);
-    }
+    // Iniciar loading
+    setState(() => _isProcessing = true);
 
     try {
+      File imageToProcess;
+
+      // Intentar recortar
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: picked.path,
+        aspectRatioPresets: [
+          CropAspectRatioPreset.original,
+          CropAspectRatioPreset.ratio4x3,
+          CropAspectRatioPreset.ratio16x9,
+        ],
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Recortar imagen',
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false,
+          ),
+          IOSUiSettings(
+            title: 'Recortar imagen',
+          ),
+        ],
+      );
+
+      if (croppedFile != null && await File(croppedFile.path).exists()) {
+        imageToProcess = File(croppedFile.path);
+      } else {
+        final tempDir = await getTemporaryDirectory();
+        final tempPath = '${tempDir.path}/original_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        imageToProcess = await File(picked.path).copy(tempPath);
+      }
+
       final tempDir = await getTemporaryDirectory();
 
       // Guardar la imagen que vamos a procesar
@@ -300,6 +303,11 @@ class _ScanViewImagenState extends State<ScanViewImagen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al procesar imagen: $e')),
         );
+      }
+    } finally {
+      // Finalizar loading
+      if (mounted) {
+        setState(() => _isProcessing = false);
       }
     }
   }
@@ -474,13 +482,51 @@ class _ScanViewImagenState extends State<ScanViewImagen> {
             children: [
 
               // VISUALIZACIÓN DE IMÁGENES O MENSAJE
-              if (listaAMostrar.isNotEmpty)
+              // VISUALIZACIÓN DE IMÁGENES O MENSAJE
+              if (listaAMostrar.isNotEmpty || _isProcessing)
                 SizedBox(
                   height: 200,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: listaAMostrar.length,
+                    itemCount: listaAMostrar.length + (_isProcessing ? 1 : 0),
                     itemBuilder: (context, index) {
+                      // Si es el último elemento y estamos procesando, mostrar loading
+                      if (index == listaAMostrar.length && _isProcessing) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Material(
+                            elevation: 6,
+                            borderRadius: BorderRadius.circular(16),
+                            shadowColor: Colors.grey.shade300,
+                            child: Container(
+                              height: 180,
+                              width: 140,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                color: Colors.grey.shade100,
+                                border: Border.all(color: Colors.grey.shade300, width: 2),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const CircularProgressIndicator(),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Procesando...',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      // Mostrar imagen normal
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Stack(
@@ -756,11 +802,20 @@ class _ScanViewImagenState extends State<ScanViewImagen> {
                 alignment: WrapAlignment.center,
                 children: [
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Agregar imagen'),
-                    onPressed: _pickAndCropImage,
+                    icon: _isProcessing
+                        ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                        : const Icon(Icons.camera_alt),
+                    label: Text(_isProcessing ? 'Procesando...' : 'Agregar imagen'),
+                    onPressed: _isProcessing ? null : _pickAndCropImage,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: colores[1],
+                      backgroundColor: _isProcessing ? Colors.grey : colores[1],
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

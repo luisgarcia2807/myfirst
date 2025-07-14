@@ -936,7 +936,7 @@ class _VistaAlergia extends State<VistaAlergia> {
                                                         DropdownButtonFormField<String>(
                                                           value: gravedadSeleccionada,
                                                           decoration: const InputDecoration(labelText: 'Gravedad'),
-                                                          items: ['leve', 'moderada', 'grave'].map((valor) {
+                                                          items: ['leve', 'moderada', 'severa'].map((valor) {
                                                             return DropdownMenuItem(
                                                               value: valor,
                                                               child: Text(valor),
